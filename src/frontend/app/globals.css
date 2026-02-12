@@ -133,6 +133,44 @@ body {
   margin: 0.5rem 0;
   color: var(--text-secondary);
 }
+.prose-chat a {
+  color: var(--accent-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-chat a:hover {
+  color: var(--accent);
+}
+.prose-chat hr {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 0.75rem 0;
+}
+.prose-chat table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+}
+.prose-chat thead {
+  background: var(--surface-3);
+  color: var(--text-secondary);
+}
+.prose-chat th {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+}
+.prose-chat td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+}
+.prose-chat tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--surface-3) 50%, transparent);
+}
+.prose-chat ul { list-style-type: disc; }
+.prose-chat ol { list-style-type: decimal; }
 
 /* React Flow overrides */
 .skill-graph .react-flow__edge.animated path {
