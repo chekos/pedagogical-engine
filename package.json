@@ -8,7 +8,7 @@
     "src/frontend"
   ],
   "scripts": {
-    "dev:server": "npm run dev --workspace=src/server",
+    "dev:server": "npx tsx watch src/server/index.ts",
     "dev:frontend": "npm run dev --workspace=src/frontend",
     "build": "npm run build --workspaces",
     "start": "npm run start --workspace=src/server"
