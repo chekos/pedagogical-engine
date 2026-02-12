@@ -1,0 +1,19 @@
+{
+  "name": "pedagogical-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-native pedagogical reasoning engine — Built with Opus 4.6 for Cerebral Valley × Anthropic hackathon",
+  "workspaces": [
+    "src/server",
+    "src/frontend"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace=src/server",
+    "dev:frontend": "npm run dev --workspace=src/frontend",
+    "build": "npm run build --workspaces",
+    "start": "npm run start --workspace=src/server"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

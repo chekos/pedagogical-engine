@@ -1,0 +1,295 @@
+{
+  "domain": "python-data-analysis",
+  "version": "1.0.0",
+  "description": "Directed dependency edges between python-data-analysis skills. Source is the prerequisite; target is the dependent skill.",
+  "edges": [
+    {
+      "source": "open-terminal",
+      "target": "navigate-directories",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "open-terminal",
+      "target": "install-python",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "navigate-directories",
+      "target": "run-python-script",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "install-python",
+      "target": "run-python-script",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "run-python-script",
+      "target": "python-variables-types",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "python-variables-types",
+      "target": "python-control-flow",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "python-control-flow",
+      "target": "python-functions",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "run-python-script",
+      "target": "install-packages",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "install-packages",
+      "target": "use-jupyter",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "run-python-script",
+      "target": "use-jupyter",
+      "confidence": 0.70,
+      "type": "prerequisite"
+    },
+    {
+      "source": "install-packages",
+      "target": "import-pandas",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "python-variables-types",
+      "target": "import-pandas",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "import-pandas",
+      "target": "inspect-dataframe",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "inspect-dataframe",
+      "target": "select-filter-data",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "python-control-flow",
+      "target": "select-filter-data",
+      "confidence": 0.75,
+      "type": "prerequisite"
+    },
+    {
+      "source": "inspect-dataframe",
+      "target": "handle-missing-data",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "select-filter-data",
+      "target": "pandas-groupby",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "python-functions",
+      "target": "pandas-groupby",
+      "confidence": 0.70,
+      "type": "prerequisite"
+    },
+    {
+      "source": "select-filter-data",
+      "target": "pandas-merge-join",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "import-pandas",
+      "target": "basic-plotting",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "install-packages",
+      "target": "basic-plotting",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "basic-plotting",
+      "target": "interpret-distributions",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "inspect-dataframe",
+      "target": "interpret-distributions",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "handle-missing-data",
+      "target": "identify-data-quality-issues",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "inspect-dataframe",
+      "target": "identify-data-quality-issues",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "interpret-distributions",
+      "target": "identify-data-quality-issues",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "pandas-groupby",
+      "target": "reshape-data",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "select-filter-data",
+      "target": "reshape-data",
+      "confidence": 0.75,
+      "type": "prerequisite"
+    },
+    {
+      "source": "python-functions",
+      "target": "write-reusable-analysis-functions",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "pandas-groupby",
+      "target": "write-reusable-analysis-functions",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "handle-missing-data",
+      "target": "write-reusable-analysis-functions",
+      "confidence": 0.75,
+      "type": "prerequisite"
+    },
+    {
+      "source": "pandas-groupby",
+      "target": "explain-analysis-choices",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "interpret-distributions",
+      "target": "explain-analysis-choices",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-data-quality-issues",
+      "target": "explain-analysis-choices",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "basic-plotting",
+      "target": "critique-visualization",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "interpret-distributions",
+      "target": "critique-visualization",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "interpret-distributions",
+      "target": "exploratory-data-analysis",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-data-quality-issues",
+      "target": "exploratory-data-analysis",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "pandas-groupby",
+      "target": "exploratory-data-analysis",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "basic-plotting",
+      "target": "exploratory-data-analysis",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "exploratory-data-analysis",
+      "target": "build-analysis-narrative",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "use-jupyter",
+      "target": "build-analysis-narrative",
+      "confidence": 0.75,
+      "type": "recommended"
+    },
+    {
+      "source": "explain-analysis-choices",
+      "target": "build-analysis-narrative",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "write-reusable-analysis-functions",
+      "target": "design-data-pipeline",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "reshape-data",
+      "target": "design-data-pipeline",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "pandas-merge-join",
+      "target": "design-data-pipeline",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-data-quality-issues",
+      "target": "design-data-pipeline",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "build-analysis-narrative",
+      "target": "design-data-pipeline",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    }
+  ]
+}

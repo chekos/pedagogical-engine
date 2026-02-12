@@ -1,0 +1,188 @@
+{
+  "domain": "python-data-analysis",
+  "version": "1.0.0",
+  "description": "Skills for Python-based data analysis — from terminal basics to end-to-end pipeline design",
+  "skills": [
+    {
+      "id": "open-terminal",
+      "label": "Can open a terminal application",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "navigate-directories",
+      "label": "Can navigate directories using cd, ls, and pwd",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["open-terminal"]
+    },
+    {
+      "id": "install-python",
+      "label": "Can install Python on their operating system",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["open-terminal"]
+    },
+    {
+      "id": "run-python-script",
+      "label": "Can create and execute a Python script from the terminal",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["navigate-directories", "install-python"]
+    },
+    {
+      "id": "python-variables-types",
+      "label": "Can declare variables and distinguish basic Python types (int, float, str, bool, list, dict)",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["run-python-script"]
+    },
+    {
+      "id": "python-control-flow",
+      "label": "Can write if/else conditionals and for/while loops",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["python-variables-types"]
+    },
+    {
+      "id": "python-functions",
+      "label": "Can define and call functions with parameters and return values",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["python-control-flow"]
+    },
+    {
+      "id": "install-packages",
+      "label": "Can install Python packages using pip or conda",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["run-python-script"]
+    },
+    {
+      "id": "use-jupyter",
+      "label": "Can create and run cells in a Jupyter notebook",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["install-packages", "run-python-script"]
+    },
+    {
+      "id": "import-pandas",
+      "label": "Can import pandas and load data from CSV, Excel, or JSON files",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["install-packages", "python-variables-types"]
+    },
+    {
+      "id": "inspect-dataframe",
+      "label": "Can inspect a DataFrame using head, info, describe, shape, and dtypes",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["import-pandas"]
+    },
+    {
+      "id": "select-filter-data",
+      "label": "Can select columns and filter rows using boolean indexing and .loc/.iloc",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["inspect-dataframe", "python-control-flow"]
+    },
+    {
+      "id": "handle-missing-data",
+      "label": "Can identify, drop, and fill missing values in a DataFrame",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["inspect-dataframe"]
+    },
+    {
+      "id": "pandas-groupby",
+      "label": "Can use groupby with aggregation functions (mean, sum, count, etc.)",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["select-filter-data", "python-functions"]
+    },
+    {
+      "id": "pandas-merge-join",
+      "label": "Can merge and join DataFrames on shared keys",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["select-filter-data"]
+    },
+    {
+      "id": "basic-plotting",
+      "label": "Can create basic plots (line, bar, scatter, histogram) using matplotlib or pandas",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["import-pandas", "install-packages"]
+    },
+    {
+      "id": "interpret-distributions",
+      "label": "Can interpret histograms, box plots, and describe statistical distributions in data",
+      "bloom_level": "analysis",
+      "assessable": true,
+      "dependencies": ["basic-plotting", "inspect-dataframe"]
+    },
+    {
+      "id": "identify-data-quality-issues",
+      "label": "Can identify data quality problems: duplicates, outliers, inconsistent types, encoding issues",
+      "bloom_level": "analysis",
+      "assessable": true,
+      "dependencies": ["handle-missing-data", "inspect-dataframe", "interpret-distributions"]
+    },
+    {
+      "id": "reshape-data",
+      "label": "Can pivot, melt, and reshape DataFrames between wide and long formats",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["pandas-groupby", "select-filter-data"]
+    },
+    {
+      "id": "write-reusable-analysis-functions",
+      "label": "Can write reusable functions that encapsulate common analysis patterns",
+      "bloom_level": "synthesis",
+      "assessable": true,
+      "dependencies": ["python-functions", "pandas-groupby", "handle-missing-data"]
+    },
+    {
+      "id": "explain-analysis-choices",
+      "label": "Can explain why specific analysis methods were chosen over alternatives",
+      "bloom_level": "evaluation",
+      "assessable": true,
+      "dependencies": ["pandas-groupby", "interpret-distributions", "identify-data-quality-issues"]
+    },
+    {
+      "id": "critique-visualization",
+      "label": "Can critique a visualization for misleading scales, poor labeling, or inappropriate chart type",
+      "bloom_level": "evaluation",
+      "assessable": true,
+      "dependencies": ["basic-plotting", "interpret-distributions"]
+    },
+    {
+      "id": "exploratory-data-analysis",
+      "label": "Can conduct a systematic EDA: profile data, check distributions, find correlations, generate hypotheses",
+      "bloom_level": "analysis",
+      "assessable": true,
+      "dependencies": ["interpret-distributions", "identify-data-quality-issues", "pandas-groupby", "basic-plotting"]
+    },
+    {
+      "id": "build-analysis-narrative",
+      "label": "Can structure an analysis into a coherent narrative with introduction, methods, findings, and conclusions",
+      "bloom_level": "synthesis",
+      "assessable": true,
+      "dependencies": ["exploratory-data-analysis", "use-jupyter", "explain-analysis-choices"]
+    },
+    {
+      "id": "design-data-pipeline",
+      "label": "Can design an end-to-end data pipeline: ingestion, cleaning, transformation, analysis, and reporting",
+      "bloom_level": "synthesis",
+      "assessable": true,
+      "dependencies": [
+        "write-reusable-analysis-functions",
+        "reshape-data",
+        "pandas-merge-join",
+        "identify-data-quality-issues",
+        "build-analysis-narrative"
+      ]
+    }
+  ]
+}
