@@ -1,13 +1,13 @@
 import {
   query,
   type Options,
-  type AgentDefinition,
   type SDKMessage,
   type Query,
 } from "@anthropic-ai/claude-agent-sdk";
 import fs from "fs/promises";
 import path from "path";
 import { pedagogyServer } from "./tools/index.js";
+import { agentDefinitions } from "./agents/index.js";
 
 // agent.ts is at src/server/ — go up 2 levels to project root
 const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(import.meta.dirname, "../..");
@@ -37,58 +37,6 @@ Behavioral rules:
 - Write learner profile updates after every assessment interaction
 - Never hardcode skill definitions — always read from data/domains/`;
 
-/** Parse agent definition files from .claude/agents/ */
-async function loadAgentDefinitions(): Promise<
-  Record<string, AgentDefinition>
-> {
-  const agentsDir = path.join(PROJECT_ROOT, ".claude", "agents");
-  const agents: Record<string, AgentDefinition> = {};
-
-  try {
-    const files = await fs.readdir(agentsDir);
-    for (const file of files) {
-      if (!file.endsWith(".md")) continue;
-      const content = await fs.readFile(path.join(agentsDir, file), "utf-8");
-
-      // Parse YAML frontmatter
-      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-      if (!frontmatterMatch) continue;
-
-      const frontmatter = frontmatterMatch[1];
-      const body = frontmatterMatch[2].trim();
-
-      const nameMatch = frontmatter.match(/name:\s*(.+)/);
-      const descMatch = frontmatter.match(/description:\s*(.+(?:\n\s+.+)*)/);
-      const modelMatch = frontmatter.match(/model:\s*(.+)/);
-      const toolsMatch = frontmatter.match(/tools:\s*(.+)/);
-
-      if (!nameMatch) continue;
-
-      const name = nameMatch[1].trim();
-      const description = descMatch
-        ? descMatch[1].replace(/\n\s+/g, " ").trim()
-        : `Agent: ${name}`;
-      const model = modelMatch
-        ? (modelMatch[1].trim() as "sonnet" | "opus" | "haiku")
-        : undefined;
-      const tools = toolsMatch
-        ? toolsMatch[1].split(",").map((t) => t.trim())
-        : undefined;
-
-      agents[name] = {
-        description,
-        prompt: body,
-        model,
-        tools,
-      };
-    }
-  } catch {
-    console.log("[agent] No agent definitions found in .claude/agents/");
-  }
-
-  return agents;
-}
-
 export interface AgentQueryOptions {
   sessionId?: string;
   resume?: string;
@@ -99,8 +47,6 @@ export async function createEducatorQuery(
   message: string,
   options: AgentQueryOptions = {}
 ): Promise<Query> {
-  const agents = await loadAgentDefinitions();
-
   const queryOptions: Options = {
     model: "opus",
     cwd: PROJECT_ROOT,
@@ -118,7 +64,7 @@ export async function createEducatorQuery(
     ],
     permissionMode: "bypassPermissions",
     allowDangerouslySkipPermissions: true,
-    agents,
+    agents: agentDefinitions,
     systemPrompt: {
       type: "preset",
       preset: "claude_code",
@@ -144,8 +90,6 @@ export async function createAssessmentQuery(
   learnerName: string,
   message: string
 ): Promise<Query> {
-  const agents = await loadAgentDefinitions();
-
   // Load the assessment session to get context
   const assessmentPath = path.join(
     DATA_DIR,
@@ -192,7 +136,7 @@ The learner's message: ${message}`;
       ],
       permissionMode: "bypassPermissions",
       allowDangerouslySkipPermissions: true,
-      agents,
+      agents: agentDefinitions,
       systemPrompt: assessmentPrompt,
       persistSession: false,
     },
