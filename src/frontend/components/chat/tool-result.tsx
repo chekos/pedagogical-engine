@@ -120,8 +120,8 @@ export default function ToolResult({ tool, isActive = false }: ToolResultProps) 
   const meta = getToolMeta(tool.name);
 
   // Special rendering for lesson plan composition
-  if (isLessonPlanInput(tool) && tool.input.content) {
-    return <LessonPlanView content={String(tool.input.content)} />;
+  if (isLessonPlanInput(tool) && (tool.input.planContent || tool.input.content)) {
+    return <LessonPlanView content={String(tool.input.planContent || tool.input.content)} />;
   }
 
   return (

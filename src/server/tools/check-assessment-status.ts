@@ -1,5 +1,5 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk";
-import { z } from "zod/v4";
+import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
 

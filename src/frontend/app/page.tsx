@@ -51,15 +51,16 @@ export default function Home() {
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             {[
               "Skill dependency graphs",
-              "Bloom&apos;s taxonomy",
+              "Bloom's taxonomy",
               "Adaptive assessment",
               "Stage-directed lesson plans",
             ].map((feature) => (
               <span
                 key={feature}
                 className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-surface-2 text-text-secondary border border-border-subtle"
-                dangerouslySetInnerHTML={{ __html: feature }}
-              />
+              >
+                {feature}
+              </span>
             ))}
           </div>
 
