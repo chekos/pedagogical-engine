@@ -34,10 +34,10 @@ Educator describes context → Agent interviews → Students self-assess via sha
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│               Next.js Frontend              │
-│  /teach (WebSocket chat)  /assess/[code]    │
-└──────────────────┬──────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│                 Next.js Frontend                  │
+│  /teach (chat)  /assess/[code]  /dashboard (viz) │
+└──────────────────┬───────────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────┐
 │          Claude Agent SDK Server            │
@@ -78,22 +78,21 @@ Educator describes context → Agent interviews → Students self-assess via sha
 # Clone and install
 git clone https://github.com/chekos/pedagogical-engine
 cd pedagogical-engine
-
-# Install dependencies
-cd src/server && npm install && cd ../..
-cd src/frontend && npm install && cd ../..
+npm install
 
 # Set your API key
 export ANTHROPIC_API_KEY=your-key-here
 
 # Start the backend (port 3000)
-cd src/server && npx tsx index.ts
+npm run dev:server
 
 # In another terminal, start the frontend (port 3001)
-cd src/frontend && npm run dev
+npm run dev:frontend
 ```
 
 Open `http://localhost:3001` and start describing your teaching context.
+
+The skill analytics dashboard at `/dashboard` works standalone (no backend needed) — it uses pre-seeded demo data to show the interactive dependency graph and group analysis visualizations.
 
 ## Demo flow
 
@@ -112,6 +111,10 @@ The repo comes with pre-seeded demo data for a realistic scenario:
 Try: *"I'm teaching a 90-minute workshop on data cleaning and exploration to my Tuesday evening cohort. They've had two previous sessions on Python basics."*
 
 Watch the engine reason about the skill distribution, identify that Alex needs extra support while Priya needs stretch challenges, and compose a lesson plan with differentiated activities and minute-by-minute timing.
+
+**Also explore the dashboard** at `/dashboard`:
+- **Dependency Graph** — interactive visualization of all 25 skills with learner overlays. Select different students to see assessed (green), inferred (yellow), and unknown skills light up. Use auto-cycle mode to sweep through all learners.
+- **Group Dashboard** — heatmap of skills vs. learners, Bloom's taxonomy radar chart, common gaps analysis with pairing suggestions, and per-learner summary cards with progress rings.
 
 ## What makes it different
 
@@ -145,7 +148,7 @@ data/groups/        — cohort definitions and interview context (Markdown)
 data/assessments/   — assessment session records (Markdown)
 data/lessons/       — composed lesson plans (Markdown)
 src/server/         — Agent SDK server with 8 custom MCP tools
-src/frontend/       — Next.js app (educator chat + student assessment)
+src/frontend/       — Next.js app (chat, assessment, skill analytics dashboard)
 ```
 
 ---
