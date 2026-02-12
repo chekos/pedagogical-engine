@@ -17,7 +17,7 @@ an experienced teacher, not a content generator.
 - Custom tools in the pedagogy MCP server access data in data/
 - All persistent data lives in data/ as JSON and Markdown files
 
-## What's built (as of Session 6 — Feb 2026)
+## What's built (as of Session 7 — Feb 12, 2026)
 
 ### Backend (src/server/)
 - Express + WebSocket server on port 3000
@@ -35,9 +35,12 @@ an experienced teacher, not a content generator.
 - Graceful shutdown, periodic session cleanup
 
 ### Frontend (src/frontend/)
-- Next.js 15 with App Router, Tailwind CSS v4
+- Next.js 16 with App Router, Turbopack, Tailwind CSS v4 (CSS-native @theme config)
 - Landing page (/) — hero with educator/student/dashboard CTAs
 - Educator chat (/teach) — WebSocket streaming with rich tool result rendering
+  - Markdown rendering via react-markdown + remark-gfm (GFM tables, code blocks, bold, lists, etc.)
+  - Interactive AskUserQuestion cards (selectable options with submit, replaces raw JSON)
+  - Persistent progress indicator with elapsed time counter and stage-aware labels
 - Student assessment (/assess/[code]) — code entry + HTTP assessment chat
 - Skill analytics dashboard (/dashboard) — two views:
   - Dependency graph: interactive React Flow DAG with learner overlay, auto-cycle demo mode
@@ -69,9 +72,16 @@ an experienced teacher, not a content generator.
 - Write learner profile updates after every assessment interaction
 - Never hardcode skill definitions — always read from data/domains/
 
+## Dev setup
+- `npm install` from root installs all workspaces
+- `npm run dev:server` — runs backend from project root (so `./data` resolves correctly)
+- `npm run dev:frontend` — runs Next.js on port 3001
+- Tailwind v4 config is CSS-native in `src/frontend/app/globals.css` (@theme inline) — no tailwind.config.ts
+
 ## Current limitations
 - Single domain (python-data-analysis) — multi-domain is architecturally supported but not demo'd
 - Assessment flow requires the backend server running (no offline mode)
 - Dashboard uses embedded demo data (not live from backend) for standalone viewing
 - No persistent storage beyond filesystem — sessions lost on server restart
 - No authentication — assessment codes are the only access control
+- No /lessons page — generated lesson plans are only viewable in chat or on disk (data/lessons/)
