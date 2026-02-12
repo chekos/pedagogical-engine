@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import type { ToolUse } from "@/lib/api";
 import LessonPlanView from "@/components/lesson-plan/lesson-plan-view";
 import GroupDashboard from "@/components/visualizations/group-dashboard";
+import AskUserQuestionCard from "./ask-user-question-card";
 import { getSkillGraphData, getGroupDashboardData } from "@/lib/demo-data";
 
 // Dynamic import for ReactFlow (client-side only)
@@ -28,6 +29,7 @@ const TOOL_META: Record<string, { label: string; icon: string; color: string }> 
   "Glob": { label: "Searching Files", icon: "🔍", color: "bg-gray-500/10 text-gray-400 border-gray-500/20" },
   "Skill": { label: "Loading Skill", icon: "🧠", color: "bg-violet-500/10 text-violet-400 border-violet-500/20" },
   "Task": { label: "Running Subagent", icon: "🤖", color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
+  "AskUserQuestion": { label: "Question for You", icon: "❓", color: "bg-accent/10 text-accent border-accent/20" },
 };
 
 function getToolMeta(name: string) {
@@ -139,14 +141,35 @@ function AssessmentStatusCard({ input }: { input: Record<string, unknown> }) {
   );
 }
 
+// Detect if tool input looks like an AskUserQuestion
+function isAskUserQuestion(tool: ToolUse): boolean {
+  return tool.name === "AskUserQuestion" && Array.isArray(tool.input.questions);
+}
+
 interface ToolResultProps {
   tool: ToolUse;
   isActive?: boolean;
+  onSendMessage?: (message: string) => void;
 }
 
-export default function ToolResult({ tool, isActive = false }: ToolResultProps) {
+export default function ToolResult({ tool, isActive = false, onSendMessage }: ToolResultProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = getToolMeta(tool.name);
+
+  // Special rendering for AskUserQuestion — always shown inline, not collapsible
+  if (isAskUserQuestion(tool) && onSendMessage) {
+    return (
+      <AskUserQuestionCard
+        questions={tool.input.questions as Array<{
+          question: string;
+          header?: string;
+          options: Array<{ label: string; description?: string }>;
+          multiSelect?: boolean;
+        }>}
+        onSubmit={onSendMessage}
+      />
+    );
+  }
 
   // Special rendering for lesson plan composition
   if (isLessonPlanInput(tool) && (tool.input.planContent || tool.input.content)) {

@@ -155,6 +155,24 @@ export default function ChatInterface() {
     }
   }, [input]);
 
+  // Programmatic send (used by interactive tool cards like AskUserQuestion)
+  const sendProgrammaticMessage = useCallback((text: string) => {
+    if (!text.trim() || !clientRef.current?.isConnected) return;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `user-${Date.now()}`,
+        role: "user",
+        text,
+        timestamp: new Date(),
+      },
+    ]);
+    setIsThinking(true);
+    setActiveTools([]);
+    clientRef.current.send(text);
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -254,7 +272,7 @@ export default function ChatInterface() {
             {msg.toolUses && msg.toolUses.length > 0 && (
               <div className="mt-2 space-y-2 ml-0 md:ml-0">
                 {msg.toolUses.map((tool) => (
-                  <ToolResult key={tool.id} tool={tool} />
+                  <ToolResult key={tool.id} tool={tool} onSendMessage={sendProgrammaticMessage} />
                 ))}
               </div>
             )}
