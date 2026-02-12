@@ -132,7 +132,172 @@ function Tooltip({ skillLabel, learnerName, confidence, type }: {
   );
 }
 
-// ─── Bloom's Level Bar Chart ────────────────────────────────────
+// ─── Radar Chart SVG ────────────────────────────────────────────
+
+function RadarChart({ data }: { data: GroupDashboardData }) {
+  const size = 260;
+  const center = size / 2;
+  const maxRadius = size / 2 - 40;
+  const levels = BLOOM_LEVELS;
+
+  const stats = useMemo(() => {
+    return levels.map((level) => {
+      const skillsAtLevel = data.skills.filter((s) => s.bloom_level === level);
+      if (skillsAtLevel.length === 0) return { level, avgConfidence: 0, coverage: 0 };
+
+      let totalConfidence = 0;
+      let count = 0;
+      const totalPossible = skillsAtLevel.length * data.learners.length;
+
+      for (const skill of skillsAtLevel) {
+        for (const learner of data.learners) {
+          const skillData = learner.skills[skill.id];
+          if (skillData) {
+            totalConfidence += skillData.confidence;
+            count++;
+          }
+        }
+      }
+
+      return {
+        level,
+        avgConfidence: count > 0 ? totalConfidence / count : 0,
+        coverage: totalPossible > 0 ? count / totalPossible : 0,
+      };
+    });
+  }, [data, levels]);
+
+  // Convert polar to cartesian
+  const polar = (angle: number, radius: number) => ({
+    x: center + radius * Math.cos(angle - Math.PI / 2),
+    y: center + radius * Math.sin(angle - Math.PI / 2),
+  });
+
+  const angleStep = (2 * Math.PI) / levels.length;
+
+  // Generate polygon points for coverage
+  const coveragePoints = stats
+    .map((s, i) => {
+      const p = polar(i * angleStep, s.coverage * maxRadius);
+      return `${p.x},${p.y}`;
+    })
+    .join(" ");
+
+  // Generate polygon points for avg confidence
+  const confidencePoints = stats
+    .map((s, i) => {
+      const p = polar(i * angleStep, s.avgConfidence * maxRadius);
+      return `${p.x},${p.y}`;
+    })
+    .join(" ");
+
+  // Grid rings
+  const rings = [0.25, 0.5, 0.75, 1.0];
+
+  return (
+    <div className="flex justify-center">
+      <svg width={size} height={size} className="overflow-visible">
+        <defs>
+          <radialGradient id="radarGlow">
+            <stop offset="0%" stopColor="rgba(99, 102, 241, 0.08)" />
+            <stop offset="100%" stopColor="rgba(99, 102, 241, 0)" />
+          </radialGradient>
+        </defs>
+
+        {/* Background glow */}
+        <circle cx={center} cy={center} r={maxRadius + 10} fill="url(#radarGlow)" />
+
+        {/* Grid rings */}
+        {rings.map((r) => (
+          <polygon
+            key={r}
+            points={levels.map((_, i) => {
+              const p = polar(i * angleStep, r * maxRadius);
+              return `${p.x},${p.y}`;
+            }).join(" ")}
+            fill="none"
+            stroke="rgba(255,255,255,0.04)"
+            strokeWidth={1}
+          />
+        ))}
+
+        {/* Axis lines */}
+        {levels.map((_, i) => {
+          const p = polar(i * angleStep, maxRadius);
+          return (
+            <line
+              key={i}
+              x1={center}
+              y1={center}
+              x2={p.x}
+              y2={p.y}
+              stroke="rgba(255,255,255,0.04)"
+              strokeWidth={1}
+            />
+          );
+        })}
+
+        {/* Coverage polygon */}
+        <polygon
+          points={coveragePoints}
+          fill="rgba(99, 102, 241, 0.12)"
+          stroke="rgba(99, 102, 241, 0.5)"
+          strokeWidth={2}
+          className="transition-all duration-700"
+        />
+
+        {/* Confidence polygon */}
+        <polygon
+          points={confidencePoints}
+          fill="rgba(34, 197, 94, 0.08)"
+          stroke="rgba(34, 197, 94, 0.4)"
+          strokeWidth={1.5}
+          strokeDasharray="4 3"
+          className="transition-all duration-700"
+        />
+
+        {/* Data points */}
+        {stats.map((s, i) => {
+          const pCov = polar(i * angleStep, s.coverage * maxRadius);
+          const color = BLOOM_COLORS[s.level];
+          return (
+            <g key={s.level}>
+              <circle
+                cx={pCov.x}
+                cy={pCov.y}
+                r={4}
+                fill={color}
+                stroke="rgba(0,0,0,0.3)"
+                strokeWidth={1}
+                style={{ filter: `drop-shadow(0 0 4px ${color}80)` }}
+              />
+            </g>
+          );
+        })}
+
+        {/* Labels */}
+        {levels.map((level, i) => {
+          const p = polar(i * angleStep, maxRadius + 22);
+          return (
+            <text
+              key={level}
+              x={p.x}
+              y={p.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="text-[9px] fill-gray-500"
+              style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+            >
+              {BLOOM_LABELS[level]}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+// ─── Bloom's Level Bar Chart + Radar ────────────────────────────
 
 function BloomDistribution({ data }: { data: GroupDashboardData }) {
   const bloomStats = useMemo(() => {
@@ -166,46 +331,74 @@ function BloomDistribution({ data }: { data: GroupDashboardData }) {
   const maxCoverage = Math.max(...bloomStats.map((b) => b.coverage), 0.01);
 
   return (
-    <div className="space-y-2">
-      {bloomStats.map((stat) => (
-        <div key={stat.level} className="flex items-center gap-3">
-          <div className="w-20 text-right">
-            <span className="text-[11px] text-gray-400 capitalize">
-              {BLOOM_LABELS[stat.level]}
-            </span>
-          </div>
-          <div className="flex-1 h-7 bg-white/[0.03] rounded-md overflow-hidden relative">
-            {/* Coverage bar */}
-            <div
-              className="h-full rounded-md transition-all duration-700 relative"
-              style={{
-                width: `${Math.max(2, (stat.coverage / maxCoverage) * 100)}%`,
-                background: `linear-gradient(90deg, ${BLOOM_COLORS[stat.level]}40, ${BLOOM_COLORS[stat.level]}80)`,
-                boxShadow: `0 0 12px ${BLOOM_COLORS[stat.level]}30`,
-              }}
-            >
-              {/* Average confidence overlay */}
-              <div
-                className="absolute top-0 left-0 h-full rounded-md opacity-60"
-                style={{
-                  width: `${stat.avgConfidence * 100}%`,
-                  background: BLOOM_COLORS[stat.level],
-                }}
-              />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Radar chart */}
+      <div>
+        <div className="flex items-center gap-4 mb-4">
+          <p className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold">
+            Coverage radar
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 bg-indigo-500 rounded-full" />
+              <span className="text-[9px] text-gray-500">Coverage</span>
             </div>
-            {/* Label */}
-            <div className="absolute inset-0 flex items-center px-2">
-              <span className="text-[10px] font-mono text-white/70">
-                {Math.round(stat.coverage * 100)}% coverage
-                {stat.avgConfidence > 0 && ` | ${Math.round(stat.avgConfidence * 100)}% avg`}
-              </span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 bg-green-500 rounded-full" style={{ borderTop: "1px dashed" }} />
+              <span className="text-[9px] text-gray-500">Avg confidence</span>
             </div>
-          </div>
-          <div className="w-8 text-right">
-            <span className="text-[10px] text-gray-600">{stat.count}</span>
           </div>
         </div>
-      ))}
+        <RadarChart data={data} />
+      </div>
+
+      {/* Bar chart */}
+      <div>
+        <p className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold mb-4">
+          Level breakdown
+        </p>
+        <div className="space-y-2.5">
+          {bloomStats.map((stat) => (
+            <div key={stat.level} className="flex items-center gap-3">
+              <div className="w-20 text-right">
+                <span className="text-[11px] text-gray-400 capitalize">
+                  {BLOOM_LABELS[stat.level]}
+                </span>
+              </div>
+              <div className="flex-1 h-7 bg-white/[0.03] rounded-md overflow-hidden relative">
+                {/* Coverage bar */}
+                <div
+                  className="h-full rounded-md transition-all duration-700 relative"
+                  style={{
+                    width: `${Math.max(2, (stat.coverage / maxCoverage) * 100)}%`,
+                    background: `linear-gradient(90deg, ${BLOOM_COLORS[stat.level]}40, ${BLOOM_COLORS[stat.level]}80)`,
+                    boxShadow: `0 0 12px ${BLOOM_COLORS[stat.level]}30`,
+                  }}
+                >
+                  {/* Average confidence overlay */}
+                  <div
+                    className="absolute top-0 left-0 h-full rounded-md opacity-60"
+                    style={{
+                      width: `${stat.avgConfidence * 100}%`,
+                      background: BLOOM_COLORS[stat.level],
+                    }}
+                  />
+                </div>
+                {/* Label */}
+                <div className="absolute inset-0 flex items-center px-2">
+                  <span className="text-[10px] font-mono text-white/70">
+                    {Math.round(stat.coverage * 100)}% coverage
+                    {stat.avgConfidence > 0 && ` | ${Math.round(stat.avgConfidence * 100)}% avg`}
+                  </span>
+                </div>
+              </div>
+              <div className="w-8 text-right">
+                <span className="text-[10px] text-gray-600">{stat.count}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

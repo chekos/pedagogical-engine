@@ -105,3 +105,50 @@ body {
   margin: 0.5rem 0;
   color: var(--text-secondary);
 }
+
+/* React Flow overrides */
+.skill-graph .react-flow__edge.animated path {
+  animation: dashdraw 0.5s linear infinite;
+  stroke-dasharray: 5 5;
+}
+
+@keyframes dashdraw {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+.skill-graph .react-flow__node {
+  transition: transform 0.3s ease;
+}
+
+/* Override React Flow default background */
+.skill-graph .react-flow__background {
+  background: transparent !important;
+}
+
+/* Minimap styling */
+.skill-graph .react-flow__minimap {
+  background: rgba(10, 10, 15, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 8px !important;
+}
+
+/* Controls styling */
+.skill-graph .react-flow__controls {
+  background: rgba(12, 12, 22, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.skill-graph .react-flow__controls-button {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  fill: rgba(255, 255, 255, 0.5) !important;
+}
+
+.skill-graph .react-flow__controls-button:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  fill: white !important;
+}
