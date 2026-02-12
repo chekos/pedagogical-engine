@@ -58,7 +58,15 @@ export default function AssessmentChat({ code, learnerName }: AssessmentChatProp
           setIsComplete(true);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to start assessment");
+        const message = err instanceof Error ? err.message : "Failed to start assessment";
+        if (message.includes("not found")) {
+          setError(`Assessment code "${code}" was not found. Please check the code and try again.`);
+        } else if (message.includes("completed")) {
+          setError("This assessment has already been completed.");
+          setIsComplete(true);
+        } else {
+          setError(message);
+        }
       } finally {
         setIsLoading(false);
         inputRef.current?.focus();

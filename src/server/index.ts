@@ -43,6 +43,20 @@ app.get("/api/status", (_req, res) => {
   });
 });
 
+// ─── Assessment validation endpoint ───────────────────────────────
+app.get("/api/assess/:code", async (req, res) => {
+  const { code } = req.params;
+  const dataDir = process.env.DATA_DIR || "./data";
+  const assessmentPath = `${dataDir}/assessments/${code}.md`;
+  try {
+    const fsModule = await import("fs/promises");
+    await fsModule.access(assessmentPath);
+    res.json({ valid: true, code });
+  } catch {
+    res.status(404).json({ valid: false, error: `Assessment '${code}' not found` });
+  }
+});
+
 // ─── Assessment endpoint (HTTP POST for student assessments) ─────
 app.post("/api/assess", async (req, res) => {
   const { code, learnerName, message } = req.body;
@@ -83,7 +97,12 @@ app.post("/api/assess", async (req, res) => {
     });
   } catch (err) {
     const error = err instanceof Error ? err.message : "Unknown error";
-    res.status(500).json({ error });
+    // Distinguish between "not found" and server errors
+    if (error.includes("not found")) {
+      res.status(404).json({ error });
+    } else {
+      res.status(500).json({ error });
+    }
   }
 });
 
@@ -212,6 +231,25 @@ setInterval(() => {
     console.log(`[cleanup] Removed ${removed} stale sessions`);
   }
 }, 15 * 60 * 1000); // Every 15 minutes
+
+// ─── Graceful shutdown ────────────────────────────────────────────
+function shutdown(signal: string) {
+  console.log(`\n[shutdown] Received ${signal}. Cleaning up sessions...`);
+  for (const session of sessionManager.list()) {
+    sessionManager.remove(session.id);
+  }
+  wss.close(() => {
+    server.close(() => {
+      console.log("[shutdown] Server closed.");
+      process.exit(0);
+    });
+  });
+  // Force exit after 5 seconds if graceful shutdown hangs
+  setTimeout(() => process.exit(1), 5000);
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 // ─── Start server ────────────────────────────────────────────────
 server.listen(PORT, () => {

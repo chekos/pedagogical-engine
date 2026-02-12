@@ -9,8 +9,9 @@ import fs from "fs/promises";
 import path from "path";
 import { pedagogyServer } from "./tools/index.js";
 
-const PROJECT_ROOT = process.env.PROJECT_ROOT || process.cwd();
-const DATA_DIR = process.env.DATA_DIR || "./data";
+// agent.ts is at src/server/ — go up 2 levels to project root
+const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(import.meta.dirname, "../..");
+const DATA_DIR = process.env.DATA_DIR || path.join(PROJECT_ROOT, "data");
 
 const EDUCATOR_SYSTEM_PROMPT = `You are a pedagogical reasoning engine — an AI teaching partner that helps educators plan and deliver effective learning experiences. You think like an experienced teacher, not a content generator.
 
@@ -153,9 +154,15 @@ export async function createAssessmentQuery(
   );
   let assessmentContext = "";
   try {
+    await fs.access(assessmentPath);
     assessmentContext = await fs.readFile(assessmentPath, "utf-8");
   } catch {
-    throw new Error(`Assessment session '${assessmentCode}' not found`);
+    throw new Error(`Assessment session '${assessmentCode}' not found. Check the code and try again.`);
+  }
+
+  // Verify assessment is still active
+  if (assessmentContext.includes("| **Status** | completed |")) {
+    throw new Error(`Assessment session '${assessmentCode}' has already been completed.`);
   }
 
   const assessmentPrompt = `You are conducting a skill assessment for learner "${learnerName}" as part of assessment session ${assessmentCode}.

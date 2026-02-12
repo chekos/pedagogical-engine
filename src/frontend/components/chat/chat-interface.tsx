@@ -187,6 +187,22 @@ export default function ChatInterface() {
 
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
+        {/* Connection error state */}
+        {messages.length === 0 && (status === "error" || status === "disconnected") && (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-text-primary mb-2">Backend not connected</h2>
+            <p className="text-sm text-text-secondary max-w-sm">
+              Make sure the backend server is running on port 3000.
+              Run <code className="px-1.5 py-0.5 bg-surface-2 rounded text-xs font-mono">cd src/server && npx tsx index.ts</code>
+            </p>
+          </div>
+        )}
+
         {messages.length === 0 && status === "connected" && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
