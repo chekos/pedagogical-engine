@@ -439,56 +439,134 @@ function CommonGaps({ data }: { data: GroupDashboardData }) {
     );
   }
 
+  // Compute pairing suggestions — match strongest with weakest on complementary skills
+  const pairings = useMemo(() => {
+    const results: { strong: string; weak: string; reason: string; complementScore: number }[] = [];
+
+    for (let i = 0; i < data.learners.length; i++) {
+      for (let j = i + 1; j < data.learners.length; j++) {
+        const a = data.learners[i];
+        const b = data.learners[j];
+        let complementScore = 0;
+        const reasons: string[] = [];
+
+        for (const skill of data.skills) {
+          const aSkill = a.skills[skill.id];
+          const bSkill = b.skills[skill.id];
+          const aConf = aSkill?.confidence || 0;
+          const bConf = bSkill?.confidence || 0;
+          const diff = Math.abs(aConf - bConf);
+
+          if (diff > 0.3) {
+            complementScore += diff;
+            if (reasons.length < 2) {
+              const stronger = aConf > bConf ? a.name.split(" ")[0] : b.name.split(" ")[0];
+              const shortSkill = skill.label.replace(/^Can /, "").replace(/^can /, "").split(" ").slice(0, 3).join(" ");
+              reasons.push(`${stronger} strong in ${shortSkill}`);
+            }
+          }
+        }
+
+        if (complementScore > 1.5) {
+          const strong = Object.values(a.skills).length > Object.values(b.skills).length ? a.name : b.name;
+          const weak = strong === a.name ? b.name : a.name;
+          results.push({ strong, weak, reason: reasons.join("; "), complementScore });
+        }
+      }
+    }
+
+    return results.sort((a, b) => b.complementScore - a.complementScore).slice(0, 4);
+  }, [data]);
+
   return (
-    <div className="space-y-2">
-      {gaps.map((gap) => {
-        const shortLabel = gap.skill.label
-          .replace(/^Can /, "")
-          .replace(/^can /, "");
+    <div className="space-y-6">
+      {/* Gaps list */}
+      <div>
+        <p className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold mb-3">
+          Skills needing attention
+        </p>
+        <div className="space-y-2">
+          {gaps.map((gap) => {
+            const shortLabel = gap.skill.label
+              .replace(/^Can /, "")
+              .replace(/^can /, "");
 
-        return (
-          <div
-            key={gap.skill.id}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-red-500/[0.04] border border-red-500/10 hover:bg-red-500/[0.08] transition-colors"
-          >
-            {/* Gap severity indicator */}
-            <div className="flex-shrink-0">
+            return (
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
-                style={{
-                  background: `rgba(239, 68, 68, ${Math.min(0.3, gap.gapScore * 0.04)})`,
-                  color: `rgba(239, 68, 68, ${Math.min(1, 0.4 + gap.gapScore * 0.08)})`,
-                }}
+                key={gap.skill.id}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg bg-red-500/[0.04] border border-red-500/10 hover:bg-red-500/[0.08] transition-colors"
               >
-                {gap.unassessedCount + gap.weakCount}
-              </div>
-            </div>
+                <div className="flex-shrink-0">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
+                    style={{
+                      background: `rgba(239, 68, 68, ${Math.min(0.3, gap.gapScore * 0.04)})`,
+                      color: `rgba(239, 68, 68, ${Math.min(1, 0.4 + gap.gapScore * 0.08)})`,
+                    }}
+                  >
+                    {gap.unassessedCount + gap.weakCount}
+                  </div>
+                </div>
 
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white truncate" title={gap.skill.label}>
-                {shortLabel}
-              </p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: BLOOM_COLORS[gap.skill.bloom_level] }}
-                />
-                <span className="text-[10px] text-gray-500 capitalize">{gap.skill.bloom_level}</span>
-                {gap.unassessedCount > 0 && (
-                  <span className="text-[10px] text-gray-600">
-                    {gap.unassessedCount} not assessed
-                  </span>
-                )}
-                {gap.weakCount > 0 && (
-                  <span className="text-[10px] text-orange-400/60">
-                    {gap.weakCount} weak
-                  </span>
-                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-white truncate" title={gap.skill.label}>
+                    {shortLabel}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ background: BLOOM_COLORS[gap.skill.bloom_level] }}
+                    />
+                    <span className="text-[10px] text-gray-500 capitalize">{gap.skill.bloom_level}</span>
+                    {gap.unassessedCount > 0 && (
+                      <span className="text-[10px] text-gray-600">
+                        {gap.unassessedCount} not assessed
+                      </span>
+                    )}
+                    {gap.weakCount > 0 && (
+                      <span className="text-[10px] text-orange-400/60">
+                        {gap.weakCount} weak
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Pairing suggestions */}
+      {pairings.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold mb-3">
+            Suggested pairings
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {pairings.map((pair, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-500/[0.04] border border-indigo-500/10"
+              >
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <span className="text-[10px] font-medium text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">
+                    {pair.strong.split(" ")[0]}
+                  </span>
+                  <svg className="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  <span className="text-[10px] font-medium text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">
+                    {pair.weak.split(" ")[0]}
+                  </span>
+                </div>
+                <p className="text-[9px] text-gray-500 truncate flex-1" title={pair.reason}>
+                  {pair.reason}
+                </p>
+              </div>
+            ))}
           </div>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }
