@@ -1,8 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import type { ToolUse } from "@/lib/api";
 import LessonPlanView from "@/components/lesson-plan/lesson-plan-view";
+import GroupDashboard from "@/components/visualizations/group-dashboard";
+import { getSkillGraphData, getGroupDashboardData } from "@/lib/demo-data";
+
+// Dynamic import for ReactFlow (client-side only)
+const SkillDependencyGraph = dynamic(
+  () => import("@/components/visualizations/skill-dependency-graph"),
+  { ssr: false }
+);
 
 // Map tool names to human-friendly labels and icons
 const TOOL_META: Record<string, { label: string; icon: string; color: string }> = {
@@ -53,10 +62,12 @@ function GroupSummaryCard({ input }: { input: Record<string, unknown> }) {
   );
 }
 
-// Render skill graph query
+// Render skill graph query — with live visualization for full_graph operations
 function SkillGraphCard({ input }: { input: Record<string, unknown> }) {
+  const showGraph = input.operation === "full_graph" || input.operation === "prerequisites" || input.operation === "infer_from";
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center gap-3 flex-wrap">
         {input.operation ? (
           <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono bg-purple-500/10 text-purple-400">
@@ -79,6 +90,24 @@ function SkillGraphCard({ input }: { input: Record<string, unknown> }) {
           Domain: {String(input.domain).replace(/-/g, " ")}
         </p>
       ) : null}
+      {showGraph && (
+        <SkillDependencyGraph data={getSkillGraphData()} height={400} />
+      )}
+    </div>
+  );
+}
+
+// Render group analysis with the full dashboard
+function GroupAnalysisCard({ input }: { input: Record<string, unknown> }) {
+  return (
+    <div className="space-y-3">
+      {"groupName" in input && input.groupName ? (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs uppercase tracking-wider text-text-tertiary font-medium">Group</span>
+          <span className="text-sm font-medium text-text-primary">{String(input.groupName)}</span>
+        </div>
+      ) : null}
+      <GroupDashboard data={getGroupDashboardData()} />
     </div>
   );
 }
@@ -155,7 +184,9 @@ export default function ToolResult({ tool, isActive = false }: ToolResultProps) 
         <div className="px-4 pb-3 border-t border-current/10">
           <div className="pt-3">
             {/* Rich rendering based on tool type */}
-            {tool.name === "mcp__pedagogy__load_roster" || tool.name === "mcp__pedagogy__query_group" ? (
+            {tool.name === "mcp__pedagogy__query_group" ? (
+              <GroupAnalysisCard input={tool.input} />
+            ) : tool.name === "mcp__pedagogy__load_roster" ? (
               <GroupSummaryCard input={tool.input} />
             ) : tool.name === "mcp__pedagogy__query_skill_graph" ? (
               <SkillGraphCard input={tool.input} />
