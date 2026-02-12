@@ -1,4 +1,11 @@
-// Educator chat interface — TODO: Implement in Session 2
+"use client";
+
+import ChatInterface from "@/components/chat/chat-interface";
+
 export default function TeachPage() {
-  return <div>Educator workspace</div>;
+  return (
+    <div className="h-screen flex flex-col bg-surface-0">
+      <ChatInterface />
+    </div>
+  );
 }
