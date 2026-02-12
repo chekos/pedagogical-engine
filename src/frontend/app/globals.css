@@ -1,5 +1,40 @@
 @import "tailwindcss";
 
+/* Tailwind v4 theme — maps runtime CSS variables to utility classes */
+@theme inline {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-accent: var(--accent);
+  --color-accent-muted: var(--accent-muted);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", Menlo, monospace;
+  --animate-fade-in: fadeIn 0.3s ease-out;
+  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-pulse-subtle: pulseSubtle 2s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 :root {
   --surface-0: #ffffff;
   --surface-1: #f8f9fa;
@@ -30,18 +65,11 @@
   }
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 html {
   color-scheme: light dark;
 }
 
 body {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
   background: var(--surface-0);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -122,19 +150,16 @@ body {
   transition: transform 0.3s ease;
 }
 
-/* Override React Flow default background */
 .skill-graph .react-flow__background {
   background: transparent !important;
 }
 
-/* Minimap styling */
 .skill-graph .react-flow__minimap {
   background: rgba(10, 10, 15, 0.9) !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
   border-radius: 8px !important;
 }
 
-/* Controls styling */
 .skill-graph .react-flow__controls {
   background: rgba(12, 12, 22, 0.95) !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
