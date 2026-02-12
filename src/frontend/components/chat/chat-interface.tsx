@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatClient, type ConnectionStatus, type ServerMessage, type ToolUse } from "@/lib/api";
 import MessageBubble from "./message-bubble";
-import ToolResult, { ToolActivityIndicator } from "./tool-result";
+import ToolResult from "./tool-result";
+import ProgressIndicator from "./progress-indicator";
 
 interface ChatMessage {
   id: string;
@@ -27,6 +28,7 @@ export default function ChatInterface() {
   const [isThinking, setIsThinking] = useState(false);
   const [activeTools, setActiveTools] = useState<ToolUse[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [thinkingStartedAt, setThinkingStartedAt] = useState<number | null>(null);
   const clientRef = useRef<ChatClient | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -38,7 +40,7 @@ export default function ChatInterface() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, activeTools, scrollToBottom]);
+  }, [messages, activeTools, isThinking, scrollToBottom]);
 
   const handleMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
@@ -47,7 +49,10 @@ export default function ChatInterface() {
         break;
 
       case "assistant": {
-        setIsThinking(false);
+        // NOTE: Do NOT setIsThinking(false) here. The agent sends multiple
+        // "assistant" messages during a turn (one per tool use). Only "result"
+        // means the agent is truly done. Clearing here caused the progress
+        // indicator to vanish prematurely during long subagent operations.
 
         // Track active tool uses
         if (msg.toolUses && msg.toolUses.length > 0) {
@@ -87,12 +92,14 @@ export default function ChatInterface() {
       case "result":
         setIsThinking(false);
         setActiveTools([]);
+        setThinkingStartedAt(null);
         currentAssistantRef.current = null;
         break;
 
       case "error":
         setIsThinking(false);
         setActiveTools([]);
+        setThinkingStartedAt(null);
         setMessages((prev) => [
           ...prev,
           {
@@ -138,6 +145,7 @@ export default function ChatInterface() {
     ]);
     setInput("");
     setIsThinking(true);
+    setThinkingStartedAt(Date.now());
     setActiveTools([]);
     clientRef.current.send(trimmed);
 
@@ -253,21 +261,12 @@ export default function ChatInterface() {
           </div>
         ))}
 
-        {/* Active tool indicator */}
-        {isThinking && activeTools.length > 0 && (
-          <ToolActivityIndicator tools={activeTools} />
-        )}
-
-        {/* Thinking indicator */}
-        {isThinking && activeTools.length === 0 && (
-          <div className="flex items-center gap-2 px-4 py-2 animate-fade-in">
-            <div className="flex space-x-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary animate-bounce [animation-delay:0ms]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary animate-bounce [animation-delay:150ms]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary animate-bounce [animation-delay:300ms]" />
-            </div>
-            <span className="text-xs text-text-tertiary">Thinking...</span>
-          </div>
+        {/* Progress indicator — persists throughout the entire agent turn */}
+        {isThinking && (
+          <ProgressIndicator
+            activeTools={activeTools}
+            startedAt={thinkingStartedAt}
+          />
         )}
 
         <div ref={messagesEndRef} />
