@@ -45,6 +45,12 @@ export default function Home() {
             Domains
           </Link>
           <Link
+            href="/wisdom"
+            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Wisdom
+          </Link>
+          <Link
             href="/disagree"
             className="text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
@@ -80,6 +86,7 @@ export default function Home() {
               "Dependency inference",
               "Stage-directed lesson plans",
               "Pedagogical pushback",
+              "Accumulated teaching wisdom",
             ].map((feature) => (
               <span
                 key={feature}
