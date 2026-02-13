@@ -25,6 +25,16 @@ function validateSlug(value: string): boolean {
   return /^[a-zA-Z0-9_-]+$/.test(value);
 }
 
+/** Convert free-form text to a URL/file-safe slug */
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/['']/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 const app = express();
 app.use(express.json({ limit: "100kb" }));
 
@@ -295,14 +305,18 @@ app.get("/api/assess/:code", async (req, res) => {
 
 // ─── Assessment link generation (for share page) ────────────────
 app.post("/api/assess/generate", async (req, res) => {
-  const { groupName, domain, targetSkills, learnerIds } = req.body;
+  const { groupName: rawGroup, domain: rawDomain, targetSkills, learnerIds } = req.body;
 
-  if (!groupName || !domain) {
+  if (!rawGroup || !rawDomain) {
     res.status(400).json({ error: "Missing required fields: groupName, domain" });
     return;
   }
-  if (!validateSlug(groupName) || !validateSlug(domain)) {
-    res.status(400).json({ error: "Invalid groupName or domain (alphanumeric, hyphens, underscores only)" });
+
+  const groupName = slugify(rawGroup);
+  const domain = slugify(rawDomain);
+
+  if (!groupName || !domain) {
+    res.status(400).json({ error: "Group name and domain must contain at least one letter or number" });
     return;
   }
 
@@ -353,14 +367,18 @@ _None yet._
 
 // ─── Batch assessment link generation ────────────────────────────
 app.post("/api/assess/generate-batch", async (req, res) => {
-  const { groupName, domain } = req.body;
+  const { groupName: rawGroup, domain: rawDomain } = req.body;
 
-  if (!groupName || !domain) {
+  if (!rawGroup || !rawDomain) {
     res.status(400).json({ error: "Missing required fields: groupName, domain" });
     return;
   }
-  if (!validateSlug(groupName) || !validateSlug(domain)) {
-    res.status(400).json({ error: "Invalid groupName or domain (alphanumeric, hyphens, underscores only)" });
+
+  const groupName = slugify(rawGroup);
+  const domain = slugify(rawDomain);
+
+  if (!groupName || !domain) {
+    res.status(400).json({ error: "Group name and domain must contain at least one letter or number" });
     return;
   }
 
