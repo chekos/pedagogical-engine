@@ -31,17 +31,24 @@ export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-0 px-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
+        {/* Friendly wave illustration */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400/20 to-orange-400/20 flex items-center justify-center mx-auto mb-5">
+            <span className="text-4xl" aria-hidden="true">👋</span>
           </div>
-          <h1 className="text-2xl font-semibold text-text-primary">Skill Assessment</h1>
-          <p className="text-sm text-text-secondary mt-2">
-            Enter your assessment code and name to begin
+          <h1 className="text-2xl font-semibold text-text-primary">
+            Hey there!
+          </h1>
+          <p className="text-base text-text-secondary mt-3 leading-relaxed max-w-sm mx-auto">
+            Your instructor wants to learn what you already know so they can
+            make your session more useful.
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-medium">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Not a test &mdash; no grades, no pressure
+          </div>
         </div>
 
         {/* Form */}
@@ -62,11 +69,14 @@ export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps
               className="w-full rounded-xl border border-border bg-surface-1 px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent font-mono tracking-wider text-center text-lg transition-all"
               autoFocus
             />
+            <p className="text-xs text-text-tertiary mt-1 text-center">
+              Your instructor shared this code with you
+            </p>
           </div>
 
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-text-secondary mb-1.5">
-              Your Name
+              Your First Name
             </label>
             <input
               id="name"
@@ -76,25 +86,30 @@ export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps
                 setName(e.target.value);
                 setError(null);
               }}
-              placeholder="First and last name"
+              placeholder="What should we call you?"
               className="w-full rounded-xl border border-border bg-surface-1 px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all"
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-400 text-center animate-fade-in">{error}</p>
-          )}
+          <div aria-live="assertive" aria-atomic="true">
+            {error && (
+              <p className="text-sm text-red-400 text-center animate-fade-in" role="alert">{error}</p>
+            )}
+          </div>
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-accent text-white py-3 text-sm font-medium hover:bg-accent-muted transition-colors"
+            className="w-full rounded-xl bg-accent text-white py-3.5 text-sm font-medium hover:bg-accent-muted transition-colors flex items-center justify-center gap-2"
           >
-            Start Assessment
+            Let&apos;s get started
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
           </button>
         </form>
 
         <p className="text-xs text-text-tertiary text-center mt-6">
-          Your assessment code was provided by your educator
+          Takes about 5 minutes. You can take your time.
         </p>
       </div>
     </div>
