@@ -141,6 +141,7 @@ _None yet._
   res.json({
     code,
     url: `${FRONTEND_URL}/assess/${code}`,
+    embedUrl: `${FRONTEND_URL}/assess/embed/${code}`,
     group: groupName,
     domain,
     created: now.toISOString(),
@@ -218,6 +219,7 @@ _None yet._
       learnerName: member.name,
       code,
       url: `${FRONTEND_URL}/assess/${code}`,
+      embedUrl: `${FRONTEND_URL}/assess/embed/${code}`,
     };
   }));
 
