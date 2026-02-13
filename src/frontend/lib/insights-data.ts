@@ -2,6 +2,20 @@
 // Includes historical time-series snapshots, lesson effectiveness metrics,
 // and computed analytics derived from the learner profiles in data/learners/.
 
+// ─── Bloom's taxonomy levels ─────────────────────────────────────
+
+export const BLOOM_LEVELS = ["knowledge", "comprehension", "application", "analysis", "synthesis", "evaluation"] as const;
+export type BloomLevel = typeof BLOOM_LEVELS[number];
+
+export const BLOOM_COLORS: Record<BloomLevel, string> = {
+  knowledge: "#6366f1",
+  comprehension: "#8b5cf6",
+  application: "#3b82f6",
+  analysis: "#f59e0b",
+  synthesis: "#10b981",
+  evaluation: "#ef4444",
+};
+
 // ─── Types ───────────────────────────────────────────────────────
 
 export interface SkillSnapshot {
@@ -9,14 +23,14 @@ export interface SkillSnapshot {
   skillsConfirmed: number;
   skillsInferred: number;
   avgConfidence: number;
-  bloomDistribution: Record<string, number>;
+  bloomDistribution: Record<BloomLevel, number>;
 }
 
 export interface LearnerTimeSeries {
   id: string;
   name: string;
   snapshots: SkillSnapshot[];
-  currentSkills: Record<string, { confidence: number; bloom: string; type: "assessed" | "inferred" }>;
+  currentSkills: Record<string, { confidence: number; bloom: BloomLevel; type: "assessed" | "inferred" }>;
 }
 
 export interface LessonEffectiveness {
@@ -36,7 +50,7 @@ export interface LessonEffectiveness {
 export interface TopicStruggle {
   skillId: string;
   skillLabel: string;
-  bloomLevel: string;
+  bloomLevel: BloomLevel;
   avgConfidence: number;
   assessmentAttempts: number;
   avgAttemptsToPass: number;
@@ -62,17 +76,40 @@ export interface GroupProgressPoint {
   cohesionScore: number; // 0-1, how close together the group is
 }
 
-// ─── Bloom's taxonomy levels ─────────────────────────────────────
+export interface SkillGap {
+  skillId: string;
+  label: string;
+  bloom: string;
+  min: number;
+  max: number;
+  avg: number;
+  gap: number;
+  confidences: number[];
+}
 
-export const BLOOM_LEVELS = ["knowledge", "comprehension", "application", "analysis", "synthesis", "evaluation"] as const;
-export const BLOOM_COLORS: Record<string, string> = {
-  knowledge: "#6366f1",
-  comprehension: "#8b5cf6",
-  application: "#3b82f6",
-  analysis: "#f59e0b",
-  synthesis: "#10b981",
-  evaluation: "#ef4444",
-};
+export interface ReadinessPrediction {
+  skillId: string;
+  label: string;
+  bloom: string;
+  readiness: number;
+  prereqsMet: number;
+  prereqsTotal: number;
+}
+
+export interface HeatmapCell {
+  skillId: string;
+  confidence: number;
+  type: "assessed" | "inferred" | null;
+}
+
+export interface HeatmapData {
+  skills: { id: string; label: string; bloom: string }[];
+  learners: {
+    id: string;
+    name: string;
+    skills: HeatmapCell[];
+  }[];
+}
 
 // ─── All 25 skills reference ─────────────────────────────────────
 
@@ -104,17 +141,39 @@ const ALL_SKILLS = [
   { id: "design-data-pipeline", label: "Data pipeline", bloom: "synthesis" },
 ];
 
+// ─── Skill prerequisite map ──────────────────────────────────────
+// Simplified adjacency list derived from data/domains/python-data-analysis/dependencies.json.
+// Maps each skill to the skills that must be confirmed before it.
+
+const SKILL_PREREQUISITES: Record<string, string[]> = {
+  "navigate-directories": ["open-terminal"],
+  "install-python": ["open-terminal"],
+  "run-python-script": ["navigate-directories", "install-python"],
+  "python-variables-types": ["run-python-script"],
+  "python-control-flow": ["python-variables-types"],
+  "python-functions": ["python-control-flow"],
+  "install-packages": ["run-python-script"],
+  "use-jupyter": ["install-packages", "run-python-script"],
+  "import-pandas": ["install-packages", "python-variables-types"],
+  "inspect-dataframe": ["import-pandas"],
+  "select-filter-data": ["inspect-dataframe", "python-control-flow"],
+  "handle-missing-data": ["inspect-dataframe"],
+  "pandas-groupby": ["select-filter-data", "python-functions"],
+  "pandas-merge-join": ["select-filter-data"],
+  "basic-plotting": ["import-pandas", "install-packages"],
+  "interpret-distributions": ["basic-plotting", "inspect-dataframe"],
+  "identify-data-quality-issues": ["handle-missing-data", "inspect-dataframe", "interpret-distributions"],
+  "reshape-data": ["pandas-groupby", "select-filter-data"],
+  "write-reusable-analysis-functions": ["python-functions", "pandas-groupby", "handle-missing-data"],
+  "explain-analysis-choices": ["pandas-groupby", "interpret-distributions", "identify-data-quality-issues"],
+  "critique-visualization": ["basic-plotting", "interpret-distributions"],
+  "exploratory-data-analysis": ["interpret-distributions", "identify-data-quality-issues", "pandas-groupby", "basic-plotting"],
+  "build-analysis-narrative": ["exploratory-data-analysis", "use-jupyter", "explain-analysis-choices"],
+  "design-data-pipeline": ["write-reusable-analysis-functions", "reshape-data", "pandas-merge-join", "identify-data-quality-issues", "build-analysis-narrative"],
+};
+
 // ─── Learner time-series data ────────────────────────────────────
 // Simulates 5 assessment sessions over 2 weeks for each learner.
-
-function bloomDist(skills: Record<string, { bloom: string }>): Record<string, number> {
-  const dist: Record<string, number> = {};
-  for (const level of BLOOM_LEVELS) dist[level] = 0;
-  for (const s of Object.values(skills)) {
-    dist[s.bloom] = (dist[s.bloom] || 0) + 1;
-  }
-  return dist;
-}
 
 export function getLearnerTimeSeries(): LearnerTimeSeries[] {
   return [
@@ -380,7 +439,7 @@ export function getGroupProgression(): GroupProgressPoint[] {
 
 // ─── Computed analytics helpers ──────────────────────────────────
 
-export function getSkillGapAnalysis() {
+export function getSkillGapAnalysis(): SkillGap[] {
   const learners = getLearnerTimeSeries();
   return ALL_SKILLS.map((skill) => {
     const confidences = learners.map((l) => {
@@ -403,7 +462,7 @@ export function getSkillGapAnalysis() {
   }).sort((a, b) => b.gap - a.gap);
 }
 
-export function getReadinessPrediction(learnerId: string) {
+export function getReadinessPrediction(learnerId: string): ReadinessPrediction[] {
   const learners = getLearnerTimeSeries();
   const learner = learners.find((l) => l.id === learnerId);
   if (!learner) return [];
@@ -411,41 +470,7 @@ export function getReadinessPrediction(learnerId: string) {
   const confirmedSkills = new Set(Object.keys(learner.currentSkills));
 
   return ALL_SKILLS.filter((s) => !confirmedSkills.has(s.id)).map((skill) => {
-    // Count how many dependencies the learner already has
-    const deps = ALL_SKILLS.find((ss) => ss.id === skill.id);
-    const skillObj = ALL_SKILLS.find((s2) => s2.id === skill.id);
-    // Simple readiness heuristic: % of prerequisites met
-    // (For real use, this would check the dependency graph)
-    const depSkills: string[] = [];
-    // We'll use a simplified dependency lookup
-    const depMap: Record<string, string[]> = {
-      "navigate-directories": ["open-terminal"],
-      "install-python": ["open-terminal"],
-      "run-python-script": ["navigate-directories", "install-python"],
-      "python-variables-types": ["run-python-script"],
-      "python-control-flow": ["python-variables-types"],
-      "python-functions": ["python-control-flow"],
-      "install-packages": ["run-python-script"],
-      "use-jupyter": ["install-packages", "run-python-script"],
-      "import-pandas": ["install-packages", "python-variables-types"],
-      "inspect-dataframe": ["import-pandas"],
-      "select-filter-data": ["inspect-dataframe", "python-control-flow"],
-      "handle-missing-data": ["inspect-dataframe"],
-      "pandas-groupby": ["select-filter-data", "python-functions"],
-      "pandas-merge-join": ["select-filter-data"],
-      "basic-plotting": ["import-pandas", "install-packages"],
-      "interpret-distributions": ["basic-plotting", "inspect-dataframe"],
-      "identify-data-quality-issues": ["handle-missing-data", "inspect-dataframe", "interpret-distributions"],
-      "reshape-data": ["pandas-groupby", "select-filter-data"],
-      "write-reusable-analysis-functions": ["python-functions", "pandas-groupby", "handle-missing-data"],
-      "explain-analysis-choices": ["pandas-groupby", "interpret-distributions", "identify-data-quality-issues"],
-      "critique-visualization": ["basic-plotting", "interpret-distributions"],
-      "exploratory-data-analysis": ["interpret-distributions", "identify-data-quality-issues", "pandas-groupby", "basic-plotting"],
-      "build-analysis-narrative": ["exploratory-data-analysis", "use-jupyter", "explain-analysis-choices"],
-      "design-data-pipeline": ["write-reusable-analysis-functions", "reshape-data", "pandas-merge-join", "identify-data-quality-issues", "build-analysis-narrative"],
-    };
-
-    const prereqs = depMap[skill.id] || [];
+    const prereqs = SKILL_PREREQUISITES[skill.id] || [];
     const metPrereqs = prereqs.filter((p) => confirmedSkills.has(p));
     const readiness = prereqs.length === 0 ? 1.0 : metPrereqs.length / prereqs.length;
 
@@ -460,7 +485,7 @@ export function getReadinessPrediction(learnerId: string) {
   }).sort((a, b) => b.readiness - a.readiness);
 }
 
-export function getHeatmapData() {
+export function getHeatmapData(): HeatmapData {
   const learners = getLearnerTimeSeries();
   return {
     skills: ALL_SKILLS,
@@ -472,14 +497,14 @@ export function getHeatmapData() {
         return {
           skillId: s.id,
           confidence: sk ? sk.confidence : 0,
-          type: sk ? sk.type : ("unknown" as const),
+          type: sk ? sk.type : null,
         };
       }),
     })),
   };
 }
 
-export function getGroupAverageBloom(): Record<string, number> {
+export function getGroupAverageBloom(): Record<BloomLevel, number> {
   const learners = getLearnerTimeSeries();
   const totals: Record<string, number> = {};
   for (const level of BLOOM_LEVELS) totals[level] = 0;
