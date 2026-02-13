@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import GroupDashboard from "@/components/visualizations/group-dashboard";
+import ExportButton from "@/components/export-button";
 import { getSkillGraphData, getGroupDashboardData, getLearnerIds } from "@/lib/demo-data";
 
 // Dynamic import for ReactFlow (requires client-side only)
@@ -78,6 +79,26 @@ export default function DashboardPage() {
                   Tuesday Cohort &middot; Python Data Analysis &middot; 25 skills &middot; 5 learners
                 </p>
               </div>
+            </div>
+
+            {/* Export buttons */}
+            <div className="flex items-center gap-2">
+              <ExportButton
+                href="/api/export/group/tuesday-cohort"
+                label="Group PDF"
+                filename="group-tuesday-cohort.pdf"
+                variant="secondary"
+                size="sm"
+              />
+              {selectedLearner && (
+                <ExportButton
+                  href={`/api/export/learner/${selectedLearner}`}
+                  label={`${selectedLearner.split("-")[0]} PDF`}
+                  filename={`learner-${selectedLearner}.pdf`}
+                  variant="secondary"
+                  size="sm"
+                />
+              )}
             </div>
 
             {/* View mode toggle */}

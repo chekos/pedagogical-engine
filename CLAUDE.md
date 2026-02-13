@@ -78,10 +78,27 @@ an experienced teacher, not a content generator.
 - `npm run dev:frontend` — runs Next.js on port 3001
 - Tailwind v4 config is CSS-native in `src/frontend/app/globals.css` (@theme inline) — no tailwind.config.ts
 
+### Export system (src/server/exports/)
+- PDF generation using @react-pdf/renderer (server-side, no browser required)
+- 4 export types:
+  - Lesson plan PDF: header, prereqs checklist, timed session plan, contingencies, logistics
+  - Learner skill report PDF: skill bars, Bloom's distribution, strengths, focus areas
+  - Group summary PDF: heatmap, common gaps, pairing recommendations, member overview
+  - Prerequisites handout PDF: student-facing checklist for pre-session prep
+- API endpoints:
+  - GET /api/export/lessons — list available lesson plans
+  - GET /api/export/lesson/:id — lesson plan PDF
+  - GET /api/export/lesson/:id/prerequisites — prerequisites handout PDF
+  - GET /api/export/learner/:id — learner skill report PDF
+  - GET /api/export/group/:id — group summary report PDF
+- Frontend integration:
+  - ExportButton component with download, loading, and error states
+  - /lessons page — browse and export all lesson plans
+  - Inline export buttons in lesson plan view, dashboard header
+
 ## Current limitations
 - Single domain (python-data-analysis) — multi-domain is architecturally supported but not demo'd
 - Assessment flow requires the backend server running (no offline mode)
 - Dashboard uses embedded demo data (not live from backend) for standalone viewing
 - No persistent storage beyond filesystem — sessions lost on server restart
 - No authentication — assessment codes are the only access control
-- No /lessons page — generated lesson plans are only viewable in chat or on disk (data/lessons/)

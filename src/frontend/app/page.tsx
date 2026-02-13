@@ -27,6 +27,12 @@ export default function Home() {
             Assess
           </Link>
           <Link
+            href="/lessons"
+            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Lessons
+          </Link>
+          <Link
             href="/dashboard"
             className="text-sm text-text-secondary hover:text-text-primary transition-colors"
           >

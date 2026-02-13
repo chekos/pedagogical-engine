@@ -9,6 +9,7 @@ import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { SessionManager } from "./sessions/manager.js";
 import { createEducatorQuery, createAssessmentQuery, createLiveCompanionQuery } from "./agent.js";
 import { parseLesson, lessonIdFromPath } from "./lib/lesson-parser.js";
+import { exportRouter } from "./exports/router.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -54,6 +55,9 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws/chat" });
 const wssLive = new WebSocketServer({ server, path: "/ws/live" });
 const sessionManager = new SessionManager();
+
+// ─── Export routes (PDF generation) ──────────────────────────────
+app.use("/api/export", exportRouter);
 
 // ─── Health check ────────────────────────────────────────────────
 app.get("/api/status", (_req, res) => {
@@ -815,6 +819,7 @@ server.listen(PORT, () => {
 ║  Health:    http://localhost:${PORT}/api/status             ║
 ║  Lessons:   http://localhost:${PORT}/api/lessons            ║
 ║  Assess:    POST http://localhost:${PORT}/api/assess        ║
+║  Exports:   GET http://localhost:${PORT}/api/export/...     ║
 ╚══════════════════════════════════════════════════════════╝
   `);
 });
