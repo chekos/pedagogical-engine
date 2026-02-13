@@ -68,6 +68,12 @@ export default function Home() {
           >
             Disagree
           </Link>
+          <Link
+            href="/meta"
+            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Meta
+          </Link>
         </div>
       </nav>
 

@@ -1,0 +1,603 @@
+[2026-02-12 23:14:48] === MOONSHOT PIPELINE STARTED ===
+[2026-02-12 23:14:48] --- Moonshot 1: lesson-simulation (branch: moonshot-1-simulation) ---
+[2026-02-12 23:14:48] SKIP: Moonshot 1 already on main
+[2026-02-12 23:14:48] --- Moonshot 2: pedagogical-disagreement (branch: moonshot-2-disagreement) ---
+[2026-02-12 23:14:48] SKIP: Moonshot 2 already on main
+[2026-02-12 23:14:48] --- Moonshot 5: assessment-integrity (branch: moonshot-5-integrity) ---
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Preparing worktree (new branch 'moonshot-5-integrity')
+HEAD is now at 7f00b95 Moonshot 2: pedagogical disagreement (#13)
+[2026-02-12 23:14:50] Worktree created: /home/chekos/projects/pedagogical-engine/.worktrees/moonshot-5-integrity
+[2026-02-12 23:14:50] Starting Claude Code for moonshot 5...
+All done. Here's a summary of what was implemented:
+
+## Moonshot 5: Assessment Integrity — Complete
+
+### What was built
+
+**The core insight:** In 2026, every student has AI in another tab. Instead of proctoring, the engine designs questions that are inherently resistant to gaming through their nature.
+
+### Pedagogical Brain (3 files)
+
+1. **`.claude/skills/assess-skills/SKILL.md`** — Added a new "Assessment integrity methodology" section with:
+   - 5 question design strategies (contextual synthesis, chained reasoning, explain-to-teach, error diagnosis, transfer probes)
+   - Response pattern awareness (depth, consistency, engagement)
+   - Confidence calibration table mapping patterns to modifiers
+   - Low-confidence handling guidelines (never accusatory, educator-facing recommendations)
+
+2. **`.claude/skills/assess-skills/references/integrity-strategies.md`** — 280-line reference with detailed implementation for each strategy, response scoring formulas, per-skill modifier computation, and markdown templates for learner profile notes
+
+3. **`.claude/agents/assessment-agent.md`** — Updated process to include integrity strategies, context gathering, silent pattern tracking, and the `analyze_assessment_integrity` tool call
+
+### Backend (4 files)
+
+4. **`src/server/tools/analyze-assessment-integrity.ts`** — New MCP tool that:
+   - Takes per-skill observations (depth 1-3, context usage, chaining, self-correction)
+   - Computes an overall integrity modifier from weighted depth/consistency/engagement scores
+   - Applies per-skill bonuses (personal context, self-correction) and penalties (inconsistencies)
+   - Generates educator-facing notes at three levels (high/moderate/low)
+   - Returns markdown ready to insert into learner profiles
+
+5. **`src/server/tools/assess-learner.ts`** — Extended with:
+   - Optional `integrityModifier` parameter that adjusts all confidence values
+   - Optional `integrityNotes` parameter that appends/replaces integrity section in profiles
+   - Integrity-adjusted profiles show both raw and adjusted confidence
+
+6. **`src/server/agent.ts`** — Assessment system prompt now includes:
+   - Context gathering instructions (learn about student's data/situation early)
+   - All 5 integrity question design strategies with examples
+   - Silent pattern tracking instructions
+   - Post-assessment flow: call `analyze_assessment_integrity` → use modifier in `assess_learner`
+
+7. **`src/server/index.ts`** — New `GET /api/assess/integrity/:group/:domain` endpoint that parses integrity data from learner profiles and returns group-level summary
+
+### Frontend (2 files)
+
+8. **`src/frontend/app/assess/integrity/page.tsx`** — Educator-facing integrity report with:
+   - Summary stats cards (total, high, moderate, low)
+   - Color-coded distribution bar
+   - Per-learner cards with integrity badges, flagged skills, expandable notes
+   - Sorted by urgency (low confidence first)
+   - Actionable guidance section explaining what to do at each level
+
+9. **`src/frontend/lib/api.ts`** — Added `fetchIntegrityReport` client function and TypeScript types
+
+### Verified
+
+- `npx tsc --noEmit` — passes
+- `npx next build` — passes, `/assess/integrity` page compiled
+- Committed as `27c943c`
+[2026-02-12 23:25:55] Branch has 1 commits
+remote: 
+remote: Create a pull request for 'moonshot-5-integrity' on GitHub by visiting:        
+remote:      https://github.com/chekos/pedagogical-engine/pull/new/moonshot-5-integrity        
+remote: 
+To github.com:chekos/pedagogical-engine.git
+ * [new branch]      moonshot-5-integrity -> moonshot-5-integrity
+[2026-02-12 23:25:58] PR: https://github.com/chekos/pedagogical-engine/pull/14
+[2026-02-12 23:25:58] Running Claude Code review...
+[2026-02-12 23:35:58] WARNING: Review session exited with error or timeout
+To github.com:chekos/pedagogical-engine.git
+   27c943c..40bd9ad  moonshot-5-integrity -> moonshot-5-integrity
+[2026-02-12 23:35:59] Merging moonshot-5-integrity...
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Updating 7f00b95..40bd9ad
+Fast-forward
+Squash commit -- not updating HEAD
+ .claude/agents/assessment-agent.md                 |  41 +-
+ .claude/skills/assess-skills/SKILL.md              |  82 ++++
+ .../references/integrity-strategies.md             | 251 ++++++++++++
+ src/frontend/app/assess/integrity/page.tsx         | 419 +++++++++++++++++++++
+ src/frontend/lib/api.ts                            |  43 +++
+ src/server/agent.ts                                |  39 +-
+ src/server/index.ts                                | 117 ++++++
+ src/server/tools/analyze-assessment-integrity.ts   | 301 +++++++++++++++
+ src/server/tools/assess-learner.ts                 |  68 +++-
+ src/server/tools/index.ts                          |   2 +
+ 10 files changed, 1346 insertions(+), 17 deletions(-)
+ create mode 100644 .claude/skills/assess-skills/references/integrity-strategies.md
+ create mode 100644 src/frontend/app/assess/integrity/page.tsx
+ create mode 100644 src/server/tools/analyze-assessment-integrity.ts
+[main 0f184ef] Moonshot 5: assessment integrity (#5)
+ 10 files changed, 1346 insertions(+), 17 deletions(-)
+ create mode 100644 .claude/skills/assess-skills/references/integrity-strategies.md
+ create mode 100644 src/frontend/app/assess/integrity/page.tsx
+ create mode 100644 src/server/tools/analyze-assessment-integrity.ts
+To github.com:chekos/pedagogical-engine.git
+   7f00b95..0f184ef  main -> main
+[2026-02-12 23:36:02] MERGED: Moonshot 5 ✓
+Deleted branch moonshot-5-integrity (was 40bd9ad).
+[2026-02-12 23:36:02] Moonshot 5 complete. Moving to next...
+
+[2026-02-12 23:36:02] --- Moonshot 6: affective-dimension (branch: moonshot-6-affective) ---
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Preparing worktree (new branch 'moonshot-6-affective')
+HEAD is now at 0f184ef Moonshot 5: assessment integrity (#5)
+[2026-02-12 23:36:03] Worktree created: /home/chekos/projects/pedagogical-engine/.worktrees/moonshot-6-affective
+[2026-02-12 23:36:03] Starting Claude Code for moonshot 6...
+[2026-02-13 00:14:16] === MOONSHOT PIPELINE STARTED ===
+[2026-02-13 00:14:16] --- Moonshot 1: lesson-simulation (branch: moonshot-1-simulation) ---
+[2026-02-13 00:14:16] SKIP: Moonshot 1 already on main
+[2026-02-13 00:14:16] --- Moonshot 2: pedagogical-disagreement (branch: moonshot-2-disagreement) ---
+[2026-02-13 00:14:16] SKIP: Moonshot 2 already on main
+[2026-02-13 00:14:16] --- Moonshot 5: assessment-integrity (branch: moonshot-5-integrity) ---
+[2026-02-13 00:14:16] SKIP: Moonshot 5 already on main
+[2026-02-13 00:14:16] --- Moonshot 6: affective-dimension (branch: moonshot-6-affective) ---
+[2026-02-13 00:14:16] SKIP: Moonshot 6 already on main
+[2026-02-13 00:14:16] --- Moonshot 7: post-session-debrief (branch: moonshot-7-debrief) ---
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Preparing worktree (new branch 'moonshot-7-debrief')
+HEAD is now at 772e2bf Moonshot 6: affective dimension
+[2026-02-13 00:14:17] Worktree created: /home/chekos/projects/pedagogical-engine/.worktrees/moonshot-7-debrief
+[2026-02-13 00:14:17] Starting Claude Code for moonshot 7...
+Moonshot 7 is complete. Here's a summary of what was implemented:
+
+## Moonshot 7: Post-Session Debrief — Implementation Summary
+
+### What was built
+
+**The feedback loop** — the feature that turns the engine from a single-use tool into a longitudinal teaching partner. After teaching a lesson, educators can debrief with the engine. The engine guides the conversation, extracts structured data, and updates the system's state.
+
+### Files created/modified
+
+| File | What it does |
+|------|-------------|
+| `.claude/skills/debrief-session/SKILL.md` | 5-stage debrief methodology: overall check, section walkthrough, student observations, unplanned moments, educator reflection. Includes confidence calibration rules for observational evidence. |
+| `src/server/tools/process-debrief.ts` | MCP tool that processes debrief data: updates learner profiles with observational evidence (tagged, confidence-discounted), records timing adjustments, saves teaching notes to the domain directory, writes the full debrief document. |
+| `src/server/tools/index.ts` | Registered the new `process_debrief` tool (now 17 tools total). |
+| `src/server/index.ts` | Three new API endpoints: `GET /api/debriefs`, `GET /api/debriefs/:lessonId`, `GET /api/debrief-ready/:lessonId` (returns parsed lesson sections for the debrief UI). |
+| `src/frontend/app/debrief/[lesson-id]/page.tsx` | Conversational debrief page with lesson section overview, WebSocket chat interface, existing debrief viewer, and processing indicators. |
+| `src/frontend/app/lessons/page.tsx` | Added "Debrief" button to the lessons list page. |
+| `data/debriefs/...debrief-2026-02-13.md` | Demo debrief for the pandas-groupby lesson with rich section feedback, learner observations, and teaching notes. |
+| `data/domains/python-data-analysis/teaching-notes.md` | Domain-level teaching notes accumulated from debriefs. |
+
+### Build status
+
+- Server TypeScript: **passes** (0 errors)
+- Next.js build: **passes** (route `/debrief/[lesson-id]` visible in build output)
+- Commit: `93dfe57` on branch `moonshot-7-debrief`
+[2026-02-13 00:23:25] Branch has 1 commits
+remote: 
+remote: Create a pull request for 'moonshot-7-debrief' on GitHub by visiting:        
+remote:      https://github.com/chekos/pedagogical-engine/pull/new/moonshot-7-debrief        
+remote: 
+To github.com:chekos/pedagogical-engine.git
+ * [new branch]      moonshot-7-debrief -> moonshot-7-debrief
+[2026-02-13 00:23:28] PR: https://github.com/chekos/pedagogical-engine/pull/15
+[2026-02-13 00:23:28] Running Claude Code review...
+Everything checks out clean. Here's my review summary:
+
+## Review Results
+
+### TypeScript
+- `tsc --noEmit` on `src/server/` — **passes clean**
+- `next build` on `src/frontend/` — **passes clean** (all 17 routes compiled successfully)
+
+### Code Review Findings
+
+**No issues found.** The branch is clean:
+
+1. **`src/server/tools/process-debrief.ts`** — New MCP tool following the same pattern as all other tools (`tool()` from `@anthropic-ai/claude-agent-sdk`, Zod schema, proper return shape with `content: [{ type: "text", text: ... }]`). File I/O is safe (uses `DATA_DIR`, `recursive: true` for mkdir, graceful `catch` on missing learners).
+
+2. **`src/server/tools/index.ts`** — Import and registration of `processDebriefTool` follows the exact existing pattern. No ordering issues.
+
+3. **`src/server/index.ts`** — Three new REST endpoints (`GET /api/debriefs`, `GET /api/debriefs/:lessonId`, `GET /api/debrief-ready/:lessonId`) all use proper path-traversal validation, consistent error handling, and the existing `parseLesson` utility. The `debrief-ready` endpoint correctly strips section `content` and `activities` fields from the response (keeping only timing/meta info needed by the frontend form).
+
+4. **`src/frontend/app/debrief/[lesson-id]/page.tsx`** — Client component with WebSocket chat that follows the same patterns as the existing `/teach` page. Interfaces match the API response shapes from `debrief-ready`. No dangling references or missing imports.
+
+5. **`src/frontend/app/lessons/page.tsx`** — Simple addition of a "Debrief" link to each lesson card, consistent with existing "Rehearse" and "Go Live" link styling.
+
+6. **Data files** — `.claude/skills/debrief-session/SKILL.md` and demo debrief/teaching-notes are documentation-only, no code issues.
+
+**No fixes needed — nothing to commit.**
+Everything up-to-date
+[2026-02-13 00:25:27] Merging moonshot-7-debrief...
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Updating 772e2bf..93dfe57
+Fast-forward
+Squash commit -- not updating HEAD
+ .claude/skills/debrief-session/SKILL.md            | 160 ++++++
+ ...as-groupby-tuesday-cohort-debrief-2026-02-13.md | 162 +++++++
+ .../domains/python-data-analysis/teaching-notes.md |  10 +
+ src/frontend/app/debrief/[lesson-id]/page.tsx      | 538 +++++++++++++++++++++
+ src/frontend/app/lessons/page.tsx                  |   9 +
+ src/server/index.ts                                | 123 +++++
+ src/server/tools/index.ts                          |   2 +
+ src/server/tools/process-debrief.ts                | 349 +++++++++++++
+ 8 files changed, 1353 insertions(+)
+ create mode 100644 .claude/skills/debrief-session/SKILL.md
+ create mode 100644 data/debriefs/2026-02-12-pandas-groupby-tuesday-cohort-debrief-2026-02-13.md
+ create mode 100644 data/domains/python-data-analysis/teaching-notes.md
+ create mode 100644 src/frontend/app/debrief/[lesson-id]/page.tsx
+ create mode 100644 src/server/tools/process-debrief.ts
+[main 1b6cc1c] Moonshot 7: post session debrief (#7)
+ 8 files changed, 1353 insertions(+)
+ create mode 100644 .claude/skills/debrief-session/SKILL.md
+ create mode 100644 data/debriefs/2026-02-12-pandas-groupby-tuesday-cohort-debrief-2026-02-13.md
+ create mode 100644 data/domains/python-data-analysis/teaching-notes.md
+ create mode 100644 src/frontend/app/debrief/[lesson-id]/page.tsx
+ create mode 100644 src/server/tools/process-debrief.ts
+To github.com:chekos/pedagogical-engine.git
+   772e2bf..1b6cc1c  main -> main
+[2026-02-13 00:25:30] MERGED: Moonshot 7 ✓
+Deleted branch moonshot-7-debrief (was 93dfe57).
+[2026-02-13 00:25:30] Moonshot 7 complete. Moving to next...
+
+[2026-02-13 00:25:30] --- Moonshot 8: accumulated-teaching-wisdom (branch: moonshot-8-wisdom) ---
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Preparing worktree (new branch 'moonshot-8-wisdom')
+HEAD is now at 1b6cc1c Moonshot 7: post session debrief (#7)
+[2026-02-13 00:25:31] Worktree created: /home/chekos/projects/pedagogical-engine/.worktrees/moonshot-8-wisdom
+[2026-02-13 00:25:31] Starting Claude Code for moonshot 8...
+All done. Here's a summary of what was implemented for Moonshot 8: Accumulated Teaching Wisdom.
+
+## What was built
+
+### The Flywheel Concept
+Every session taught through the engine makes future plans better. Teaching wisdom accumulates from post-session debriefs and is integrated into lesson composition.
+
+### New files created
+
+**Seed data:**
+- `data/domains/python-data-analysis/teaching-notes.json` — 24 teaching notes + 5 cross-skill patterns simulating 23 sessions of accumulated wisdom. Covers timing calibrations, confusion points, success patterns, accessibility notes, group composition insights, and activity recommendations.
+
+**3 new MCP tools:**
+- `src/server/tools/query-teaching-wisdom.ts` — Retrieve teaching notes and patterns filtered by skill IDs, note types, confidence threshold, and group level. Used during lesson composition.
+- `src/server/tools/analyze-teaching-patterns.ts` — Scan all debriefs for a domain to detect recurring patterns (timing overruns, engagement drops, contingency frequency). Updates the wisdom layer.
+- `src/server/tools/add-teaching-note.ts` — Allows educators to directly contribute teaching notes ("Remember this for next time — the dataset was too clean"). These start at 0.85 confidence since they're educator-direct.
+
+**Frontend:**
+- `src/frontend/app/wisdom/page.tsx` — Teaching wisdom dashboard with stats cards, flywheel callout, tabbed notes/patterns view, filterable by type and skill, confidence bars, type distribution chart.
+
+### Modified files
+
+- `src/server/tools/index.ts` — Registered 3 new tools (now 20 total)
+- `src/server/index.ts` — Added `GET /api/wisdom/:domain` and `GET /api/wisdom/:domain/skills` endpoints
+- `.claude/agents/lesson-agent.md` — Added `query_teaching_wisdom` to tools, added wisdom consultation as step 4 in the composition process
+- `.claude/skills/compose-lesson/SKILL.md` — Added "Teaching wisdom integration" section with 5 application strategies and transparency guidelines
+- `src/frontend/app/page.tsx` — Added Wisdom nav link and "Accumulated teaching wisdom" feature pill
+- `CLAUDE.md` — Updated to Session 8 with full documentation of the new layer
+
+### Verified
+- Server TypeScript: `npx tsc --noEmit` passes clean
+- Frontend build: `npx next build` passes clean (13 pages generated including `/wisdom`)
+- Committed as `0c3c470` on branch `moonshot-8-wisdom`
+[2026-02-13 00:37:54] Branch has 1 commits
+remote: 
+remote: Create a pull request for 'moonshot-8-wisdom' on GitHub by visiting:        
+remote:      https://github.com/chekos/pedagogical-engine/pull/new/moonshot-8-wisdom        
+remote: 
+To github.com:chekos/pedagogical-engine.git
+ * [new branch]      moonshot-8-wisdom -> moonshot-8-wisdom
+[2026-02-13 00:37:57] PR: https://github.com/chekos/pedagogical-engine/pull/16
+[2026-02-13 00:37:57] Running Claude Code review...
+## Review Summary
+
+**Branch changes:** 11 files, +1,977 lines — 3 new MCP tools (query_teaching_wisdom, analyze_teaching_patterns, add_teaching_note), 2 API endpoints (/api/wisdom/:domain, /api/wisdom/:domain/skills), new /wisdom frontend page, seed data, and skill/agent updates.
+
+**TypeScript checks:**
+- `tsc --noEmit` (server) — clean
+- `next build` (frontend) — clean, /wisdom route builds as static page
+
+**Issue found and fixed:**
+- `query-teaching-wisdom.ts:34` — `TeachingNotesData` interface was missing the `version: string` field that exists in the actual JSON data and the other two tool files. Added it for consistency. (Wouldn't cause runtime errors since the field would just be silently ignored, but it's a data contract mismatch.)
+
+**No issues found with:**
+- All imports resolve correctly (tool files → index.ts → MCP server)
+- API endpoints use existing `validateSlug` and follow the same pattern as other routes
+- Frontend fetches from `/api/domains` (exists) and `/api/wisdom/:domain` (new, correctly wired)
+- Tool names in agent definitions match the registered tool names
+- Teaching notes JSON seed data structure matches all three interface definitions
+- No missing dependencies — all imports are from existing packages (`zod`, `@anthropic-ai/claude-agent-sdk`, `fs/promises`, `path`)
+To github.com:chekos/pedagogical-engine.git
+   0c3c470..5c275b8  moonshot-8-wisdom -> moonshot-8-wisdom
+[2026-02-13 00:41:25] Merging moonshot-8-wisdom...
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Updating 1b6cc1c..5c275b8
+Fast-forward
+Squash commit -- not updating HEAD
+ .claude/agents/lesson-agent.md                     |  22 +-
+ .claude/skills/compose-lesson/SKILL.md             |  46 ++
+ CLAUDE.md                                          |  31 +-
+ .../python-data-analysis/teaching-notes.json       | 453 ++++++++++++++++
+ src/frontend/app/page.tsx                          |   7 +
+ src/frontend/app/wisdom/page.tsx                   | 592 +++++++++++++++++++++
+ src/server/index.ts                                |  69 +++
+ src/server/tools/add-teaching-note.ts              | 188 +++++++
+ src/server/tools/analyze-teaching-patterns.ts      | 380 +++++++++++++
+ src/server/tools/index.ts                          |   6 +
+ src/server/tools/query-teaching-wisdom.ts          | 193 +++++++
+ 11 files changed, 1978 insertions(+), 9 deletions(-)
+ create mode 100644 data/domains/python-data-analysis/teaching-notes.json
+ create mode 100644 src/frontend/app/wisdom/page.tsx
+ create mode 100644 src/server/tools/add-teaching-note.ts
+ create mode 100644 src/server/tools/analyze-teaching-patterns.ts
+ create mode 100644 src/server/tools/query-teaching-wisdom.ts
+[main 14db778] Moonshot 8: accumulated teaching wisdom (#8)
+ 11 files changed, 1978 insertions(+), 9 deletions(-)
+ create mode 100644 data/domains/python-data-analysis/teaching-notes.json
+ create mode 100644 src/frontend/app/wisdom/page.tsx
+ create mode 100644 src/server/tools/add-teaching-note.ts
+ create mode 100644 src/server/tools/analyze-teaching-patterns.ts
+ create mode 100644 src/server/tools/query-teaching-wisdom.ts
+To github.com:chekos/pedagogical-engine.git
+   1b6cc1c..14db778  main -> main
+[2026-02-13 00:41:28] MERGED: Moonshot 8 ✓
+Deleted branch moonshot-8-wisdom (was 5c275b8).
+[2026-02-13 00:41:28] Moonshot 8 complete. Moving to next...
+
+[2026-02-13 00:41:28] --- Moonshot 9: educator-profiling (branch: moonshot-9-educator) ---
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Preparing worktree (new branch 'moonshot-9-educator')
+HEAD is now at 14db778 Moonshot 8: accumulated teaching wisdom (#8)
+[2026-02-13 00:41:30] Worktree created: /home/chekos/projects/pedagogical-engine/.worktrees/moonshot-9-educator
+[2026-02-13 00:41:30] Starting Claude Code for moonshot 9...
+[2026-02-13 02:14:12] === MOONSHOT PIPELINE STARTED ===
+[2026-02-13 02:14:12] --- Moonshot 1: lesson-simulation (branch: moonshot-1-simulation) ---
+[2026-02-13 02:14:12] SKIP: Moonshot 1 already on main
+[2026-02-13 02:14:12] --- Moonshot 2: pedagogical-disagreement (branch: moonshot-2-disagreement) ---
+[2026-02-13 02:14:12] SKIP: Moonshot 2 already on main
+[2026-02-13 02:14:12] --- Moonshot 5: assessment-integrity (branch: moonshot-5-integrity) ---
+[2026-02-13 02:14:12] SKIP: Moonshot 5 already on main
+[2026-02-13 02:14:12] --- Moonshot 6: affective-dimension (branch: moonshot-6-affective) ---
+[2026-02-13 02:14:12] SKIP: Moonshot 6 already on main
+[2026-02-13 02:14:12] --- Moonshot 7: post-session-debrief (branch: moonshot-7-debrief) ---
+[2026-02-13 02:14:12] SKIP: Moonshot 7 already on main
+[2026-02-13 02:14:12] --- Moonshot 8: accumulated-teaching-wisdom (branch: moonshot-8-wisdom) ---
+[2026-02-13 02:14:12] SKIP: Moonshot 8 already on main
+[2026-02-13 02:14:12] --- Moonshot 9: educator-profiling (branch: moonshot-9-educator) ---
+[2026-02-13 02:14:12] SKIP: Moonshot 9 already on main
+[2026-02-13 02:14:12] --- Moonshot 3: cross-domain-transfer (branch: moonshot-3-transfer) ---
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Preparing worktree (new branch 'moonshot-3-transfer')
+HEAD is now at 9e17ae9 Moonshot 9: educator profiling
+[2026-02-13 02:14:14] Worktree created: /home/chekos/projects/pedagogical-engine/.worktrees/moonshot-3-transfer
+[2026-02-13 02:14:14] Starting Claude Code for moonshot 3...
+All done. Here's a summary of what was implemented:
+
+## Moonshot 3: Cross-Domain Transfer — Complete
+
+### What was built
+
+**Backend — MCP Tool** (`src/server/tools/analyze-cross-domain-transfer.ts`)
+- New `analyze_cross_domain_transfer` tool that loads two domain graphs simultaneously and reasons about skill transfer
+- Confidence model with multiple factors:
+  - Base transfer rate of 0.35 (significantly lower than within-domain 0.85+)
+  - Bloom's level alignment multiplier (same=1.0x, adjacent=0.6x, two-apart=0.3x, distant=0x)
+  - Cognitive operation matching (shared verbs like "analyze", "compare", "interpret" get +30%)
+  - Skill generality score based on dependency chain position (+20% for high-order skills)
+  - Hard cap at 0.55 — cross-domain transfer never claims high confidence
+- Three transfer types: `cognitive_operation`, `metacognitive`, `structural`
+- Assessment recommendations: suggested start level, skills to skip vs. focus on
+
+**Backend — API Endpoints** (`src/server/index.ts`)
+- `GET /api/transfer/:learnerId?source=X&target=Y` — full transfer analysis
+- `GET /api/transfer-learners` — list learners with assessed skills for the selector
+
+**Frontend** (`src/frontend/app/transfer/page.tsx`)
+- Interactive page with learner/domain selectors (auto-selects Maya demo)
+- Readiness banner showing overall transfer level (high/moderate/low/none)
+- Side-by-side domain comparison with Bloom's-grouped skill lists
+- Transfer bridges visualization showing source→target mappings with confidence bars
+- Color-coded by Bloom's level and transfer strength
+
+**Demo Data** — Enhanced Maya Whitehawk profile with 16 assessed outdoor-ecology skills (up to evaluation level), perfect for demonstrating ecology→python-data-analysis transfer
+
+**Pedagogical Brain** — Updated `reason-dependencies/SKILL.md` with full cross-domain inference methodology, confidence model, assessment integration guide, and worked example
+
+**Both `tsc --noEmit` and `next build` pass cleanly.** Committed as `dd2ddcf`.
+[2026-02-13 02:24:57] Branch has 1 commits
+remote: 
+remote: Create a pull request for 'moonshot-3-transfer' on GitHub by visiting:        
+remote:      https://github.com/chekos/pedagogical-engine/pull/new/moonshot-3-transfer        
+remote: 
+To github.com:chekos/pedagogical-engine.git
+ * [new branch]      moonshot-3-transfer -> moonshot-3-transfer
+[2026-02-13 02:25:01] PR: https://github.com/chekos/pedagogical-engine/pull/17
+[2026-02-13 02:25:01] Running Claude Code review...
+**Review results — all clean. No fixes needed.**
+
+Here's what I checked:
+
+1. **TypeScript (server):** `tsc --noEmit` passes with zero errors.
+
+2. **Next.js build (frontend):** `next build` compiles and generates all 20 routes successfully, including the new `/transfer` page.
+
+3. **Imports and dependencies:**
+   - `analyze-cross-domain-transfer.ts` imports `loadGraph`, `Skill`, `Edge`, `SkillGraph` from `./shared.js` — all exported correctly from `shared.ts`
+   - `BLOOM_ORDER` imported from `./domain-utils.js` — exported and populated at module load time
+   - Tool registered in `tools/index.ts` — properly imported and added to the MCP server's tool list
+
+4. **Integration:**
+   - `/api/transfer/:learnerId` endpoint uses `validateSlug` for all params (safe against path traversal)
+   - `/api/transfer-learners` endpoint mirrors the pattern from existing endpoints
+   - `/api/domains` endpoint returns `slug` and `name` fields matching what the frontend `transfer/page.tsx` expects
+   - Frontend `transfer/page.tsx` auto-selects Maya Whitehawk demo data
+   - Landing page (`page.tsx`) adds "Transfer" nav link and feature tag — consistent with existing patterns
+
+5. **Demo data:**
+   - `outdoor-ecology` domain has `skills.json` and `dependencies.json` with expected structure
+   - `maya-whitehawk.md` learner profile has 16 assessed skills with Bloom's levels that the parser can extract
+   - Skill IDs in the learner profile match the ecology domain graph
+
+6. **No bugs found** in the transfer confidence model, deduplication logic, or readiness scoring. The inline API implementation in `index.ts` mirrors the MCP tool logic faithfully.
+
+Nothing to commit — the branch is clean.
+Everything up-to-date
+[2026-02-13 02:27:22] Merging moonshot-3-transfer...
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Updating 9e17ae9..dd2ddcf
+Fast-forward
+Squash commit -- not updating HEAD
+ .claude/skills/reason-dependencies/SKILL.md       |  96 ++++
+ CLAUDE.md                                         |  30 +-
+ data/learners/maya-whitehawk.md                   |  54 +-
+ src/frontend/app/page.tsx                         |   7 +
+ src/frontend/app/transfer/page.tsx                | 652 ++++++++++++++++++++++
+ src/server/index.ts                               | 274 +++++++++
+ src/server/tools/analyze-cross-domain-transfer.ts | 583 +++++++++++++++++++
+ src/server/tools/index.ts                         |   2 +
+ 8 files changed, 1676 insertions(+), 22 deletions(-)
+ create mode 100644 src/frontend/app/transfer/page.tsx
+ create mode 100644 src/server/tools/analyze-cross-domain-transfer.ts
+[main cf043c3] Moonshot 3: cross domain transfer (#3)
+ 8 files changed, 1676 insertions(+), 22 deletions(-)
+ create mode 100644 src/frontend/app/transfer/page.tsx
+ create mode 100644 src/server/tools/analyze-cross-domain-transfer.ts
+To github.com:chekos/pedagogical-engine.git
+   9e17ae9..cf043c3  main -> main
+[2026-02-13 02:27:25] MERGED: Moonshot 3 ✓
+Deleted branch moonshot-3-transfer (was dd2ddcf).
+[2026-02-13 02:27:25] Moonshot 3 complete. Moving to next...
+
+[2026-02-13 02:27:25] --- Moonshot 4: meta-pedagogical-layer (branch: moonshot-4-meta) ---
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Preparing worktree (new branch 'moonshot-4-meta')
+HEAD is now at cf043c3 Moonshot 3: cross domain transfer (#3)
+[2026-02-13 02:27:26] Worktree created: /home/chekos/projects/pedagogical-engine/.worktrees/moonshot-4-meta
+[2026-02-13 02:27:26] Starting Claude Code for moonshot 4...
+Moonshot 4 is implemented and committed. Here's what was built:
+
+## Summary: Meta-Pedagogical Layer (Moonshot 4)
+
+### 3 new MCP tools
+
+1. **`explain_pedagogical_reasoning`** — When an educator asks "why?" about any decision in a lesson plan, this tool retrieves stored reasoning traces and assembles all the evidence (skill graph, learner profiles, Bloom's levels, constraints, alternatives considered) for the agent to compose a natural explanation.
+
+2. **`store_reasoning_traces`** — Called during/after lesson composition to capture structured reasoning traces for every major decision. Each trace includes: what was decided, why, which primitives drove it, what alternatives were considered, and what would need to change for the decision to go differently.
+
+3. **`analyze_meta_pedagogical_patterns`** — Detects when an educator's questions reveal a pattern (e.g., they keep asking about timing decisions) and surfaces the underlying pedagogical principle. Includes 6 built-in principles (Bloom's ordering, timing calibration, pairing strategy, content depth, contingency design, energy management) with frameworks, examples, and reading references.
+
+### 3 API endpoints
+- `GET /api/reasoning` — list lessons with reasoning traces
+- `GET /api/reasoning/:lessonId` — all traces for a lesson
+- `GET /api/reasoning/:lessonId/:traceId` — specific trace
+
+### Frontend: `/meta` page
+- Interactive exploration of reasoning traces with decision type filters, expandable cards showing evidence tags, alternatives considered, and "what would change" conditions
+- Pedagogical principles reference grid
+
+### Demo data
+- 8 rich reasoning traces for the basic-plotting lesson covering all 6 decision types (ordering, timing, pairing, activity choice, content depth, contingency)
+
+### SKILL.md updates
+- Compose-lesson skill now includes methodology for generating reasoning traces alongside every lesson plan section
+[2026-02-13 02:39:44] Branch has 1 commits
+remote: 
+remote: Create a pull request for 'moonshot-4-meta' on GitHub by visiting:        
+remote:      https://github.com/chekos/pedagogical-engine/pull/new/moonshot-4-meta        
+remote: 
+To github.com:chekos/pedagogical-engine.git
+ * [new branch]      moonshot-4-meta -> moonshot-4-meta
+[2026-02-13 02:39:47] PR: https://github.com/chekos/pedagogical-engine/pull/18
+[2026-02-13 02:39:47] Running Claude Code review...
+Here's the review summary:
+
+## Branch Review: `moonshot-4-meta` (diff from `main`)
+
+### Changes
+8 files, +1837 lines — adds the meta-pedagogical reasoning layer (Moonshot 4):
+- **3 new MCP tools**: `explain_pedagogical_reasoning`, `store_reasoning_traces`, `analyze_meta_pedagogical_patterns`
+- **3 new API routes**: `/api/reasoning`, `/api/reasoning/:lessonId`, `/api/reasoning/:lessonId/:traceId`
+- **Frontend page**: `/meta` — trace explorer with expandable cards, evidence tags, decision type filters
+- **Demo data**: 8 reasoning traces for the basic-plotting lesson
+- **SKILL.md update**: compose-lesson skill updated with trace generation methodology
+
+### Checks
+- **tsc --noEmit (server)**: Clean
+- **next build (frontend)**: Clean, `/meta` page renders as static
+- **Imports**: All correct — `loadGraph`/`DATA_DIR` from `./shared.js`, new tools properly registered in `tools/index.ts`
+- **Dependencies**: No new npm packages needed
+
+### Bug Found & Fixed
+- **`wouldChangIf` typo** in the `store_reasoning_traces` zod schema — missing the `e` in `wouldChangeIf`. The interface, frontend, and demo data all use the correct spelling, so new traces stored via the tool would have had the wrong key name and the frontend's "What would change this decision?" section would never render for them. Fixed in commit `b73476b`.
+
+### No Issues Found With
+- Route registration order (Express correctly distinguishes `/api/reasoning` from `/api/reasoning/:lessonId`)
+- Tool registration in the MCP server
+- Frontend API calls match the backend endpoints
+- Path traversal protection on the reasoning endpoints
+- Directory creation (`mkdir recursive`) before writes in both new tools
+- `DATA_DIR` handling (consistent with existing tools)
+To github.com:chekos/pedagogical-engine.git
+   8f26e76..b73476b  moonshot-4-meta -> moonshot-4-meta
+[2026-02-13 02:42:27] Merging moonshot-4-meta...
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+From github.com:chekos/pedagogical-engine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Updating cf043c3..b73476b
+Fast-forward
+Squash commit -- not updating HEAD
+ .claude/skills/compose-lesson/SKILL.md             |  63 ++
+ CLAUDE.md                                          |  44 +-
+ .../2026-02-12-basic-plotting-with-matplotlib.json | 201 ++++++
+ src/frontend/app/meta/page.tsx                     | 706 +++++++++++++++++++++
+ src/server/index.ts                                |  79 +++
+ .../tools/analyze-meta-pedagogical-patterns.ts     | 281 ++++++++
+ src/server/tools/explain-reasoning.ts              | 460 ++++++++++++++
+ src/server/tools/index.ts                          |   5 +
+ 8 files changed, 1837 insertions(+), 2 deletions(-)
+ create mode 100644 data/reasoning-traces/2026-02-12-basic-plotting-with-matplotlib.json
+ create mode 100644 src/frontend/app/meta/page.tsx
+ create mode 100644 src/server/tools/analyze-meta-pedagogical-patterns.ts
+ create mode 100644 src/server/tools/explain-reasoning.ts
+[main 01e8948] Moonshot 4: meta pedagogical layer (#4)
+ 8 files changed, 1837 insertions(+), 2 deletions(-)
+ create mode 100644 data/reasoning-traces/2026-02-12-basic-plotting-with-matplotlib.json
+ create mode 100644 src/frontend/app/meta/page.tsx
+ create mode 100644 src/server/tools/analyze-meta-pedagogical-patterns.ts
+ create mode 100644 src/server/tools/explain-reasoning.ts
+To github.com:chekos/pedagogical-engine.git
+   cf043c3..01e8948  main -> main
+[2026-02-13 02:42:30] MERGED: Moonshot 4 ✓
+Deleted branch moonshot-4-meta (was b73476b).
+[2026-02-13 02:42:30] Moonshot 4 complete. Moving to next...
+
+[2026-02-13 02:42:30] === MOONSHOT PIPELINE COMPLETE ===
+[2026-02-13 02:42:30] Check moonshot-progress.log for full details
