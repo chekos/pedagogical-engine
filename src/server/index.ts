@@ -693,6 +693,11 @@ app.get("/api/simulate/:lessonId", async (req, res) => {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
 
+      if (!groupSlug) {
+        res.status(400).json({ error: "Invalid group name after normalization" });
+        return;
+      }
+
       try {
         const result = await runSimulation(lessonId, effectiveDomain, groupSlug);
         res.json({ simulation: result });

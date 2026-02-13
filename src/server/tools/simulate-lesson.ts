@@ -2,7 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-import { loadGraph, DATA_DIR, type Skill, type Edge, type SkillGraph } from "./shared.js";
+import { loadGraph, DATA_DIR, type Skill, type SkillGraph } from "./shared.js";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -394,6 +394,10 @@ async function runSimulation(
   const groupPath = path.join(DATA_DIR, "groups", `${groupName}.md`);
   const groupContent = await fs.readFile(groupPath, "utf-8");
   const members = parseGroupMembers(groupContent);
+
+  if (members.length === 0) {
+    throw new Error(`No members found in group '${groupName}'. Check group file format.`);
+  }
 
   // 3. Load learner profiles
   const learners: LearnerSkillProfile[] = [];
