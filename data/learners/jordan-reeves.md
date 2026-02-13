@@ -16,7 +16,6 @@
 - identify-animal-signs: 0.45 confidence — demonstrated at knowledge level (knows deer tracks, confused by others)
 - read-topographic-map: 0.30 confidence — not demonstrated (never seen a topo map)
 - keep-field-journal: 0.25 confidence — not demonstrated (has never kept a journal of any kind)
-- kitchen-safety-basics: 0.00 confidence — wrong domain, not applicable
 
 ## Inferred Skills
 
