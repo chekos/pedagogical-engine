@@ -1,0 +1,53 @@
+{
+  "id": "dr-sarah-chen",
+  "name": "Dr. Sarah Chen",
+  "bio": "University lecturer specializing in data science. 8 years teaching experience. Known for clear explanations and structured approach.",
+  "created": "2026-02-10T09:00:00Z",
+  "updated": "2026-02-13T14:00:00Z",
+  "teaching_style": {
+    "lecture": 0.35,
+    "discussion": 0.15,
+    "hands_on": 0.25,
+    "socratic": 0.05,
+    "project_based": 0.10,
+    "demonstration": 0.10
+  },
+  "strengths": [
+    { "area": "content_expertise", "confidence": 0.95, "notes": "Deep Python and data analysis knowledge, can answer advanced questions on the fly" },
+    { "area": "time_management", "confidence": 0.85, "notes": "Consistently finishes on time, has internalized pacing" },
+    { "area": "structured_explanation", "confidence": 0.90, "notes": "Builds concepts step-by-step with clear scaffolding" },
+    { "area": "rapport_building", "confidence": 0.70, "notes": "Professional but warm, students respect her but she can feel distant to beginners" }
+  ],
+  "growth_areas": [
+    { "area": "group_management", "notes": "Struggles with complex multi-group activities, prefers whole-class instruction" },
+    { "area": "facilitation", "notes": "Tends to lecture when discussion stalls rather than using probing questions" },
+    { "area": "improvisation", "notes": "Prefers prepared material, less comfortable going off-script" }
+  ],
+  "content_confidence": {
+    "python-data-analysis": {
+      "level": "expert",
+      "confidence": 0.95,
+      "notes": "Published researcher in data science, teaches this daily"
+    }
+  },
+  "preferences": {
+    "lesson_start": "theory_first",
+    "group_work_comfort": "moderate",
+    "tech_comfort": "high",
+    "pacing": "structured",
+    "feedback_style": "direct",
+    "contingency_preference": "specific_alternatives"
+  },
+  "timing_patterns": {
+    "lecture": { "adjustment_min": 0, "notes": "On-time with lectures" },
+    "discussion": { "adjustment_min": -3, "notes": "Tends to cut discussions short" },
+    "hands_on": { "adjustment_min": +2, "notes": "Slightly runs over on hands-on exercises" },
+    "transitions": { "adjustment_min": +1, "notes": "Takes a bit longer on transitions between activities" }
+  },
+  "growth_nudges": [
+    "Try opening with a hands-on warm-up instead of a lecture introduction — your explanations are strongest when students have context from trying something first",
+    "When discussion stalls, try a think-pair-share instead of reverting to lecture — it gives quieter students a low-stakes entry point"
+  ],
+  "session_count": 14,
+  "debrief_count": 8
+}

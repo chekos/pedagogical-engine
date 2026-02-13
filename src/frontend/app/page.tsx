@@ -51,6 +51,12 @@ export default function Home() {
             Wisdom
           </Link>
           <Link
+            href="/profile"
+            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Profiles
+          </Link>
+          <Link
             href="/disagree"
             className="text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
@@ -87,6 +93,7 @@ export default function Home() {
               "Stage-directed lesson plans",
               "Pedagogical pushback",
               "Accumulated teaching wisdom",
+              "Educator profiling",
             ].map((feature) => (
               <span
                 key={feature}

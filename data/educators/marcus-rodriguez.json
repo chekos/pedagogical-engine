@@ -1,0 +1,53 @@
+{
+  "id": "marcus-rodriguez",
+  "name": "Marcus Rodriguez",
+  "bio": "Bootcamp instructor and workshop facilitator. 3 years teaching experience. High-energy, hands-on teaching style. Former software engineer who discovered a passion for teaching.",
+  "created": "2026-02-10T09:00:00Z",
+  "updated": "2026-02-13T14:00:00Z",
+  "teaching_style": {
+    "lecture": 0.05,
+    "discussion": 0.20,
+    "hands_on": 0.40,
+    "socratic": 0.15,
+    "project_based": 0.15,
+    "demonstration": 0.05
+  },
+  "strengths": [
+    { "area": "facilitation", "confidence": 0.90, "notes": "Naturally draws students into conversation, reads the room well" },
+    { "area": "improvisation", "confidence": 0.85, "notes": "Thrives when plans go sideways, can generate activities on the fly" },
+    { "area": "rapport_building", "confidence": 0.95, "notes": "Students love him, creates a safe and energetic learning environment" },
+    { "area": "group_management", "confidence": 0.80, "notes": "Comfortable running pair programming, small groups, and whole-class activities" }
+  ],
+  "growth_areas": [
+    { "area": "content_expertise", "notes": "Knows Python data analysis at a practical level but not academic depth — advanced statistical questions can trip him up" },
+    { "area": "time_management", "notes": "Consistently runs over time, especially on hands-on sections where he lets students explore" },
+    { "area": "structured_explanation", "notes": "Sometimes jumps between concepts without clear scaffolding" }
+  ],
+  "content_confidence": {
+    "python-data-analysis": {
+      "level": "intermediate",
+      "confidence": 0.60,
+      "notes": "Solid on pandas basics and data cleaning, weaker on advanced aggregation and statistical methods"
+    }
+  },
+  "preferences": {
+    "lesson_start": "hands_on_first",
+    "group_work_comfort": "high",
+    "tech_comfort": "high",
+    "pacing": "flexible",
+    "feedback_style": "encouraging",
+    "contingency_preference": "open_ended_pivots"
+  },
+  "timing_patterns": {
+    "lecture": { "adjustment_min": -2, "notes": "Keeps lectures very short, often shorter than planned" },
+    "discussion": { "adjustment_min": +3, "notes": "Discussions run long because he's good at them and enjoys them" },
+    "hands_on": { "adjustment_min": +5, "notes": "Consistently runs 5 min over on hands-on exercises — needs pre-shortened allocations" },
+    "transitions": { "adjustment_min": 0, "notes": "Quick, energetic transitions" }
+  },
+  "growth_nudges": [
+    "For advanced aggregation topics, consider including detailed talking points in the plan — your facilitation is strong enough to carry the content even when it's scripted",
+    "Try setting a visible timer for hands-on exercises — your instinct to let students explore is good but the sessions consistently run over"
+  ],
+  "session_count": 9,
+  "debrief_count": 5
+}

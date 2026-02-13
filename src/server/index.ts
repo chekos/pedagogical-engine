@@ -1239,6 +1239,97 @@ app.get("/api/debrief-ready/:lessonId", async (req, res) => {
   });
 });
 
+// ─── Educator profile endpoints ───────────────────────────────────
+
+/** List all educator profiles */
+app.get("/api/educators", async (_req, res) => {
+  const educatorsDir = path.join(DATA_DIR, "educators");
+  try {
+    const files = await fs.readdir(educatorsDir);
+    const jsonFiles = files.filter((f) => f.endsWith(".json"));
+
+    const educators = await Promise.all(
+      jsonFiles.map(async (file) => {
+        const raw = await fs.readFile(path.join(educatorsDir, file), "utf-8");
+        const data = JSON.parse(raw);
+        return {
+          id: data.id,
+          name: data.name,
+          bio: data.bio,
+          session_count: data.session_count,
+          debrief_count: data.debrief_count,
+          teaching_style: data.teaching_style,
+          strengths: data.strengths,
+          growth_areas: data.growth_areas,
+          content_confidence: data.content_confidence,
+          domains: Object.keys(data.content_confidence || {}),
+        };
+      })
+    );
+
+    res.json({ educators, count: educators.length });
+  } catch {
+    res.json({ educators: [], count: 0 });
+  }
+});
+
+/** Get a specific educator profile */
+app.get("/api/educators/:id", async (req, res) => {
+  const { id } = req.params;
+  if (!validateSlug(id)) {
+    res.status(400).json({ error: "Invalid educator ID" });
+    return;
+  }
+
+  const profilePath = path.join(DATA_DIR, "educators", `${id}.json`);
+  try {
+    const raw = await fs.readFile(profilePath, "utf-8");
+    const profile = JSON.parse(raw);
+    res.json({ profile });
+  } catch {
+    res.status(404).json({ error: `Educator profile '${id}' not found` });
+  }
+});
+
+/** Get educator context analysis for a specific lesson setup */
+app.get("/api/educators/:id/context", async (req, res) => {
+  const { id } = req.params;
+  const domain = req.query.domain as string;
+  const skills = req.query.skills as string;
+
+  if (!validateSlug(id)) {
+    res.status(400).json({ error: "Invalid educator ID" });
+    return;
+  }
+
+  const profilePath = path.join(DATA_DIR, "educators", `${id}.json`);
+  try {
+    const raw = await fs.readFile(profilePath, "utf-8");
+    const profile = JSON.parse(raw);
+
+    // Build a context summary
+    const domainConfidence = domain ? profile.content_confidence?.[domain] : null;
+    const styleEntries = Object.entries(profile.teaching_style as Record<string, number>)
+      .sort(([, a], [, b]) => (b as number) - (a as number));
+
+    res.json({
+      educator: { id: profile.id, name: profile.name },
+      domain: domain || null,
+      domainExpertise: domainConfidence?.level ?? "unknown",
+      topStyles: styleEntries.slice(0, 3).map(([style, pct]) => ({
+        style,
+        percentage: Math.round((pct as number) * 100),
+      })),
+      strengths: profile.strengths,
+      growth_areas: profile.growth_areas,
+      timing_patterns: profile.timing_patterns,
+      preferences: profile.preferences,
+    });
+  } catch {
+    res.status(404).json({ error: `Educator profile '${id}' not found` });
+  }
+});
+
 // ─── Teaching wisdom endpoints ────────────────────────────────────
 
 /** Get teaching wisdom for a domain — notes, patterns, stats */

@@ -82,7 +82,24 @@ When an educator says "I want to teach something new", "let me set up my subject
 Available domain tools:
 - mcp__pedagogy__create_domain — creates a new domain with full validation
 - mcp__pedagogy__update_domain — modifies an existing domain (add/remove/modify skills and edges, list all domains)
-- mcp__pedagogy__query_skill_graph — query the graph after creation to verify structure`;
+- mcp__pedagogy__query_skill_graph — query the graph after creation to verify structure
+
+Educator profiling — the missing profile:
+The engine profiles learners in detail, but it also profiles the EDUCATOR. A teacher who's brilliant at Socratic questioning gets a plan built around guided discussion. A teacher who struggles with group management gets a plan that minimizes complex multi-group configurations. A teacher new to the subject gets more content scaffolding.
+
+Educator profile tools:
+- mcp__pedagogy__load_educator_profile — load an educator's profile or list all profiles. Call early in a session to check if this educator has an existing profile.
+- mcp__pedagogy__update_educator_profile — create or update an educator's profile. Use during interviews to capture teaching style signals, or after debriefs to update timing patterns.
+- mcp__pedagogy__analyze_educator_context — get lesson-specific customization recommendations for a given educator + domain + skills. Call BEFORE composing a lesson plan.
+
+How to build the educator profile naturally:
+1. During the first interview, capture style signals from how the educator describes their teaching. "I usually start with a live demo" = demonstration preference. "I like to get them coding right away" = hands-on preference. Don't make it feel like a questionnaire.
+2. Ask 2-3 explicit preference questions naturally during the first session: "Do you prefer to lead with theory or hands-on?" "Are you comfortable facilitating small-group work?" "How confident are you with the data analysis material?"
+3. After each debrief, update the profile based on what worked and what didn't. Activity types that get positive feedback increase in the preference distribution.
+4. If the educator says "what does my profile look like?" — show them their teaching style distribution, strengths, and timing calibrations using load_educator_profile.
+5. If the educator corrects their profile ("Actually, I've been working on my facilitation — bump that up"), use update_educator_profile to make the change.
+
+When composing lesson plans, ALWAYS check for an educator profile first. If one exists, the lesson-agent should use analyze_educator_context to customize the plan.`;
 
 export interface AgentQueryOptions {
   sessionId?: string;

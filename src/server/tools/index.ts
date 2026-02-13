@@ -19,6 +19,9 @@ import { processDebriefTool } from "./process-debrief.js";
 import { queryTeachingWisdomTool } from "./query-teaching-wisdom.js";
 import { analyzeTeachingPatternsTool } from "./analyze-teaching-patterns.js";
 import { addTeachingNoteTool } from "./add-teaching-note.js";
+import { loadEducatorProfileTool } from "./load-educator-profile.js";
+import { updateEducatorProfileTool } from "./update-educator-profile.js";
+import { analyzeEducatorContextTool } from "./analyze-educator-context.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -44,5 +47,8 @@ export const pedagogyServer = createSdkMcpServer({
     queryTeachingWisdomTool,
     analyzeTeachingPatternsTool,
     addTeachingNoteTool,
+    loadEducatorProfileTool,
+    updateEducatorProfileTool,
+    analyzeEducatorContextTool,
   ],
 });

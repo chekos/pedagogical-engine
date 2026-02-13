@@ -154,6 +154,62 @@ Teaching wisdom is input, not rules. Override it when:
   timing notes apply only to beginners)
 - The setting is different from the pattern's context
 
+## Educator profile integration
+
+Before composing, check if an educator profile is available using
+`load_educator_profile`. If a profile exists, call `analyze_educator_context`
+with the educator ID, domain, and target skills. This returns actionable
+customization for the lesson plan:
+
+### How to apply the educator profile
+
+1. **Activity type weighting.** Weight activities toward the educator's preferred
+   styles. If they're 40% hands-on and 5% lecture, the plan should be mostly
+   hands-on exercises with minimal lecture. Don't force activity types the
+   educator is uncomfortable with unless there's a pedagogical reason.
+
+2. **Content scaffolding depth.** Adjust detail level based on content confidence:
+   - **Expert educator:** Brief bullet points, trust them to explain in their
+     own words. Focus the plan on timing and structure.
+   - **Intermediate educator:** Key talking points and anticipated tough questions.
+     Reference notes for complex topics.
+   - **Novice educator:** Full talking points, suggested explanations, anticipated
+     student questions with prepared answers, step-by-step walkthroughs.
+
+3. **Timing calibration.** If the educator consistently runs over on hands-on
+   sections, pre-shorten those sections in the plan. If they cut discussions
+   short, allocate slightly less time. Cite the pattern: "I've pre-shortened
+   the hands-on section by 5 min because your sessions tend to run long there."
+
+4. **Contingency matching.** Match contingency style to the educator:
+   - **Improvisers** get open-ended contingencies: "Pivot to a discussion about
+     why this is hard."
+   - **Structuralists** get specific alternatives: "Switch to exercise Y
+     (detailed instructions below)."
+
+5. **Growth nudges.** Occasionally suggest an activity type the educator doesn't
+   usually use, with extra scaffolding. Frame it as an opportunity, not a
+   correction: "You tend toward lecture for theory sections. For this topic, a
+   10-minute Socratic discussion might be more effective — I've included guiding
+   questions in case you want to try it."
+
+### Transparency
+
+When the educator profile influences the plan, tell the educator:
+- "I've weighted toward hands-on activities based on your teaching style profile."
+- "Since you're deeply expert in this domain, I've kept content notes brief."
+- "I've pre-shortened the hands-on section by 5 min based on your timing patterns."
+- Include an "Educator Profile Applied" section at the end of the plan listing
+  which customizations were made and why.
+
+### Two plans, same group
+
+The money shot for this feature: show that the same group, same topic, same
+constraints produces different plans for different educators. Dr. Chen gets a
+plan built around structured explanations and worked examples. Marcus gets a plan
+built around pair programming and guided discussion. Both achieve the same
+learning objectives.
+
 ## Composition principles
 
 ### Think like a stage director

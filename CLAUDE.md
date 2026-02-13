@@ -17,12 +17,12 @@ an experienced teacher, not a content generator.
 - Custom tools in the pedagogy MCP server access data in data/
 - All persistent data lives in data/ as JSON and Markdown files
 
-## What's built (as of Session 8 — Feb 13, 2026)
+## What's built (as of Session 9 — Feb 13, 2026)
 
 ### Backend (src/server/)
 - Express + WebSocket server on port 3000
 - Agent SDK integration with Opus 4.6 for educator conversations, Sonnet for assessments
-- 11 custom MCP tools via `createSdkMcpServer`:
+- 14 custom MCP tools via `createSdkMcpServer`:
   - `load_roster` — load or create groups and learner profiles
   - `query_skill_graph` — BFS/DFS traversal, dependency inference, Bloom's level filtering
   - `generate_assessment_link` — create assessment sessions with shareable codes
@@ -34,6 +34,9 @@ an experienced teacher, not a content generator.
   - `query_teaching_wisdom` — retrieve accumulated teaching notes and patterns for a domain, filtered by skill, type, confidence, and group level
   - `analyze_teaching_patterns` — scan all debriefs for a domain to detect recurring timing, engagement, confusion, and success patterns
   - `add_teaching_note` — add educator-direct teaching notes with high confidence to the domain's wisdom layer
+  - `load_educator_profile` — load an educator's teaching profile (style, strengths, timing patterns) or list all profiles
+  - `update_educator_profile` — create or update an educator's profile from interview signals, preferences, or debrief patterns
+  - `analyze_educator_context` — generate lesson-specific customization recommendations based on educator profile + domain + skills
 - Session management with WebSocket connection mapping
 - Graceful shutdown, periodic session cleanup
 
@@ -68,7 +71,41 @@ an experienced teacher, not a content generator.
   - Flywheel effect callout showing how sessions compound into better plans
   - Tabbed view: teaching notes (filterable by type, skill) and cross-skill patterns
   - Confidence bars, note type distribution chart, pattern recommendations
+- Educator profiles page (/profile) — teaching style visualization and comparison
+  - Educator selector with profile cards
+  - Teaching style distribution bar chart (lecture, discussion, hands-on, socratic, project-based, demonstration)
+  - Strengths with confidence bars, growth areas, content confidence by domain
+  - Timing patterns (learned adjustments from debriefs)
+  - Growth nudges and preferences
+  - Side-by-side comparison view showing how the same lesson would differ for two educators
 - Custom theme with light/dark mode via CSS variables
+
+### Educator profiling layer (Moonshot 9)
+- Educator profiles: structured teaching style data at `data/educators/{id}.json`
+  - Teaching style distribution: lecture, discussion, hands_on, socratic, project_based, demonstration (percentages sum to ~1.0)
+  - Strengths with confidence scores: content_expertise, facilitation, improvisation, group_management, rapport_building, time_management, structured_explanation
+  - Growth areas with notes
+  - Content confidence per domain: expert, proficient, intermediate, novice
+  - Preferences: lesson_start, group_work_comfort, pacing, contingency_preference
+  - Timing patterns: per-activity-type minute adjustments learned from debriefs
+  - Growth nudges: suggestions the engine may include in plans to expand the educator's range
+- Profile building happens naturally from three sources:
+  1. Interview signals — captured during first conversation
+  2. Explicit preferences — 2-3 questions woven into conversation
+  3. Debrief patterns — updated after each post-session debrief
+- Lesson composition integration: when composing plans, the engine loads the educator profile and:
+  - Weights activities toward the educator's preferred styles
+  - Adjusts content scaffolding depth based on domain expertise (expert gets bullet points, novice gets full talking points)
+  - Pre-calibrates timing for known patterns (if they always run +5 min on hands-on, shorten those sections)
+  - Matches contingency style (improvisers get open-ended pivots, structuralists get specific alternatives)
+  - Occasionally includes a growth nudge with extra scaffolding
+- Demo data: two contrasting educator profiles
+  - Dr. Sarah Chen: lecture/hands-on style, expert content knowledge, structured approach, prefers specific alternatives
+  - Marcus Rodriguez: hands-on/discussion style, intermediate content knowledge, high-energy facilitator, prefers open-ended pivots
+- API endpoints:
+  - GET /api/educators — list all educator profiles
+  - GET /api/educators/:id — get specific educator profile
+  - GET /api/educators/:id/context — get educator context analysis for a lesson
 
 ### Teaching wisdom layer (Moonshot 8)
 - Accumulated teaching notes: structured observations from post-session debriefs
@@ -96,6 +133,7 @@ an experienced teacher, not a content generator.
 - Group: tuesday-cohort (5 learners with diverse skill profiles)
 - Learners: Priya (advanced), Marcus (intermediate, accessibility needs), Sofia (intermediate, viz-strong), Alex (beginner), Nkechi (mixed — R expert learning Python)
 - Pre-completed assessment: TUE-2026-0211
+- Educators: Dr. Sarah Chen (lecture/structured expert), Marcus Rodriguez (hands-on facilitator) — contrasting profiles for same-lesson comparison demo
 
 ## Data conventions
 - Skill graphs: data/domains/{domain}/skills.json, dependencies.json (JSON — programmatic traversal)
@@ -105,6 +143,7 @@ an experienced teacher, not a content generator.
 - Lesson plans: data/lessons/{name}.md (Markdown — human-readable)
 - Teaching wisdom: data/domains/{domain}/teaching-notes.json (JSON — structured notes and patterns)
 - Teaching notes (human-readable): data/domains/{domain}/teaching-notes.md (Markdown — appended by debriefs)
+- Educator profiles: data/educators/{id}.json (JSON — teaching style, strengths, timing patterns)
 
 ## Behavioral rules
 - Always read the relevant skill before performing a task
@@ -112,6 +151,7 @@ an experienced teacher, not a content generator.
 - Delegate lesson composition to the lesson-agent subagent
 - Write learner profile updates after every assessment interaction
 - Query teaching wisdom before composing lesson plans — cite adjustments to the educator
+- Load educator profile before composing lesson plans — customize activity types, content depth, timing, and contingency style to the educator
 - Never hardcode skill definitions — always read from data/domains/
 
 ## Dev setup
