@@ -1,0 +1,24 @@
+{
+  "name": "Python Data Analysis",
+  "slug": "python-data-analysis",
+  "version": "1.0.0",
+  "description": "Skills for Python-based data analysis — from terminal basics to end-to-end pipeline design",
+  "author": "Pedagogical Engine Team",
+  "license": "MIT",
+  "tags": ["programming", "data-science", "python", "pandas", "visualization"],
+  "audience": {
+    "level": "beginner-to-advanced",
+    "ages": "16+",
+    "setting": "workshop, classroom, or self-paced online"
+  },
+  "stats": {
+    "skills": 25,
+    "dependencies": 48,
+    "bloomLevels": 6
+  },
+  "icon": "chart-bar",
+  "color": "#3b82f6",
+  "featured": true,
+  "createdAt": "2026-02-10T00:00:00.000Z",
+  "updatedAt": "2026-02-12T00:00:00.000Z"
+}

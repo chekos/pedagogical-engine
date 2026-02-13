@@ -1,0 +1,24 @@
+{
+  "name": "Farm Science",
+  "slug": "farm-science",
+  "version": "1.0.0",
+  "description": "Skills for understanding farms, food origins, and plant life cycles — designed for grades K-3",
+  "author": "Pedagogical Engine Team",
+  "license": "MIT",
+  "tags": ["agriculture", "early-education", "science", "plants", "animals"],
+  "audience": {
+    "level": "beginner",
+    "ages": "5-8",
+    "setting": "classroom, school garden, or farm field trip"
+  },
+  "stats": {
+    "skills": 10,
+    "dependencies": 9,
+    "bloomLevels": 4
+  },
+  "icon": "seedling",
+  "color": "#a3e635",
+  "featured": false,
+  "createdAt": "2026-02-11T00:00:00.000Z",
+  "updatedAt": "2026-02-12T00:00:00.000Z"
+}

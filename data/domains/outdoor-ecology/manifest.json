@@ -1,0 +1,24 @@
+{
+  "name": "Outdoor Ecology",
+  "slug": "outdoor-ecology",
+  "version": "1.0.0",
+  "description": "Skills for outdoor ecology education — from species identification to ecosystem analysis and habitat restoration planning",
+  "author": "Pedagogical Engine Team",
+  "license": "MIT",
+  "tags": ["ecology", "outdoor-education", "field-science", "nature", "environmental"],
+  "audience": {
+    "level": "beginner-to-intermediate",
+    "ages": "10+",
+    "setting": "outdoor trails, creeks, meadows, forest edges — no internet required"
+  },
+  "stats": {
+    "skills": 19,
+    "dependencies": 31,
+    "bloomLevels": 6
+  },
+  "icon": "leaf",
+  "color": "#22c55e",
+  "featured": true,
+  "createdAt": "2026-02-10T00:00:00.000Z",
+  "updatedAt": "2026-02-12T00:00:00.000Z"
+}
