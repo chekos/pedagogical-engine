@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatClient, type ConnectionStatus, type ServerMessage, type ToolUse } from "@/lib/api";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { useSpeechSynthesis } from "@/hooks/use-speech-synthesis";
 import MessageBubble from "./message-bubble";
 import ToolResult from "./tool-result";
 import ProgressIndicator from "./progress-indicator";
+import VoiceMicButton from "./voice-mic-button";
 
 interface ChatMessage {
   id: string;
@@ -33,6 +36,42 @@ export default function ChatInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentAssistantRef = useRef<string | null>(null);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  const ttsQueueRef = useRef<string | null>(null);
+  const ttsEnabledRef = useRef(false);
+  // Keep ref in sync with state so the callback can read it
+  useEffect(() => { ttsEnabledRef.current = ttsEnabled; }, [ttsEnabled]);
+
+  // Voice input (speech-to-text)
+  const {
+    isSupported: sttSupported,
+    status: sttStatus,
+    transcript,
+    toggleListening,
+    errorMessage: sttError,
+  } = useSpeechRecognition({
+    onFinalTranscript: (text) => {
+      // Populate textarea with recognized speech — user can review before sending
+      setInput((prev) => (prev ? prev + " " + text : text));
+    },
+  });
+
+  // Voice output (text-to-speech)
+  const {
+    isSupported: ttsSupported,
+    isSpeaking,
+    speak,
+    stop: stopSpeaking,
+  } = useSpeechSynthesis({ rate: 1.05 });
+
+  // Update input when transcript changes (interim results)
+  const lastTranscriptRef = useRef("");
+  useEffect(() => {
+    if (transcript && transcript !== lastTranscriptRef.current && sttStatus === "listening") {
+      // Show interim transcript in the input as a preview
+      lastTranscriptRef.current = transcript;
+    }
+  }, [transcript, sttStatus]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,6 +101,10 @@ export default function ChatInterface() {
         if (msg.text.trim()) {
           const id = `assistant-${Date.now()}-${Math.random()}`;
           currentAssistantRef.current = id;
+          // Queue for TTS — only the last assistant message gets read aloud
+          if (ttsEnabledRef.current) {
+            ttsQueueRef.current = msg.text;
+          }
           setMessages((prev) => [
             ...prev,
             {
@@ -94,6 +137,12 @@ export default function ChatInterface() {
         setActiveTools([]);
         setThinkingStartedAt(null);
         currentAssistantRef.current = null;
+        // TTS: read back final assistant response if enabled
+        // (handled via ttsQueueRef so the callback doesn't need ttsEnabled in deps)
+        if (ttsQueueRef.current) {
+          speak(ttsQueueRef.current);
+          ttsQueueRef.current = null;
+        }
         // Surface error results to the user
         if (msg.subtype !== "success") {
           const errors = msg.errors ?? [];
@@ -140,7 +189,7 @@ export default function ChatInterface() {
         break;
       }
     }
-  }, []);
+  }, [speak]);
 
   useEffect(() => {
     const client = new ChatClient({
@@ -318,7 +367,31 @@ export default function ChatInterface() {
 
       {/* Input area */}
       <div className="border-t border-border-subtle p-4 md:px-6">
-        <div className="flex items-end gap-3 max-w-4xl mx-auto">
+        {/* STT error banner */}
+        {sttError && (
+          <div className="max-w-4xl mx-auto mb-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+            {sttError}
+          </div>
+        )}
+        {/* Listening indicator */}
+        {sttStatus === "listening" && (
+          <div className="max-w-4xl mx-auto mb-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse-subtle" />
+            <span className="text-xs text-red-400 font-medium">Listening...</span>
+            {transcript && (
+              <span className="text-xs text-text-secondary italic truncate">{transcript}</span>
+            )}
+          </div>
+        )}
+        <div className="flex items-end gap-2 max-w-4xl mx-auto">
+          {/* Mic button */}
+          {sttSupported && (
+            <VoiceMicButton
+              status={sttStatus}
+              onClick={toggleListening}
+              disabled={status !== "connected" || isThinking}
+            />
+          )}
           <div className="flex-1 relative">
             <textarea
               ref={inputRef}
@@ -327,7 +400,9 @@ export default function ChatInterface() {
               onKeyDown={handleKeyDown}
               placeholder={
                 status === "connected"
-                  ? "Describe your teaching context..."
+                  ? sttStatus === "listening"
+                    ? "Listening... speak now"
+                    : "Type or tap the mic to speak..."
                   : "Waiting for connection..."
               }
               disabled={status !== "connected"}
@@ -345,9 +420,33 @@ export default function ChatInterface() {
             </svg>
           </button>
         </div>
-        <p className="text-xs text-text-tertiary text-center mt-2">
-          Press Enter to send, Shift+Enter for new line
-        </p>
+        <div className="flex items-center justify-center gap-4 mt-2">
+          <p className="text-xs text-text-tertiary">
+            {sttSupported ? "Enter to send, mic to speak" : "Press Enter to send, Shift+Enter for new line"}
+          </p>
+          {ttsSupported && (
+            <button
+              type="button"
+              onClick={() => {
+                setTtsEnabled(!ttsEnabled);
+                if (isSpeaking) stopSpeaking();
+              }}
+              className={`flex items-center gap-1 text-xs transition-colors ${
+                ttsEnabled ? "text-accent" : "text-text-tertiary hover:text-text-secondary"
+              }`}
+              title={ttsEnabled ? "Disable voice responses" : "Enable voice responses"}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {ttsEnabled ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                )}
+              </svg>
+              {ttsEnabled ? "Voice on" : "Voice off"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
