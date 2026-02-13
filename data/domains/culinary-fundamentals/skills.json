@@ -1,0 +1,147 @@
+{
+  "domain": "culinary-fundamentals",
+  "version": "1.0.0",
+  "description": "Skills for home cooking education — from kitchen safety and tool identification to meal planning and recipe creation. Designed for homeschool families, community cooking classes, and family education programs.",
+  "setting_constraints": {
+    "environment": "kitchen — home or community kitchen with standard residential equipment",
+    "connectivity": "optional — recipes can be printed; no internet required during cooking",
+    "materials": "kitchen equipment — knives, cutting boards, pots/pans, oven, measuring tools, staple ingredients",
+    "safety": "age-appropriate supervision required, burn prevention, knife safety, allergen awareness, food temperature monitoring",
+    "allergen_protocol": "always check for allergies before any tasting or cooking activity; maintain allergen-free alternatives"
+  },
+  "skills": [
+    {
+      "id": "identify-kitchen-tools",
+      "label": "Can identify and name common kitchen tools: chef's knife, paring knife, cutting board, whisk, spatula, measuring cups/spoons, thermometer",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "kitchen-safety-basics",
+      "label": "Can demonstrate safe kitchen practices: hand washing, handling hot surfaces, preventing cross-contamination, fire safety",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "measure-ingredients",
+      "label": "Can accurately measure dry and liquid ingredients using cups, spoons, and a kitchen scale",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["identify-kitchen-tools"]
+    },
+    {
+      "id": "basic-knife-skills",
+      "label": "Can safely hold a knife and perform basic cuts: rough chop, dice, mince, and slice with consistent size",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["identify-kitchen-tools", "kitchen-safety-basics"]
+    },
+    {
+      "id": "control-stovetop-heat",
+      "label": "Can manage stovetop temperature: adjust between low/medium/high, recognize when oil shimmers vs smokes, maintain a simmer vs boil",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["kitchen-safety-basics"]
+    },
+    {
+      "id": "food-safety-temperatures",
+      "label": "Can use a thermometer to check food doneness and explain safe internal temperatures for meat, poultry, and leftovers",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["kitchen-safety-basics", "identify-kitchen-tools"]
+    },
+    {
+      "id": "read-follow-recipe",
+      "label": "Can read a recipe, identify ingredients and steps, and follow it sequentially from start to finish",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["measure-ingredients", "identify-kitchen-tools"]
+    },
+    {
+      "id": "saute-and-stir-fry",
+      "label": "Can saut\u00e9 vegetables and proteins: manage oil temperature, avoid overcrowding the pan, achieve browning without burning",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["basic-knife-skills", "control-stovetop-heat"]
+    },
+    {
+      "id": "make-basic-sauce",
+      "label": "Can prepare a basic sauce: pan sauce, vinaigrette, or roux-based sauce with correct consistency",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["control-stovetop-heat", "measure-ingredients"]
+    },
+    {
+      "id": "cook-grains-and-pasta",
+      "label": "Can cook rice, pasta, and other grains to proper doneness using correct water ratios and timing",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["control-stovetop-heat", "measure-ingredients"]
+    },
+    {
+      "id": "make-basic-dough",
+      "label": "Can prepare a simple dough (bread, pizza, or biscuit): mix, knead, and recognize proper texture and elasticity",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["measure-ingredients", "read-follow-recipe"]
+    },
+    {
+      "id": "taste-and-adjust-seasoning",
+      "label": "Can taste a dish and adjust salt, acid, fat, and heat to improve flavor balance",
+      "bloom_level": "analysis",
+      "assessable": true,
+      "dependencies": ["saute-and-stir-fry", "make-basic-sauce"]
+    },
+    {
+      "id": "identify-flavor-profiles",
+      "label": "Can identify the five basic tastes (salt, sweet, sour, bitter, umami) and common herbs/spices by smell and taste",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["kitchen-safety-basics"]
+    },
+    {
+      "id": "plan-mise-en-place",
+      "label": "Can organize ingredients and tools before cooking: read recipe fully, prep all ingredients, arrange workspace efficiently",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["read-follow-recipe", "basic-knife-skills"]
+    },
+    {
+      "id": "scale-recipe",
+      "label": "Can double, halve, or scale a recipe for a different number of servings while maintaining correct proportions",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["read-follow-recipe", "measure-ingredients"]
+    },
+    {
+      "id": "evaluate-dish-quality",
+      "label": "Can evaluate a finished dish on taste, texture, appearance, and temperature, and identify what went wrong if it failed",
+      "bloom_level": "evaluation",
+      "assessable": true,
+      "dependencies": ["taste-and-adjust-seasoning", "identify-flavor-profiles"]
+    },
+    {
+      "id": "cook-complete-meal",
+      "label": "Can prepare a complete meal with protein, starch, and vegetable, timing all components to finish together",
+      "bloom_level": "synthesis",
+      "assessable": true,
+      "dependencies": ["saute-and-stir-fry", "cook-grains-and-pasta", "plan-mise-en-place", "food-safety-temperatures"]
+    },
+    {
+      "id": "adapt-recipe-for-restrictions",
+      "label": "Can modify a recipe to accommodate dietary restrictions (gluten-free, dairy-free, vegetarian) while preserving flavor and texture",
+      "bloom_level": "analysis",
+      "assessable": true,
+      "dependencies": ["identify-flavor-profiles", "scale-recipe", "read-follow-recipe"]
+    },
+    {
+      "id": "design-weekly-meal-plan",
+      "label": "Can design a balanced weekly meal plan considering nutrition, budget, dietary restrictions, ingredient reuse, and prep time",
+      "bloom_level": "synthesis",
+      "assessable": true,
+      "dependencies": ["cook-complete-meal", "adapt-recipe-for-restrictions", "evaluate-dish-quality", "scale-recipe"]
+    }
+  ]
+}
