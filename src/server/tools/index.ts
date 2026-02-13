@@ -11,6 +11,7 @@ import { createDomainTool } from "./create-domain.js";
 import { updateDomainTool } from "./update-domain.js";
 import { composeCurriculumTool } from "./compose-curriculum.js";
 import { advanceCurriculumTool } from "./advance-curriculum.js";
+import { simulateLessonTool } from "./simulate-lesson.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -28,5 +29,6 @@ export const pedagogyServer = createSdkMcpServer({
     updateDomainTool,
     composeCurriculumTool,
     advanceCurriculumTool,
+    simulateLessonTool,
   ],
 });
