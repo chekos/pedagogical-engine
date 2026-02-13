@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+import { BACKEND_URL } from "@/lib/constants";
 
 interface ReasoningTrace {
   id: string;
@@ -369,37 +367,49 @@ export default function MetaPage() {
   };
 
   // Filter traces
-  const filteredTraces = traces
-    ? traces.traces.filter(
-        (t) => filterType === "all" || t.decisionType === filterType
-      )
-    : [];
+  const filteredTraces = useMemo(
+    () =>
+      traces
+        ? traces.traces.filter(
+            (t) => filterType === "all" || t.decisionType === filterType
+          )
+        : [],
+    [traces, filterType]
+  );
 
   // Decision type counts
-  const typeCounts = traces
-    ? traces.traces.reduce(
-        (acc, t) => {
-          acc[t.decisionType] = (acc[t.decisionType] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>
-      )
-    : {};
+  const typeCounts = useMemo(
+    () =>
+      traces
+        ? traces.traces.reduce(
+            (acc, t) => {
+              acc[t.decisionType] = (acc[t.decisionType] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          )
+        : {},
+    [traces]
+  );
 
   // Evidence type counts
-  const evidenceCounts = traces
-    ? traces.traces.reduce(
-        (acc, t) => {
-          for (const [key, val] of Object.entries(t.evidence)) {
-            if (Array.isArray(val) && val.length > 0) {
-              acc[key] = (acc[key] || 0) + 1;
-            }
-          }
-          return acc;
-        },
-        {} as Record<string, number>
-      )
-    : {};
+  const evidenceCounts = useMemo(
+    () =>
+      traces
+        ? traces.traces.reduce(
+            (acc, t) => {
+              for (const [key, val] of Object.entries(t.evidence)) {
+                if (Array.isArray(val) && val.length > 0) {
+                  acc[key] = (acc[key] || 0) + 1;
+                }
+              }
+              return acc;
+            },
+            {} as Record<string, number>
+          )
+        : {},
+    [traces]
+  );
 
   return (
     <div className="min-h-screen bg-surface-0">

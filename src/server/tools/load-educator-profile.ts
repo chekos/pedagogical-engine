@@ -2,8 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, toolResponse } from "./shared.js";
 
 export interface EducatorProfile {
   id: string;
@@ -60,31 +59,13 @@ export const loadEducatorProfileTool = tool(
             };
           })
         );
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                { educators: profiles, count: profiles.length },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+        return toolResponse({ educators: profiles, count: profiles.length });
       } catch {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({
-                educators: [],
-                count: 0,
-                note: "No educator profiles found. Create one during the interview.",
-              }),
-            },
-          ],
-        };
+        return toolResponse({
+          educators: [],
+          count: 0,
+          note: "No educator profiles found. Create one during the interview.",
+        });
       }
     }
 
@@ -103,43 +84,25 @@ export const loadEducatorProfileTool = tool(
         .sort((a, b) => b.confidence - a.confidence)
         .slice(0, 3);
 
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(
-              {
-                profile,
-                summary: {
-                  dominant_styles: topStyles.map(([style, pct]) => ({
-                    style,
-                    percentage: Math.round(pct * 100),
-                  })),
-                  top_strengths: topStrengths.map((s) => s.area),
-                  growth_areas: profile.growth_areas.map((g) => g.area),
-                  active_domains: Object.keys(profile.content_confidence),
-                  total_sessions: profile.session_count,
-                },
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+      return toolResponse({
+        profile,
+        summary: {
+          dominant_styles: topStyles.map(([style, pct]) => ({
+            style,
+            percentage: Math.round(pct * 100),
+          })),
+          top_strengths: topStrengths.map((s) => s.area),
+          growth_areas: profile.growth_areas.map((g) => g.area),
+          active_domains: Object.keys(profile.content_confidence),
+          total_sessions: profile.session_count,
+        },
+      });
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              error: `Educator profile '${educatorId}' not found`,
-              suggestion:
-                "Use load_educator_profile without an ID to list available profiles, or create a new one during the interview.",
-            }),
-          },
-        ],
-      };
+      return toolResponse({
+        error: `Educator profile '${educatorId}' not found`,
+        suggestion:
+          "Use load_educator_profile without an ID to list available profiles, or create a new one during the interview.",
+      });
     }
   }
 );

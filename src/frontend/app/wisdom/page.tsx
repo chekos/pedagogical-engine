@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+import { BACKEND_URL } from "@/lib/constants";
 
 interface TeachingNote {
   id: string;
@@ -139,42 +137,54 @@ export default function WisdomPage() {
   }, [selectedDomain]);
 
   // Get unique skill IDs for filter
-  const skillIds = wisdom
-    ? [...new Set(wisdom.notes.map((n) => n.skillId))].sort()
-    : [];
+  const skillIds = useMemo(
+    () =>
+      wisdom
+        ? [...new Set(wisdom.notes.map((n) => n.skillId))].sort()
+        : [],
+    [wisdom]
+  );
 
   // Filter notes
-  const filteredNotes = wisdom
-    ? wisdom.notes
-        .filter((n) => filterType === "all" || n.type === filterType)
-        .filter((n) => filterSkill === "all" || n.skillId === filterSkill)
-        .sort((a, b) => b.confidence - a.confidence)
-    : [];
+  const filteredNotes = useMemo(
+    () =>
+      wisdom
+        ? wisdom.notes
+            .filter((n) => filterType === "all" || n.type === filterType)
+            .filter((n) => filterSkill === "all" || n.skillId === filterSkill)
+            .sort((a, b) => b.confidence - a.confidence)
+        : [],
+    [wisdom, filterType, filterSkill]
+  );
 
   // Stats
-  const stats = wisdom
-    ? {
-        totalNotes: wisdom.notes.length,
-        totalPatterns: wisdom.patterns.length,
-        avgConfidence:
-          wisdom.notes.length > 0
-            ? Math.round(
-                (wisdom.notes.reduce((s, n) => s + n.confidence, 0) /
-                  wisdom.notes.length) *
-                  100
-              )
-            : 0,
-        typeCounts: wisdom.notes.reduce(
-          (acc, n) => {
-            acc[n.type] = (acc[n.type] || 0) + 1;
-            return acc;
-          },
-          {} as Record<string, number>
-        ),
-        highConfidenceCount: wisdom.notes.filter((n) => n.confidence >= 0.85)
-          .length,
-      }
-    : null;
+  const stats = useMemo(
+    () =>
+      wisdom
+        ? {
+            totalNotes: wisdom.notes.length,
+            totalPatterns: wisdom.patterns.length,
+            avgConfidence:
+              wisdom.notes.length > 0
+                ? Math.round(
+                    (wisdom.notes.reduce((s, n) => s + n.confidence, 0) /
+                      wisdom.notes.length) *
+                      100
+                  )
+                : 0,
+            typeCounts: wisdom.notes.reduce(
+              (acc, n) => {
+                acc[n.type] = (acc[n.type] || 0) + 1;
+                return acc;
+              },
+              {} as Record<string, number>
+            ),
+            highConfidenceCount: wisdom.notes.filter((n) => n.confidence >= 0.85)
+              .length,
+          }
+        : null,
+    [wisdom]
+  );
 
   return (
     <div className="min-h-screen bg-surface-0">

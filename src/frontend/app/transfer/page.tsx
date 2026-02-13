@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+import { BACKEND_URL } from "@/lib/constants";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -106,8 +105,8 @@ export default function TransferPage() {
   // Load learners and domains on mount
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/api/transfer-learners`).then((r) => r.json()),
-      fetch(`${API}/api/domains`).then((r) => r.json()),
+      fetch(`${BACKEND_URL}/api/transfer-learners`).then((r) => r.json()),
+      fetch(`${BACKEND_URL}/api/domains`).then((r) => r.json()),
     ]).then(([learnersRes, domainsRes]) => {
       setLearners(learnersRes.learners || []);
       const domainList = (domainsRes.domains || []).map((d: { slug: string; name: string }) => ({
@@ -140,7 +139,7 @@ export default function TransferPage() {
 
     try {
       const res = await fetch(
-        `${API}/api/transfer/${selectedLearner}?source=${sourceDomain}&target=${targetDomain}`
+        `${BACKEND_URL}/api/transfer/${selectedLearner}?source=${sourceDomain}&target=${targetDomain}`
       );
       const data = await res.json();
       if (!res.ok) {

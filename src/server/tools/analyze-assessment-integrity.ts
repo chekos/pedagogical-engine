@@ -1,5 +1,6 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
+import { toolResponse } from "./shared.js";
 
 /**
  * Analyze assessment integrity — compute confidence modifiers from
@@ -229,31 +230,20 @@ export const analyzeAssessmentIntegrityTool = tool(
       contextGathered
     );
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              learnerId,
-              assessmentCode,
-              integrityLevel,
-              integrityModifier,
-              avgDepthScore: Math.round(avgDepth * 100) / 100,
-              consistencyScore,
-              engagementScore,
-              perSkillModifiers,
-              inconsistencies: inconsistencies ?? [],
-              educatorNotes,
-              integrityMarkdown,
-              contextGathered: contextGathered ?? null,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      learnerId,
+      assessmentCode,
+      integrityLevel,
+      integrityModifier,
+      avgDepthScore: Math.round(avgDepth * 100) / 100,
+      consistencyScore,
+      engagementScore,
+      perSkillModifiers,
+      inconsistencies: inconsistencies ?? [],
+      educatorNotes,
+      integrityMarkdown,
+      contextGathered: contextGathered ?? null,
+    });
   }
 );
 

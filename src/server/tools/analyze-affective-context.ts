@@ -2,8 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, loadGroupLearners, toolResponse } from "./shared.js";
 
 interface AffectiveEntry {
   confidence: string;
@@ -88,7 +87,6 @@ export const analyzeAffectiveContextTool = tool(
       ),
   },
   async ({ groupName, learnerId }) => {
-    const learnersDir = path.join(DATA_DIR, "learners");
     const groupPath = path.join(DATA_DIR, "groups", `${groupName}.md`);
 
     // Load group-level affective context
@@ -96,8 +94,8 @@ export const analyzeAffectiveContextTool = tool(
     try {
       const groupContent = await fs.readFile(groupPath, "utf-8");
       groupAffective = parseGroupAffectiveContext(groupContent);
-    } catch {
-      // Group file not found or no affective context
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== "ENOENT") throw err;
     }
 
     // Load individual learner profiles
@@ -108,33 +106,19 @@ export const analyzeAffectiveContextTool = tool(
       hasAffectiveData: boolean;
     }> = [];
 
-    try {
-      const files = await fs.readdir(learnersDir);
-      for (const file of files) {
-        if (!file.endsWith(".md")) continue;
-        const content = await fs.readFile(
-          path.join(learnersDir, file),
-          "utf-8"
-        );
-        if (!content.includes(`| **Group** | ${groupName} |`)) continue;
+    const groupLearners = await loadGroupLearners(groupName);
+    for (const gl of groupLearners) {
+      // If specific learner requested, skip others
+      if (learnerId && gl.id !== learnerId) continue;
 
-        const id = file.replace(".md", "");
+      const affective = parseAffectiveProfile(gl.content);
 
-        // If specific learner requested, skip others
-        if (learnerId && id !== learnerId) continue;
-
-        const nameMatch = content.match(/# Learner Profile: (.+)/);
-        const affective = parseAffectiveProfile(content);
-
-        learnerProfiles.push({
-          id,
-          name: nameMatch ? nameMatch[1] : id,
-          affective,
-          hasAffectiveData: affective !== null,
-        });
-      }
-    } catch {
-      // No learner files
+      learnerProfiles.push({
+        id: gl.id,
+        name: gl.name,
+        affective,
+        hasAffectiveData: affective !== null,
+      });
     }
 
     // Compute group-level affective summary
@@ -218,37 +202,26 @@ export const analyzeAffectiveContextTool = tool(
       );
     }
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              group: groupName,
-              dataCompleteness: {
-                learnersWithAffectiveData: withData.length,
-                totalLearners: learnerProfiles.length,
-                hasGroupLevelContext: groupAffective !== null,
-              },
-              groupAffective,
-              recommendedGroupTone: groupTone,
-              learners: learnerProfiles.map((l) => ({
-                id: l.id,
-                name: l.name,
-                hasAffectiveData: l.hasAffectiveData,
-                affective: l.affective,
-              })),
-              pairingFlags,
-              pastExperienceFlags,
-              activityRecommendations,
-              confidenceSummary: confidenceLevels,
-              motivationSummary: motivationTypes,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      group: groupName,
+      dataCompleteness: {
+        learnersWithAffectiveData: withData.length,
+        totalLearners: learnerProfiles.length,
+        hasGroupLevelContext: groupAffective !== null,
+      },
+      groupAffective,
+      recommendedGroupTone: groupTone,
+      learners: learnerProfiles.map((l) => ({
+        id: l.id,
+        name: l.name,
+        hasAffectiveData: l.hasAffectiveData,
+        affective: l.affective,
+      })),
+      pairingFlags,
+      pastExperienceFlags,
+      activityRecommendations,
+      confidenceSummary: confidenceLevels,
+      motivationSummary: motivationTypes,
+    });
   }
 );

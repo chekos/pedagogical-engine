@@ -1,8 +1,7 @@
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR } from "./shared.js";
 
 // --- Constants ---
 

@@ -2,7 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-import { DATA_DIR, loadGraph } from "./shared.js";
+import { DATA_DIR, loadGraph, toolResponse } from "./shared.js";
 
 /**
  * Meta-pedagogical reasoning tool: explains the pedagogical reasoning
@@ -50,18 +50,11 @@ export const explainReasoningTool = tool(
     try {
       lessonContent = await fs.readFile(lessonPath, "utf-8");
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              error: `Lesson '${lessonId}' not found`,
-              suggestion:
-                "Check the lesson ID. Use the /api/lessons endpoint to list available lessons.",
-            }),
-          },
-        ],
-      };
+      return toolResponse({
+        error: `Lesson '${lessonId}' not found`,
+        suggestion:
+          "Check the lesson ID. Use the /api/lessons endpoint to list available lessons.",
+      });
     }
 
     // 2. Load stored reasoning traces (if they exist)
@@ -75,8 +68,8 @@ export const explainReasoningTool = tool(
       const raw = await fs.readFile(tracesPath, "utf-8");
       const data = JSON.parse(raw);
       traces = data.traces || [];
-    } catch {
-      // No stored traces — we'll construct evidence from the lesson plan itself
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== "ENOENT") throw err;
     }
 
     // 3. Parse lesson metadata
@@ -148,8 +141,8 @@ export const explainReasoningTool = tool(
             }
           }
         }
-      } catch {
-        // Domain graph not available
+      } catch (err: unknown) {
+        if ((err as { code?: string }).code !== "ENOENT") throw err;
       }
     }
 
@@ -258,8 +251,8 @@ export const explainReasoningTool = tool(
               })
             ),
         };
-      } catch {
-        // No wisdom data
+      } catch (err: unknown) {
+        if ((err as { code?: string }).code !== "ENOENT") throw err;
       }
     }
 
@@ -293,14 +286,7 @@ export const explainReasoningTool = tool(
         "'I've shared my reasoning. You know your students better than I do.'",
     };
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
-    };
+    return toolResponse(result);
   }
 );
 
@@ -419,21 +405,14 @@ export const storeReasoningTracesTool = tool(
         (typeCounts[t.decisionType] || 0) + 1;
     }
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify({
-            stored: true,
-            lessonId,
-            file: filePath,
-            traceCount: traces.length,
-            decisionTypes: typeCounts,
-            message: `Stored ${traces.length} reasoning traces for lesson ${lessonId}. Educators can now ask "why" about any decision in this plan.`,
-          }),
-        },
-      ],
-    };
+    return toolResponse({
+      stored: true,
+      lessonId,
+      file: filePath,
+      traceCount: traces.length,
+      decisionTypes: typeCounts,
+      message: `Stored ${traces.length} reasoning traces for lesson ${lessonId}. Educators can now ask "why" about any decision in this plan.`,
+    });
   }
 );
 

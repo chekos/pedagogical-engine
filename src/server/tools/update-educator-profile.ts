@@ -3,8 +3,7 @@ import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
 import type { EducatorProfile } from "./load-educator-profile.js";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, toolResponse } from "./shared.js";
 
 export const updateEducatorProfileTool = tool(
   "update_educator_profile",
@@ -157,25 +156,14 @@ export const updateEducatorProfileTool = tool(
 
     await fs.writeFile(profilePath, JSON.stringify(profile, null, 2), "utf-8");
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              action: isNew ? "created" : "updated",
-              educatorId,
-              name: profile.name,
-              updated: now,
-              session_count: profile.session_count,
-              debrief_count: profile.debrief_count,
-              domains: Object.keys(profile.content_confidence),
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      action: isNew ? "created" : "updated",
+      educatorId,
+      name: profile.name,
+      updated: now,
+      session_count: profile.session_count,
+      debrief_count: profile.debrief_count,
+      domains: Object.keys(profile.content_confidence),
+    });
   }
 );

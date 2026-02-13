@@ -2,8 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, toolResponse } from "./shared.js";
 
 export const composeLessonPlanTool = tool(
   "compose_lesson_plan",
@@ -59,32 +58,21 @@ export const composeLessonPlanTool = tool(
 
     await fs.writeFile(filePath, planContent, "utf-8");
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              title,
-              file: filePath,
-              filename,
-              domain,
-              group: groupName,
-              topic,
-              duration,
-              setting: setting ?? "not specified",
-              educator: educatorName ?? "not specified",
-              objectives,
-              targetSkills,
-              constraints: constraints ?? "none",
-              created: now.toISOString(),
-              planContent,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      title,
+      file: filePath,
+      filename,
+      domain,
+      group: groupName,
+      topic,
+      duration,
+      setting: setting ?? "not specified",
+      educator: educatorName ?? "not specified",
+      objectives,
+      targetSkills,
+      constraints: constraints ?? "none",
+      created: now.toISOString(),
+      planContent,
+    });
   }
 );

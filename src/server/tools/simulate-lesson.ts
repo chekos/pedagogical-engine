@@ -2,7 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-import { loadGraph, DATA_DIR, type Skill, type SkillGraph } from "./shared.js";
+import { loadGraph, DATA_DIR, parseLearnerProfile, parseGroupMembers, toolResponse, type Skill, type SkillGraph } from "./shared.js";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -96,42 +96,6 @@ interface SimulationResult {
 
 // ─── Helpers ────────────────────────────────────────────────────
 
-/** Parse learner profile markdown into a skill map */
-function parseLearnerProfile(content: string): { assessed: Record<string, number>; inferred: Record<string, number> } {
-  const assessed: Record<string, number> = {};
-  const inferred: Record<string, number> = {};
-
-  // Parse assessed skills
-  const assessedSection = content.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
-  for (const line of assessedSection.split("\n")) {
-    const match = line.match(/^- ([^:]+):\s*([\d.]+)\s*confidence/);
-    if (match) {
-      assessed[match[1].trim()] = parseFloat(match[2]);
-    }
-  }
-
-  // Parse inferred skills
-  const inferredSection = content.split("## Inferred Skills")[1]?.split("##")[0] ?? "";
-  for (const line of inferredSection.split("\n")) {
-    const match = line.match(/^- ([^:]+):\s*([\d.]+)\s*confidence/);
-    if (match) {
-      inferred[match[1].trim()] = parseFloat(match[2]);
-    }
-  }
-
-  return { assessed, inferred };
-}
-
-/** Parse group members from group markdown */
-function parseGroupMembers(content: string): Array<{ id: string; name: string }> {
-  const members: Array<{ id: string; name: string }> = [];
-  const memberRegex = /- (.+?) \(`([^)]+)`\)/g;
-  let match;
-  while ((match = memberRegex.exec(content)) !== null) {
-    members.push({ id: match[2], name: match[1] });
-  }
-  return members;
-}
 
 /** Extract skills mentioned in a lesson section based on skill IDs and labels */
 function extractSectionSkills(
@@ -405,14 +369,24 @@ async function runSimulation(
     try {
       const profilePath = path.join(DATA_DIR, "learners", `${member.id}.md`);
       const profileContent = await fs.readFile(profilePath, "utf-8");
-      const { assessed, inferred } = parseLearnerProfile(profileContent);
+      const profile = parseLearnerProfile(profileContent);
+      const assessed: Record<string, number> = {};
+      const inferred: Record<string, number> = {};
+      for (const s of profile.skills) {
+        if (s.source === "assessed") {
+          assessed[s.skillId] = s.confidence;
+        } else {
+          inferred[s.skillId] = s.confidence;
+        }
+      }
       learners.push({
         id: member.id,
         name: member.name,
         assessed,
         inferred,
       });
-    } catch {
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== "ENOENT") throw err;
       // Learner profile not found — treat as empty
       learners.push({
         id: member.id,
@@ -600,25 +574,10 @@ export const simulateLessonTool = tool(
     try {
       const result = await runSimulation(lessonId, domain, groupName);
 
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
+      return toolResponse(result);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ error: message }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({ error: message }, true);
     }
   }
 );

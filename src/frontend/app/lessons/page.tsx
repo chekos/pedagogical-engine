@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import ExportButton from "@/components/export-button";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+import { BACKEND_URL } from "@/lib/constants";
 
 export default function LessonsPage() {
   const [lessons, setLessons] = useState<string[]>([]);

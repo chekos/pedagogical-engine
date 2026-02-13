@@ -17,6 +17,7 @@ import {
   ConnectionLineType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { BLOOM_COLORS } from "@/lib/constants";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -51,15 +52,6 @@ export interface SkillGraphData {
 // ─── Constants ──────────────────────────────────────────────────
 
 const BLOOM_LEVELS = ["knowledge", "comprehension", "application", "analysis", "synthesis", "evaluation"];
-
-const BLOOM_COLORS: Record<string, string> = {
-  knowledge: "#64748b",
-  comprehension: "#06b6d4",
-  application: "#22c55e",
-  analysis: "#f59e0b",
-  synthesis: "#a855f7",
-  evaluation: "#ef4444",
-};
 
 const BLOOM_LABELS: Record<string, string> = {
   knowledge: "Remember",

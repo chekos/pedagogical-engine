@@ -2,19 +2,12 @@
 // Includes historical time-series snapshots, lesson effectiveness metrics,
 // and computed analytics derived from the learner profiles in data/learners/.
 
+import { BLOOM_COLORS } from "./constants";
+
 // ─── Bloom's taxonomy levels ─────────────────────────────────────
 
 export const BLOOM_LEVELS = ["knowledge", "comprehension", "application", "analysis", "synthesis", "evaluation"] as const;
 export type BloomLevel = typeof BLOOM_LEVELS[number];
-
-export const BLOOM_COLORS: Record<BloomLevel, string> = {
-  knowledge: "#6366f1",
-  comprehension: "#8b5cf6",
-  application: "#3b82f6",
-  analysis: "#f59e0b",
-  synthesis: "#10b981",
-  evaluation: "#ef4444",
-};
 
 // ─── Types ───────────────────────────────────────────────────────
 

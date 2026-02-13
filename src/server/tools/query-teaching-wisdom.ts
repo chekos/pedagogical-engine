@@ -2,43 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
-
-interface TeachingNote {
-  id: string;
-  skillId: string;
-  type: string;
-  observation: string;
-  confidence: number;
-  sessionCount: number;
-  confirmedIn: string[];
-  context: Record<string, unknown>;
-  source: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface TeachingPattern {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  affectedSkills: string[];
-  confidence: number;
-  sessionCount: number;
-  recommendation: string;
-  createdAt: string;
-}
-
-interface TeachingNotesData {
-  domain: string;
-  version: string;
-  sessionCount: number;
-  lastUpdated: string;
-  notes: TeachingNote[];
-  patterns: TeachingPattern[];
-}
+import { DATA_DIR, toolResponse, TeachingNote, TeachingPattern, TeachingNotesData } from "./shared.js";
 
 export const queryTeachingWisdomTool = tool(
   "query_teaching_wisdom",
@@ -86,20 +50,13 @@ export const queryTeachingWisdomTool = tool(
       const raw = await fs.readFile(notesPath, "utf-8");
       data = JSON.parse(raw);
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              domain,
-              found: false,
-              message: `No teaching wisdom found for domain '${domain}'. This domain hasn't accumulated any teaching notes yet. After sessions are taught and debriefed, wisdom will accumulate here.`,
-              notes: [],
-              patterns: [],
-            }),
-          },
-        ],
-      };
+      return toolResponse({
+        domain,
+        found: false,
+        message: `No teaching wisdom found for domain '${domain}'. This domain hasn't accumulated any teaching notes yet. After sessions are taught and debriefed, wisdom will accumulate here.`,
+        notes: [],
+        patterns: [],
+      });
     }
 
     const threshold = minConfidence ?? 0;
@@ -151,43 +108,32 @@ export const queryTeachingWisdomTool = tool(
       typeCounts[n.type] = (typeCounts[n.type] || 0) + 1;
     }
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              domain,
-              found: true,
-              totalSessionsAnalyzed: data.sessionCount,
-              lastUpdated: data.lastUpdated,
-              query: {
-                skillIds: skillIds ?? "all",
-                noteTypes: noteTypes ?? "all",
-                minConfidence: threshold,
-                groupLevel: groupLevel ?? "all",
-              },
-              summary: {
-                notesReturned: filteredNotes.length,
-                patternsReturned: filteredPatterns.length,
-                noteTypeBreakdown: typeCounts,
-                avgConfidence:
-                  filteredNotes.length > 0
-                    ? Math.round(
-                        (filteredNotes.reduce((s, n) => s + n.confidence, 0) /
-                          filteredNotes.length) *
-                          100
-                      ) / 100
-                    : 0,
-              },
-              notes: filteredNotes,
-              patterns: filteredPatterns,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      domain,
+      found: true,
+      totalSessionsAnalyzed: data.sessionCount,
+      lastUpdated: data.lastUpdated,
+      query: {
+        skillIds: skillIds ?? "all",
+        noteTypes: noteTypes ?? "all",
+        minConfidence: threshold,
+        groupLevel: groupLevel ?? "all",
+      },
+      summary: {
+        notesReturned: filteredNotes.length,
+        patternsReturned: filteredPatterns.length,
+        noteTypeBreakdown: typeCounts,
+        avgConfidence:
+          filteredNotes.length > 0
+            ? Math.round(
+                (filteredNotes.reduce((s, n) => s + n.confidence, 0) /
+                  filteredNotes.length) *
+                  100
+              ) / 100
+            : 0,
+      },
+      notes: filteredNotes,
+      patterns: filteredPatterns,
+    });
   }
 );

@@ -3,8 +3,7 @@ import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
 import { nanoid } from "nanoid";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, loadGroupLearners, toolResponse } from "./shared.js";
 
 function slugify(name: string): string {
   return name
@@ -103,51 +102,25 @@ _No constraints recorded yet._
     }
 
     // Load all learner profiles associated with this group
-    const profiles: Array<{ id: string; name: string; content: string }> = [];
-    try {
-      const files = await fs.readdir(learnersDir);
-      for (const file of files) {
-        if (!file.endsWith(".md")) continue;
-        const content = await fs.readFile(
-          path.join(learnersDir, file),
-          "utf-8"
-        );
-        if (content.includes(`| **Group** | ${slug} |`)) {
-          const nameMatch = content.match(/# Learner Profile: (.+)/);
-          profiles.push({
-            id: file.replace(".md", ""),
-            name: nameMatch ? nameMatch[1] : file.replace(".md", ""),
-            content,
-          });
-        }
-      }
-    } catch {
-      // No learner files yet
-    }
+    const groupLearners = await loadGroupLearners(slug);
+    const profiles = groupLearners.map((gl) => ({
+      id: gl.id,
+      name: gl.name,
+      content: gl.content,
+    }));
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              group: slug,
-              domain,
-              isNew,
-              memberCount: profiles.length,
-              groupFile: groupPath,
-              groupContent,
-              profiles: profiles.map((p) => ({
-                id: p.id,
-                name: p.name,
-                content: p.content,
-              })),
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      group: slug,
+      domain,
+      isNew,
+      memberCount: profiles.length,
+      groupFile: groupPath,
+      groupContent,
+      profiles: profiles.map((p) => ({
+        id: p.id,
+        name: p.name,
+        content: p.content,
+      })),
+    });
   }
 );

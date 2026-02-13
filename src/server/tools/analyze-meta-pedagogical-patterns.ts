@@ -2,8 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, toolResponse } from "./shared.js";
 
 /**
  * Meta-pedagogical pattern analysis tool: detects when an educator's
@@ -164,8 +163,8 @@ export const analyzeMetaPedagogicalPatternsTool = tool(
       try {
         const raw = await fs.readFile(historyPath, "utf-8");
         storedHistory = JSON.parse(raw).questions || [];
-      } catch {
-        // No stored history
+      } catch (err: unknown) {
+        if ((err as { code?: string }).code !== "ENOENT") throw err;
       }
     }
 
@@ -269,13 +268,6 @@ export const analyzeMetaPedagogicalPatternsTool = tool(
         "relevant principle in your explanation, but briefly — don't lecture unprompted.",
     };
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
-    };
+    return toolResponse(result);
   }
 );

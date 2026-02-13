@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
-import GroupDashboard from "@/components/visualizations/group-dashboard";
 import ExportButton from "@/components/export-button";
 import { getSkillGraphData, getGroupDashboardData, getLearnerIds } from "@/lib/demo-data";
 
@@ -10,6 +9,12 @@ import { getSkillGraphData, getGroupDashboardData, getLearnerIds } from "@/lib/d
 const SkillDependencyGraph = dynamic(
   () => import("@/components/visualizations/skill-dependency-graph"),
   { ssr: false, loading: () => <GraphSkeleton /> }
+);
+
+// Dynamic import for GroupDashboard (only shown when user clicks tab)
+const GroupDashboard = dynamic(
+  () => import("@/components/visualizations/group-dashboard"),
+  { loading: () => <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" /></div> }
 );
 
 function GraphSkeleton() {

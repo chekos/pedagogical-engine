@@ -5,10 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-const WS_URL = BACKEND_URL.replace(/^http/, "ws");
+import { BACKEND_URL, WS_URL } from "@/lib/constants";
 
 interface LessonSection {
   id: string;
@@ -152,6 +149,13 @@ export default function DebriefPage() {
     setWs(socket);
     return socket;
   }, []);
+
+  // Cleanup WebSocket on unmount
+  useEffect(() => {
+    return () => {
+      ws?.close();
+    };
+  }, [ws]);
 
   // Start the debrief conversation
   const startDebrief = useCallback(() => {

@@ -1,7 +1,7 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
-import { DATA_DIR, safePath } from "./shared.js";
+import { DATA_DIR, safePath, toolResponse } from "./shared.js";
 
 export const advanceCurriculumTool = tool(
   "advance_curriculum",
@@ -25,15 +25,7 @@ export const advanceCurriculumTool = tool(
     // Sanitize slug to prevent path traversal
     const safeSlug = curriculumSlug.replace(/[^a-z0-9-]/g, "-").replace(/^-|-$/g, "");
     if (!safeSlug) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ error: "Invalid curriculum slug" }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({ error: "Invalid curriculum slug" }, true);
     }
     const filePath = safePath(DATA_DIR, "curricula", `${safeSlug}.md`);
 
@@ -41,15 +33,7 @@ export const advanceCurriculumTool = tool(
     try {
       content = await fs.readFile(filePath, "utf-8");
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ error: `Curriculum file not found: ${safeSlug}.md` }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({ error: `Curriculum file not found: ${safeSlug}.md` }, true);
     }
 
     // Parse current status
@@ -62,15 +46,7 @@ export const advanceCurriculumTool = tool(
 
     const totalSessions = sessionNumbers.length;
     if (completedSession > totalSessions) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ error: `Session ${completedSession} does not exist in this curriculum (${totalSessions} sessions total)` }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({ error: `Session ${completedSession} does not exist in this curriculum (${totalSessions} sessions total)` }, true);
     }
 
     // Update the status field
@@ -169,35 +145,24 @@ export const advanceCurriculumTool = tool(
     // Write updated curriculum
     await fs.writeFile(filePath, content, "utf-8");
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              curriculumSlug,
-              completedSession,
-              totalSessions,
-              remainingSessions,
-              outcome,
-              adjustments,
-              skillsConfirmed: skillsConfirmed || [],
-              skillsStruggled: skillsStruggled || [],
-              notes: notes || "",
-              file: filePath,
-              message: `Curriculum updated. Session ${completedSession}/${totalSessions} marked as ${outcome}.${
-                outcome === "struggled"
-                  ? " Remediation recommendations added."
-                  : outcome === "ahead"
-                  ? " Compression recommendations added."
-                  : ""
-              }`,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      curriculumSlug,
+      completedSession,
+      totalSessions,
+      remainingSessions,
+      outcome,
+      adjustments,
+      skillsConfirmed: skillsConfirmed || [],
+      skillsStruggled: skillsStruggled || [],
+      notes: notes || "",
+      file: filePath,
+      message: `Curriculum updated. Session ${completedSession}/${totalSessions} marked as ${outcome}.${
+        outcome === "struggled"
+          ? " Remediation recommendations added."
+          : outcome === "ahead"
+          ? " Compression recommendations added."
+          : ""
+      }`,
+    });
   }
 );

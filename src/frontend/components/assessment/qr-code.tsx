@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import QRCode from "qrcode";
 
 interface QRCodeDisplayProps {
   url: string;
@@ -15,15 +14,18 @@ export default function QRCodeDisplay({ url, size = 200, className = "" }: QRCod
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    QRCode.toCanvas(canvasRef.current, url, {
-      width: size,
-      margin: 2,
-      color: {
-        dark: "#000000",
-        light: "#ffffff",
-      },
-      errorCorrectionLevel: "M",
-    }).catch(console.error);
+    (async () => {
+      const QRCode = await import("qrcode");
+      QRCode.default.toCanvas(canvasRef.current, url, {
+        width: size,
+        margin: 2,
+        color: {
+          dark: "#000000",
+          light: "#ffffff",
+        },
+        errorCorrectionLevel: "M",
+      }).catch(console.error);
+    })();
   }, [url, size]);
 
   return (

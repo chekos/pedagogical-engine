@@ -3,8 +3,8 @@ import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
 import { nanoid } from "nanoid";
+import { DATA_DIR, toolResponse } from "./shared.js";
 
-const DATA_DIR = process.env.DATA_DIR || "./data";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3001";
 
 export const generateAssessmentLinkTool = tool(
@@ -67,26 +67,15 @@ _None yet._
 
     const assessUrl = `${FRONTEND_URL}/assess/${code}`;
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              code,
-              url: assessUrl,
-              group: groupName,
-              domain,
-              targetSkills: targetSkills ?? "full_domain",
-              targetLearners: learnerIds ?? "all_members",
-              file: path.join(assessmentsDir, filename),
-              created: now.toISOString(),
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      code,
+      url: assessUrl,
+      group: groupName,
+      domain,
+      targetSkills: targetSkills ?? "full_domain",
+      targetLearners: learnerIds ?? "all_members",
+      file: path.join(assessmentsDir, filename),
+      created: now.toISOString(),
+    });
   }
 );

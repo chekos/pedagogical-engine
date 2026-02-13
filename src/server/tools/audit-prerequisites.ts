@@ -2,8 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, loadGroupLearners, toolResponse } from "./shared.js";
 
 export const auditPrerequisitesTool = tool(
   "audit_prerequisites",
@@ -32,7 +31,6 @@ export const auditPrerequisitesTool = tool(
   },
   async ({ domain, groupName, targetSkills, constraints }) => {
     const domainDir = path.join(DATA_DIR, "domains", domain);
-    const learnersDir = path.join(DATA_DIR, "learners");
 
     // Load skill graph
     let skills: Array<{
@@ -55,15 +53,7 @@ export const auditPrerequisitesTool = tool(
       skills = JSON.parse(skillsRaw).skills;
       edges = JSON.parse(depsRaw).edges;
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ error: `Domain '${domain}' not found` }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({ error: `Domain '${domain}' not found` }, true);
     }
 
     // Find all prerequisites for target skills (BFS)
@@ -91,58 +81,33 @@ export const auditPrerequisitesTool = tool(
       weakPrereqs: Array<{ skill: string; confidence: number }>;
     }> = [];
 
-    try {
-      const files = await fs.readdir(learnersDir);
-      for (const file of files) {
-        if (!file.endsWith(".md")) continue;
-        const content = await fs.readFile(
-          path.join(learnersDir, file),
-          "utf-8"
-        );
-        if (!content.includes(`| **Group** | ${groupName} |`)) continue;
-
-        const nameMatch = content.match(/# Learner Profile: (.+)/);
-        const name = nameMatch ? nameMatch[1] : file.replace(".md", "");
-        const id = file.replace(".md", "");
-
-        // Extract skills from profile
-        const learnerSkills = new Map<string, number>();
-        const skillSections = ["## Assessed Skills", "## Inferred Skills"];
-        for (const section of skillSections) {
-          const sectionContent = content.split(section)[1]?.split("##")[0] ?? "";
-          for (const line of sectionContent.split("\n")) {
-            const match = line.match(/^- (.+?):\s*([\d.]+)\s*confidence/i);
-            if (match) {
-              const existing = learnerSkills.get(match[1].trim()) ?? 0;
-              learnerSkills.set(
-                match[1].trim(),
-                Math.max(existing, parseFloat(match[2]))
-              );
-            }
-          }
-        }
-
-        const missing: string[] = [];
-        const weak: Array<{ skill: string; confidence: number }> = [];
-
-        for (const prereq of allPrereqs) {
-          const conf = learnerSkills.get(prereq);
-          if (conf === undefined) {
-            missing.push(prereq);
-          } else if (conf < 0.6) {
-            weak.push({ skill: prereq, confidence: conf });
-          }
-        }
-
-        learnerGaps.push({
-          name,
-          id,
-          missingPrereqs: missing,
-          weakPrereqs: weak,
-        });
+    const groupLearners = await loadGroupLearners(groupName);
+    for (const gl of groupLearners) {
+      // Build skill map from parsed profile (take max confidence across assessed/inferred)
+      const learnerSkills = new Map<string, number>();
+      for (const s of gl.profile.skills) {
+        const existing = learnerSkills.get(s.skillId) ?? 0;
+        learnerSkills.set(s.skillId, Math.max(existing, s.confidence));
       }
-    } catch {
-      // No learner files
+
+      const missing: string[] = [];
+      const weak: Array<{ skill: string; confidence: number }> = [];
+
+      for (const prereq of allPrereqs) {
+        const conf = learnerSkills.get(prereq);
+        if (conf === undefined) {
+          missing.push(prereq);
+        } else if (conf < 0.6) {
+          weak.push({ skill: prereq, confidence: conf });
+        }
+      }
+
+      learnerGaps.push({
+        name: gl.name,
+        id: gl.id,
+        missingPrereqs: missing,
+        weakPrereqs: weak,
+      });
     }
 
     // Compute group-level gaps
@@ -218,35 +183,24 @@ export const auditPrerequisitesTool = tool(
       }
     }
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              domain,
-              group: groupName,
-              targetSkills,
-              prerequisites: [...allPrereqs],
-              prerequisiteCount: allPrereqs.size,
-              criticalGaps,
-              learnerGaps: learnerGaps.map((l) => ({
-                name: l.name,
-                missingCount: l.missingPrereqs.length,
-                weakCount: l.weakPrereqs.length,
-                missingPrereqs: l.missingPrereqs,
-                weakPrereqs: l.weakPrereqs,
-              })),
-              prereqCoverage,
-              logisticsIssues,
-              feasible: criticalGaps.length === 0,
-              constraints: constraints ?? {},
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      domain,
+      group: groupName,
+      targetSkills,
+      prerequisites: [...allPrereqs],
+      prerequisiteCount: allPrereqs.size,
+      criticalGaps,
+      learnerGaps: learnerGaps.map((l) => ({
+        name: l.name,
+        missingCount: l.missingPrereqs.length,
+        weakCount: l.weakPrereqs.length,
+        missingPrereqs: l.missingPrereqs,
+        weakPrereqs: l.weakPrereqs,
+      })),
+      prereqCoverage,
+      logisticsIssues,
+      feasible: criticalGaps.length === 0,
+      constraints: constraints ?? {},
+    });
   }
 );

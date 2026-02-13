@@ -2,8 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, toolResponse, TeachingNote, TeachingPattern, TeachingNotesData } from "./shared.js";
 
 interface DebriefSectionFeedback {
   sectionTitle: string;
@@ -26,41 +25,6 @@ interface ParsedDebrief {
     noteType: string;
     note: string;
   }>;
-}
-
-interface TeachingNote {
-  id: string;
-  skillId: string;
-  type: string;
-  observation: string;
-  confidence: number;
-  sessionCount: number;
-  confirmedIn: string[];
-  context: Record<string, unknown>;
-  source: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface TeachingPattern {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  affectedSkills: string[];
-  confidence: number;
-  sessionCount: number;
-  recommendation: string;
-  createdAt: string;
-}
-
-interface TeachingNotesData {
-  domain: string;
-  version: string;
-  sessionCount: number;
-  lastUpdated: string;
-  notes: TeachingNote[];
-  patterns: TeachingPattern[];
 }
 
 function parseDebriefMd(content: string, filename: string): ParsedDebrief {
@@ -157,18 +121,11 @@ export const analyzeTeachingPatternsTool = tool(
       const files = await fs.readdir(debriefDir);
       debriefFiles = files.filter((f) => f.endsWith(".md"));
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              domain,
-              analyzed: false,
-              message: "No debriefs directory found. Run post-session debriefs first.",
-            }),
-          },
-        ],
-      };
+      return toolResponse({
+        domain,
+        analyzed: false,
+        message: "No debriefs directory found. Run post-session debriefs first.",
+      });
     }
 
     // Parse all debriefs for this domain
@@ -182,18 +139,11 @@ export const analyzeTeachingPatternsTool = tool(
     }
 
     if (debriefs.length === 0) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              domain,
-              analyzed: false,
-              message: `No debriefs found for domain '${domain}'.`,
-            }),
-          },
-        ],
-      };
+      return toolResponse({
+        domain,
+        analyzed: false,
+        message: `No debriefs found for domain '${domain}'.`,
+      });
     }
 
     // Load existing teaching notes
@@ -348,33 +298,22 @@ export const analyzeTeachingPatternsTool = tool(
     existingData.lastUpdated = now.toISOString();
     await fs.writeFile(notesPath, JSON.stringify(existingData, null, 2), "utf-8");
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              domain,
-              analyzed: true,
-              debriefsAnalyzed: debriefs.length,
-              promotionThreshold: threshold,
-              patternsDetected: detectedPatterns.length,
-              patterns: detectedPatterns,
-              noteAggregation: Object.fromEntries(
-                Array.from(noteAggregation.entries()).map(([key, val]) => [
-                  key,
-                  { count: val.count, type: val.type, skillId: val.skillId },
-                ])
-              ),
-              existingNotesCount: existingData.notes.length,
-              existingPatternsCount: existingData.patterns.length,
-              timestamp: now.toISOString(),
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      domain,
+      analyzed: true,
+      debriefsAnalyzed: debriefs.length,
+      promotionThreshold: threshold,
+      patternsDetected: detectedPatterns.length,
+      patterns: detectedPatterns,
+      noteAggregation: Object.fromEntries(
+        Array.from(noteAggregation.entries()).map(([key, val]) => [
+          key,
+          { count: val.count, type: val.type, skillId: val.skillId },
+        ])
+      ),
+      existingNotesCount: existingData.notes.length,
+      existingPatternsCount: existingData.patterns.length,
+      timestamp: now.toISOString(),
+    });
   }
 );

@@ -2,11 +2,7 @@
 
 import { useState, useCallback } from "react";
 import QRCodeDisplay from "@/components/assessment/qr-code";
-
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-const FRONTEND_URL =
-  process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
+import { BACKEND_URL, FRONTEND_URL } from "@/lib/constants";
 
 interface AssessmentLink {
   code: string;

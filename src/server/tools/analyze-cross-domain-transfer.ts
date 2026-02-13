@@ -2,10 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-import { loadGraph, type Skill, type Edge, type SkillGraph } from "./shared.js";
-import { BLOOM_ORDER } from "./domain-utils.js";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { loadGraph, DATA_DIR, BLOOM_ORDER, parseLearnerProfile as sharedParseLearnerProfile, type Skill, type Edge, type SkillGraph } from "./shared.js";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -154,60 +151,20 @@ function parseLearnerProfile(content: string): {
   domains: Set<string>;
   skills: LearnerSkill[];
 } {
-  const idMatch = content.match(/\| \*\*ID\*\* \| ([^ |]+)/);
-  const nameMatch = content.match(/\| \*\*Name\*\* \| ([^|]+)/);
-  const domainMatch = content.match(/\| \*\*Domain\*\* \| ([^|]+)/);
+  const profile = sharedParseLearnerProfile(content);
 
+  const idMatch = content.match(/\| \*\*ID\*\* \| ([^ |]+)/);
   const id = idMatch?.[1]?.trim() ?? "unknown";
-  const name = nameMatch?.[1]?.trim() ?? id;
-  const primaryDomain = domainMatch?.[1]?.trim() ?? "";
 
   const domains = new Set<string>();
-  if (primaryDomain) domains.add(primaryDomain);
+  if (profile.domain) domains.add(profile.domain);
 
-  const skills: LearnerSkill[] = [];
-
-  // Parse assessed skills
-  const assessedMatch = content.match(
-    /## Assessed Skills\n\n([\s\S]*?)(?=\n## |\n$)/
-  );
-  if (assessedMatch) {
-    const lines = assessedMatch[1].split("\n").filter((l) => l.startsWith("- "));
-    for (const line of lines) {
-      const match = line.match(
-        /- ([^:]+): ([\d.]+) confidence.*?(?:demonstrated at (\w+) level)?/
-      );
-      if (match) {
-        skills.push({
-          skillId: match[1].trim(),
-          confidence: parseFloat(match[2]),
-          bloomLevel: match[3] || "unknown",
-          source: "assessed",
-        });
-      }
-    }
-  }
-
-  // Parse inferred skills
-  const inferredMatch = content.match(
-    /## Inferred Skills\n\n([\s\S]*?)(?=\n## |\n$)/
-  );
-  if (inferredMatch) {
-    const lines = inferredMatch[1]
-      .split("\n")
-      .filter((l) => l.startsWith("- "));
-    for (const line of lines) {
-      const match = line.match(/- ([^:]+): ([\d.]+) confidence/);
-      if (match) {
-        skills.push({
-          skillId: match[1].trim(),
-          confidence: parseFloat(match[2]),
-          bloomLevel: "unknown",
-          source: "inferred",
-        });
-      }
-    }
-  }
+  const skills: LearnerSkill[] = profile.skills.map((s) => ({
+    skillId: s.skillId,
+    confidence: s.confidence,
+    bloomLevel: s.bloomLevel,
+    source: s.source,
+  }));
 
   // Check for cross-domain sections (e.g., "## Domain: outdoor-ecology")
   const domainSections = content.matchAll(
@@ -232,7 +189,7 @@ function parseLearnerProfile(content: string): {
     }
   }
 
-  return { id, name, domains, skills };
+  return { id, name: profile.name, domains, skills };
 }
 
 // ─── Core transfer analysis ───────────────────────────────────────
@@ -457,6 +414,74 @@ function computeOverallReadiness(
   return { level, score, explanation };
 }
 
+// ─── Reusable core logic ──────────────────────────────────────────
+
+export async function runTransferAnalysis(params: {
+  learnerId: string;
+  sourceDomain: string;
+  targetDomain: string;
+}): Promise<TransferSummary> {
+  const { learnerId, sourceDomain, targetDomain } = params;
+
+  // Load learner profile
+  const learnerPath = path.join(DATA_DIR, "learners", `${learnerId}.md`);
+  const learnerContent = await fs.readFile(learnerPath, "utf-8");
+
+  // Load both domain graphs
+  const [sourceGraph, targetGraph] = await Promise.all([
+    loadGraph(sourceDomain),
+    loadGraph(targetDomain),
+  ]);
+
+  // Parse learner profile
+  const learner = parseLearnerProfile(learnerContent);
+
+  // Filter to source domain skills
+  const sourceSkillIds = new Set(sourceGraph.skills.map((s) => s.id));
+  const learnerSourceSkills = learner.skills.filter((s) =>
+    sourceSkillIds.has(s.skillId)
+  );
+
+  if (learnerSourceSkills.length === 0) {
+    throw new Error(
+      `Learner '${learnerId}' has no assessed skills in '${sourceDomain}'. Cannot analyze transfer without source skills.`
+    );
+  }
+
+  // Fill in bloom levels from the graph for skills that didn't parse them
+  for (const ls of learnerSourceSkills) {
+    if (ls.bloomLevel === "unknown") {
+      const graphSkill = sourceGraph.skills.find((s) => s.id === ls.skillId);
+      if (graphSkill) ls.bloomLevel = graphSkill.bloom_level;
+    }
+  }
+
+  // Run transfer analysis
+  const candidates = analyzeTransfer(
+    sourceGraph,
+    targetGraph,
+    sourceDomain,
+    targetDomain,
+    learnerSourceSkills
+  );
+
+  const assessmentRec = generateAssessmentRecommendation(
+    candidates,
+    targetGraph
+  );
+
+  const readiness = computeOverallReadiness(candidates);
+
+  return {
+    learner: { id: learner.id, name: learner.name },
+    sourceDomain,
+    targetDomain,
+    transferCandidates: candidates,
+    assessmentRecommendation: assessmentRec,
+    overallReadiness: readiness,
+  };
+}
+
 // ─── MCP Tool ─────────────────────────────────────────────────────
 
 export const analyzeCrossDomainTransferTool = tool(
@@ -472,112 +497,33 @@ export const analyzeCrossDomainTransferTool = tool(
       .describe("Domain where we want to predict readiness"),
   },
   async ({ learnerId, sourceDomain, targetDomain }) => {
-    // Load learner profile
-    const learnerPath = path.join(DATA_DIR, "learners", `${learnerId}.md`);
-    let learnerContent: string;
     try {
-      learnerContent = await fs.readFile(learnerPath, "utf-8");
-    } catch {
+      const summary = await runTransferAnalysis({
+        learnerId,
+        sourceDomain,
+        targetDomain,
+      });
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(summary, null, 2),
+          },
+        ],
+      };
+    } catch (err) {
       return {
         content: [
           {
             type: "text" as const,
             text: JSON.stringify({
-              error: `Learner profile '${learnerId}' not found`,
+              error: (err as Error).message,
             }),
           },
         ],
         isError: true,
       };
     }
-
-    // Load both domain graphs
-    let sourceGraph: SkillGraph;
-    let targetGraph: SkillGraph;
-    try {
-      [sourceGraph, targetGraph] = await Promise.all([
-        loadGraph(sourceDomain),
-        loadGraph(targetDomain),
-      ]);
-    } catch (e) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              error: `Failed to load domain graphs: ${(e as Error).message}`,
-            }),
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    // Parse learner profile
-    const learner = parseLearnerProfile(learnerContent);
-
-    // Filter to source domain skills
-    const sourceSkillIds = new Set(sourceGraph.skills.map((s) => s.id));
-    const learnerSourceSkills = learner.skills.filter((s) =>
-      sourceSkillIds.has(s.skillId)
-    );
-
-    if (learnerSourceSkills.length === 0) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              error: `Learner '${learnerId}' has no assessed skills in '${sourceDomain}'. Cannot analyze transfer without source skills.`,
-              suggestion:
-                "Assess the learner in the source domain first, then analyze cross-domain transfer.",
-            }),
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    // Fill in bloom levels from the graph for skills that didn't parse them
-    for (const ls of learnerSourceSkills) {
-      if (ls.bloomLevel === "unknown") {
-        const graphSkill = sourceGraph.skills.find((s) => s.id === ls.skillId);
-        if (graphSkill) ls.bloomLevel = graphSkill.bloom_level;
-      }
-    }
-
-    // Run transfer analysis
-    const candidates = analyzeTransfer(
-      sourceGraph,
-      targetGraph,
-      sourceDomain,
-      targetDomain,
-      learnerSourceSkills
-    );
-
-    const assessmentRec = generateAssessmentRecommendation(
-      candidates,
-      targetGraph
-    );
-
-    const readiness = computeOverallReadiness(candidates);
-
-    const summary: TransferSummary = {
-      learner: { id: learner.id, name: learner.name },
-      sourceDomain,
-      targetDomain,
-      transferCandidates: candidates,
-      assessmentRecommendation: assessmentRec,
-      overallReadiness: readiness,
-    };
-
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(summary, null, 2),
-        },
-      ],
-    };
   }
 );

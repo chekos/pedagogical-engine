@@ -1,11 +1,6 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
-import fs from "fs/promises";
-import path from "path";
-import { loadGraph, type SkillGraph } from "./shared.js";
-import { BLOOM_ORDER } from "./domain-utils.js";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { loadGraph, loadGroupLearners, BLOOM_ORDER, type SkillGraph } from "./shared.js";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -30,43 +25,6 @@ interface LearnerSkillMap {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────
-
-function parseLearnerSkillsFromContent(content: string): Map<string, number> {
-  const skills = new Map<string, number>();
-  for (const section of ["## Assessed Skills", "## Inferred Skills"]) {
-    const sectionContent = content.split(section)[1]?.split("##")[0] ?? "";
-    for (const line of sectionContent.split("\n")) {
-      const match = line.match(/^- (.+?):\s*([\d.]+)\s*confidence/i);
-      if (match) {
-        const existing = skills.get(match[1].trim()) ?? 0;
-        skills.set(match[1].trim(), Math.max(existing, parseFloat(match[2])));
-      }
-    }
-  }
-  return skills;
-}
-
-async function loadGroupLearners(groupName: string): Promise<LearnerSkillMap[]> {
-  const learnersDir = path.join(DATA_DIR, "learners");
-  const learners: LearnerSkillMap[] = [];
-  try {
-    const files = await fs.readdir(learnersDir);
-    for (const file of files) {
-      if (!file.endsWith(".md")) continue;
-      const content = await fs.readFile(path.join(learnersDir, file), "utf-8");
-      if (!content.includes(`| **Group** | ${groupName} |`)) continue;
-      const nameMatch = content.match(/# Learner Profile: (.+)/);
-      learners.push({
-        name: nameMatch ? nameMatch[1] : file.replace(".md", ""),
-        id: file.replace(".md", ""),
-        skills: parseLearnerSkillsFromContent(content),
-      });
-    }
-  } catch {
-    // No learner files
-  }
-  return learners;
-}
 
 /** Check if teaching skills in the given sequence violates dependency ordering */
 function checkDependencyOrdering(
@@ -476,6 +434,107 @@ function checkConstraintViolations(
   return tensions;
 }
 
+// ─── Reusable core logic ─────────────────────────────────────────
+
+export async function runTensionAnalysis(params: {
+  domain: string;
+  groupName: string;
+  targetSkills: string[];
+  durationMinutes?: number;
+  constraints?: Record<string, unknown>;
+}): Promise<object> {
+  const { domain, groupName, targetSkills, durationMinutes, constraints } = params;
+
+  // Load graph
+  const graph = await loadGraph(domain);
+
+  // Load learner profiles
+  const groupLearners = await loadGroupLearners(groupName);
+  const learners: LearnerSkillMap[] = groupLearners.map((gl) => {
+    const skills = new Map<string, number>();
+    for (const s of gl.profile.skills) {
+      const existing = skills.get(s.skillId) ?? 0;
+      skills.set(s.skillId, Math.max(existing, s.confidence));
+    }
+    return { name: gl.name, id: gl.id, skills };
+  });
+
+  // Run all tension checks
+  const tensions: Tension[] = [];
+
+  // 1. Dependency ordering
+  tensions.push(...checkDependencyOrdering(graph, targetSkills));
+
+  // 2. Scope-time mismatch
+  if (durationMinutes) {
+    tensions.push(
+      ...checkScopeTimeMismatch(graph, targetSkills, durationMinutes, learners)
+    );
+  }
+
+  // 3. Prerequisite gaps
+  if (learners.length > 0) {
+    tensions.push(
+      ...checkPrerequisiteGaps(graph, targetSkills, learners)
+    );
+  }
+
+  // 4. Bloom's level mismatch
+  if (learners.length > 0) {
+    tensions.push(
+      ...checkBloomLevelMismatch(graph, targetSkills, learners)
+    );
+  }
+
+  // 5. Constraint violations
+  if (constraints) {
+    const constraintRecord: Record<string, string | string[] | undefined> = {
+      connectivity: constraints.connectivity as string | undefined,
+      setting: constraints.setting as string | undefined,
+      tools: constraints.tools as string[] | undefined,
+    };
+    tensions.push(
+      ...checkConstraintViolations(graph, targetSkills, constraintRecord)
+    );
+  }
+
+  // Sort: critical first, then warning, then info
+  const severityOrder = { critical: 0, warning: 1, info: 2 };
+  tensions.sort(
+    (a, b) => severityOrder[a.severity] - severityOrder[b.severity]
+  );
+
+  // Build summary
+  const criticalCount = tensions.filter((t) => t.severity === "critical").length;
+  const warningCount = tensions.filter((t) => t.severity === "warning").length;
+  const infoCount = tensions.filter((t) => t.severity === "info").length;
+
+  const summary =
+    tensions.length === 0
+      ? "No pedagogical tensions detected. The plan aligns well with the skill graph, learner profiles, and constraints."
+      : `Found ${tensions.length} tension${tensions.length === 1 ? "" : "s"}: ${criticalCount} critical, ${warningCount} warning${warningCount === 1 ? "" : "s"}, ${infoCount} info. ${criticalCount > 0 ? "Critical issues should be addressed before proceeding." : "Review the warnings and consider the suggestions."}`;
+
+  return {
+    domain,
+    group: groupName,
+    targetSkills,
+    durationMinutes: durationMinutes ?? null,
+    tensionCount: tensions.length,
+    summary,
+    critical: criticalCount,
+    warnings: warningCount,
+    info: infoCount,
+    tensions,
+    learnersAnalyzed: learners.length,
+    recommendation:
+      criticalCount > 0
+        ? "I'd recommend addressing the critical tensions before building this lesson plan. I can do what you're asking, but the data suggests these issues will significantly impact the session's success."
+        : warningCount > 0
+          ? "The plan is workable, but I want to flag some concerns. Here's what I'm seeing in the data — you decide what to adjust."
+          : "The plan looks solid. The skill graph, learner profiles, and constraints all align well with your intent.",
+  };
+}
+
 // ─── Main Tool ───────────────────────────────────────────────────
 
 export const analyzeTensionsTool = tool(
@@ -503,111 +562,35 @@ export const analyzeTensionsTool = tool(
       ),
   },
   async ({ domain, groupName, targetSkills, durationMinutes, constraints }) => {
-    // Load graph
-    let graph: SkillGraph;
     try {
-      graph = await loadGraph(domain);
-    } catch {
+      const result = await runTensionAnalysis({
+        domain,
+        groupName,
+        targetSkills,
+        durationMinutes,
+        constraints,
+      });
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (err) {
       return {
         content: [
           {
             type: "text" as const,
             text: JSON.stringify({
-              error: `Domain '${domain}' not found`,
+              error: (err as Error).message,
             }),
           },
         ],
         isError: true,
       };
     }
-
-    // Load learner profiles
-    const learners = await loadGroupLearners(groupName);
-
-    // Run all tension checks
-    const tensions: Tension[] = [];
-
-    // 1. Dependency ordering
-    tensions.push(...checkDependencyOrdering(graph, targetSkills));
-
-    // 2. Scope-time mismatch
-    if (durationMinutes) {
-      tensions.push(
-        ...checkScopeTimeMismatch(graph, targetSkills, durationMinutes, learners)
-      );
-    }
-
-    // 3. Prerequisite gaps
-    if (learners.length > 0) {
-      tensions.push(
-        ...checkPrerequisiteGaps(graph, targetSkills, learners)
-      );
-    }
-
-    // 4. Bloom's level mismatch
-    if (learners.length > 0) {
-      tensions.push(
-        ...checkBloomLevelMismatch(graph, targetSkills, learners)
-      );
-    }
-
-    // 5. Constraint violations
-    if (constraints) {
-      const constraintRecord: Record<string, string | string[] | undefined> = {
-        connectivity: constraints.connectivity,
-        setting: constraints.setting,
-        tools: constraints.tools,
-      };
-      tensions.push(
-        ...checkConstraintViolations(graph, targetSkills, constraintRecord)
-      );
-    }
-
-    // Sort: critical first, then warning, then info
-    const severityOrder = { critical: 0, warning: 1, info: 2 };
-    tensions.sort(
-      (a, b) => severityOrder[a.severity] - severityOrder[b.severity]
-    );
-
-    // Build summary
-    const criticalCount = tensions.filter((t) => t.severity === "critical").length;
-    const warningCount = tensions.filter((t) => t.severity === "warning").length;
-    const infoCount = tensions.filter((t) => t.severity === "info").length;
-
-    const summary =
-      tensions.length === 0
-        ? "No pedagogical tensions detected. The plan aligns well with the skill graph, learner profiles, and constraints."
-        : `Found ${tensions.length} tension${tensions.length === 1 ? "" : "s"}: ${criticalCount} critical, ${warningCount} warning${warningCount === 1 ? "" : "s"}, ${infoCount} info. ${criticalCount > 0 ? "Critical issues should be addressed before proceeding." : "Review the warnings and consider the suggestions."}`;
-
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              domain,
-              group: groupName,
-              targetSkills,
-              durationMinutes: durationMinutes ?? null,
-              tensionCount: tensions.length,
-              summary,
-              critical: criticalCount,
-              warnings: warningCount,
-              info: infoCount,
-              tensions,
-              learnersAnalyzed: learners.length,
-              recommendation:
-                criticalCount > 0
-                  ? "I'd recommend addressing the critical tensions before building this lesson plan. I can do what you're asking, but the data suggests these issues will significantly impact the session's success."
-                  : warningCount > 0
-                    ? "The plan is workable, but I want to flag some concerns. Here's what I'm seeing in the data — you decide what to adjust."
-                    : "The plan looks solid. The skill graph, learner profiles, and constraints all align well with your intent.",
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
   }
 );

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
@@ -69,7 +70,7 @@ const markdownComponents: Components = {
   hr: () => <hr className="my-3 border-border-subtle" />,
 };
 
-export default function MessageBubble({ role, text, timestamp }: MessageBubbleProps) {
+export default memo(function MessageBubble({ role, text, timestamp }: MessageBubbleProps) {
   const isUser = role === "user";
 
   return (
@@ -107,4 +108,4 @@ export default function MessageBubble({ role, text, timestamp }: MessageBubblePr
       </div>
     </div>
   );
-}
+})

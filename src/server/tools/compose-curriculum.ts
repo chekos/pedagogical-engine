@@ -2,7 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-import { DATA_DIR, loadGraph, safePath, type SkillGraph } from "./shared.js";
+import { DATA_DIR, BLOOM_ORDER, loadGraph, safePath, parseLearnerProfile, toolResponse, type SkillGraph } from "./shared.js";
 
 interface LearnerSkill {
   id: string;
@@ -14,8 +14,6 @@ interface GroupSkillProfile {
   totalLearners: number;
   skillCoverage: Record<string, { haveIt: number; fraction: number; avgConfidence: number }>;
 }
-
-const BLOOM_ORDER = ["knowledge", "comprehension", "application", "analysis", "synthesis", "evaluation"];
 
 async function loadGroupProfile(groupName: string): Promise<{ domain: string; members: string[]; context: string }> {
   const groupPath = safePath(DATA_DIR, "groups", `${groupName}.md`);
@@ -35,28 +33,12 @@ async function loadGroupProfile(groupName: string): Promise<{ domain: string; me
 }
 
 function parseLearnerSkills(content: string): LearnerSkill[] {
-  const skills: LearnerSkill[] = [];
-  const skillLineRegex = /^- (.+?):\s*([\d.]+)\s*confidence/im;
-
-  // Parse assessed skills section
-  const assessedSection = content.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
-  for (const line of assessedSection.split("\n")) {
-    const match = line.match(skillLineRegex);
-    if (match) {
-      skills.push({ id: match[1].trim(), confidence: parseFloat(match[2]), type: "assessed" });
-    }
-  }
-
-  // Parse inferred skills section
-  const inferredSection = content.split("## Inferred Skills")[1]?.split("##")[0] ?? "";
-  for (const line of inferredSection.split("\n")) {
-    const match = line.match(skillLineRegex);
-    if (match) {
-      skills.push({ id: match[1].trim(), confidence: parseFloat(match[2]), type: "inferred" });
-    }
-  }
-
-  return skills;
+  const profile = parseLearnerProfile(content);
+  return profile.skills.map((s) => ({
+    id: s.skillId,
+    confidence: s.confidence,
+    type: s.source,
+  }));
 }
 
 async function buildGroupSkillProfile(members: string[]): Promise<GroupSkillProfile> {
@@ -77,8 +59,8 @@ async function buildGroupSkillProfile(members: string[]): Promise<GroupSkillProf
           allSkills[skill.id].totalConf += skill.confidence;
         }
       }
-    } catch {
-      // Learner file not found — skip
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== "ENOENT") throw err;
     }
   }
 
@@ -153,7 +135,7 @@ function topologicalSort(graph: SkillGraph, skillIds: string[]): string[] {
     .sort((a, b) => {
       const sa = graph.skills.find((s) => s.id === a);
       const sb = graph.skills.find((s) => s.id === b);
-      return BLOOM_ORDER.indexOf(sa?.bloom_level || "") - BLOOM_ORDER.indexOf(sb?.bloom_level || "");
+      return (BLOOM_ORDER[sa?.bloom_level || ""] ?? -1) - (BLOOM_ORDER[sb?.bloom_level || ""] ?? -1);
     });
 
   const sorted: string[] = [];
@@ -169,7 +151,7 @@ function topologicalSort(graph: SkillGraph, skillIds: string[]): string[] {
         queue.sort((a, b) => {
           const sa = graph.skills.find((s) => s.id === a);
           const sb = graph.skills.find((s) => s.id === b);
-          return BLOOM_ORDER.indexOf(sa?.bloom_level || "") - BLOOM_ORDER.indexOf(sb?.bloom_level || "");
+          return (BLOOM_ORDER[sa?.bloom_level || ""] ?? -1) - (BLOOM_ORDER[sb?.bloom_level || ""] ?? -1);
         });
       }
     }
@@ -321,30 +303,14 @@ export const composeCurriculumTool = tool(
     try {
       graph = await loadGraph(domain);
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ error: `Domain '${domain}' not found or has invalid skill data` }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({ error: `Domain '${domain}' not found or has invalid skill data` }, true);
     }
 
     let groupData: { domain: string; members: string[]; context: string };
     try {
       groupData = await loadGroupProfile(groupName);
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ error: `Group '${groupName}' not found` }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({ error: `Group '${groupName}' not found` }, true);
     }
 
     const groupProfile = await buildGroupSkillProfile(groupData.members);
@@ -354,7 +320,7 @@ export const composeCurriculumTool = tool(
     if (targetSkills.length === 0) {
       // Default: target the highest Bloom's level skills in the domain
       targetSkills = graph.skills
-        .filter((s) => BLOOM_ORDER.indexOf(s.bloom_level) >= 3) // analysis and above
+        .filter((s) => (BLOOM_ORDER[s.bloom_level] ?? -1) >= 3) // analysis and above
         .map((s) => s.id);
     }
 
@@ -362,18 +328,10 @@ export const composeCurriculumTool = tool(
     const graphSkillIds = new Set(graph.skills.map((s) => s.id));
     const unknownSkills = targetSkills.filter((id) => !graphSkillIds.has(id));
     if (unknownSkills.length > 0) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              error: `Unknown skill IDs not found in ${domain} graph: ${unknownSkills.join(", ")}`,
-              validSkillIds: Array.from(graphSkillIds),
-            }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({
+        error: `Unknown skill IDs not found in ${domain} graph: ${unknownSkills.join(", ")}`,
+        validSkillIds: Array.from(graphSkillIds),
+      }, true);
     }
 
     // Find the teaching frontier — skills the group needs to learn
@@ -463,35 +421,24 @@ export const composeCurriculumTool = tool(
     const filePath = path.join(curriculaDir, filename);
     await fs.writeFile(filePath, markdown, "utf-8");
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              title,
-              file: filePath,
-              filename,
-              domain,
-              group: groupName,
-              numberOfSessions,
-              sessionDuration,
-              objectives,
-              targetSkills,
-              totalSkillsToTeach: sortedSkills.length,
-              criticalPathLength: critPath,
-              minSessionsRecommended: minSessionsNeeded,
-              sessions: sessionsWithReadiness,
-              created: now.toISOString(),
-              constraints: constraints ?? "none",
-              curriculumContent: markdown,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      title,
+      file: filePath,
+      filename,
+      domain,
+      group: groupName,
+      numberOfSessions,
+      sessionDuration,
+      objectives,
+      targetSkills,
+      totalSkillsToTeach: sortedSkills.length,
+      criticalPathLength: critPath,
+      minSessionsRecommended: minSessionsNeeded,
+      sessions: sessionsWithReadiness,
+      created: now.toISOString(),
+      constraints: constraints ?? "none",
+      curriculumContent: markdown,
+    });
   }
 );
 

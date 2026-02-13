@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import dynamic from "next/dynamic";
 import type { ToolUse } from "@/lib/api";
 import LessonPlanView from "@/components/lesson-plan/lesson-plan-view";
@@ -165,7 +165,7 @@ interface ToolResultProps {
   onSendMessage?: (message: string) => void;
 }
 
-export default function ToolResult({ tool, isActive = false, onSendMessage }: ToolResultProps) {
+export default memo(function ToolResult({ tool, isActive = false, onSendMessage }: ToolResultProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = getToolMeta(tool.name);
 
@@ -251,7 +251,7 @@ export default function ToolResult({ tool, isActive = false, onSendMessage }: To
       )}
     </div>
   );
-}
+})
 
 // Compact tool activity indicator shown while tools are running
 export function ToolActivityIndicator({ tools }: { tools: ToolUse[] }) {

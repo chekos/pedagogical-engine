@@ -2,8 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, toolResponse } from "./shared.js";
 
 /**
  * Run dependency inference: given demonstrated skills, infer prerequisites
@@ -119,17 +118,9 @@ export const assessLearnerTool = tool(
     try {
       content = await fs.readFile(learnerPath, "utf-8");
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              error: `Learner profile '${learnerId}' not found`,
-            }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({
+        error: `Learner profile '${learnerId}' not found`,
+      }, true);
     }
 
     // Apply integrity modifier to confidence values if provided
@@ -228,37 +219,26 @@ export const assessLearnerTool = tool(
 
     await fs.writeFile(learnerPath, content, "utf-8");
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              learnerId,
-              domain,
-              updated: true,
-              assessedSkills: adjustedSkills.map((s) => ({
-                skillId: s.skillId,
-                confidence: s.confidence,
-                bloomLevel: s.bloomLevel,
-                ...(integrityModifier !== undefined && integrityModifier < 1.0
-                  ? { originalConfidence: s.originalConfidence, integrityAdjusted: true }
-                  : {}),
-              })),
-              inferredSkills: inferred,
-              totalAssessed: adjustedSkills.length,
-              totalInferred: inferred.length,
-              profilePath: learnerPath,
-              lastAssessed: now,
-              ...(integrityModifier !== undefined
-                ? { integrityModifier, integrityApplied: integrityModifier < 1.0 }
-                : {}),
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      learnerId,
+      domain,
+      updated: true,
+      assessedSkills: adjustedSkills.map((s) => ({
+        skillId: s.skillId,
+        confidence: s.confidence,
+        bloomLevel: s.bloomLevel,
+        ...(integrityModifier !== undefined && integrityModifier < 1.0
+          ? { originalConfidence: s.originalConfidence, integrityAdjusted: true }
+          : {}),
+      })),
+      inferredSkills: inferred,
+      totalAssessed: adjustedSkills.length,
+      totalInferred: inferred.length,
+      profilePath: learnerPath,
+      lastAssessed: now,
+      ...(integrityModifier !== undefined
+        ? { integrityModifier, integrityApplied: integrityModifier < 1.0 }
+        : {}),
+    });
   }
 );

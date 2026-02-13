@@ -1,6 +1,7 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
+import { toolResponse } from "./shared.js";
 import {
   DomainNameSchema,
   SkillSchema,
@@ -41,26 +42,14 @@ export const createDomainTool = tool(
     const validation = validateDomain(skills, edges);
 
     if (!validation.valid) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(
-              {
-                success: false,
-                domain,
-                errors: validation.errors,
-                warnings: validation.warnings,
-                message:
-                  "Domain graph has errors that must be fixed before saving. Review the errors and resubmit.",
-              },
-              null,
-              2
-            ),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({
+        success: false,
+        domain,
+        errors: validation.errors,
+        warnings: validation.warnings,
+        message:
+          "Domain graph has errors that must be fixed before saving. Review the errors and resubmit.",
+      }, true);
     }
 
     // Check if domain already exists
@@ -68,26 +57,14 @@ export const createDomainTool = tool(
     try {
       await fs.access(dir);
       if (!overwrite) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  success: false,
-                  domain,
-                  error: `Domain "${domain}" already exists. Set overwrite: true to replace it.`,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-          isError: true,
-        };
+        return toolResponse({
+          success: false,
+          domain,
+          error: `Domain "${domain}" already exists. Set overwrite: true to replace it.`,
+        }, true);
       }
-    } catch {
-      // Domain doesn't exist yet — good
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== "ENOENT") throw err;
     }
 
     // Ensure directory exists
@@ -124,24 +101,13 @@ export const createDomainTool = tool(
 
     const stats = computeDomainStats(skills, edges);
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              success: true,
-              domain,
-              path: `data/domains/${domain}/`,
-              stats,
-              warnings: validation.warnings,
-              message: `Domain "${domain}" created successfully with ${skills.length} skills and ${edges.length} edges.`,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      success: true,
+      domain,
+      path: `data/domains/${domain}/`,
+      stats,
+      warnings: validation.warnings,
+      message: `Domain "${domain}" created successfully with ${skills.length} skills and ${edges.length} edges.`,
+    });
   }
 );

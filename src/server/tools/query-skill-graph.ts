@@ -1,6 +1,6 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
-import { loadGraph, type Skill, type SkillGraph } from "./shared.js";
+import { loadGraph, toolResponse, type Skill, type SkillGraph } from "./shared.js";
 
 /** BFS to find all prerequisites of a skill (traverse edges backwards) */
 function findPrerequisites(
@@ -132,160 +132,92 @@ export const querySkillGraphTool = tool(
     switch (operation) {
       case "prerequisites": {
         if (!skillId) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "skillId is required for prerequisites operation" }),
-              },
-            ],
-            isError: true,
-          };
+          return toolResponse({ error: "skillId is required for prerequisites operation" }, true);
         }
         const skill = graph.skills.find((s) => s.id === skillId);
         const prereqs = findPrerequisites(graph, skillId);
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  operation: "prerequisites",
-                  skill: skill
-                    ? { id: skill.id, label: skill.label, bloom_level: skill.bloom_level }
-                    : { id: skillId },
-                  prerequisites: prereqs.map((p) => {
-                    const s = graph.skills.find((sk) => sk.id === p.id);
-                    return {
-                      id: p.id,
-                      label: s?.label ?? p.id,
-                      bloom_level: s?.bloom_level,
-                      confidence: p.confidence,
-                      depth: p.depth,
-                    };
-                  }),
-                  totalPrerequisites: prereqs.length,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+        return toolResponse({
+          operation: "prerequisites",
+          skill: skill
+            ? { id: skill.id, label: skill.label, bloom_level: skill.bloom_level }
+            : { id: skillId },
+          prerequisites: prereqs.map((p) => {
+            const s = graph.skills.find((sk) => sk.id === p.id);
+            return {
+              id: p.id,
+              label: s?.label ?? p.id,
+              bloom_level: s?.bloom_level,
+              confidence: p.confidence,
+              depth: p.depth,
+            };
+          }),
+          totalPrerequisites: prereqs.length,
+        });
       }
 
       case "infer_from": {
         if (!skillId) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "skillId is required for infer_from operation" }),
-              },
-            ],
-            isError: true,
-          };
+          return toolResponse({ error: "skillId is required for infer_from operation" }, true);
         }
         const skill = graph.skills.find((s) => s.id === skillId);
         const inferred = inferFromDemonstration(graph, skillId);
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  operation: "infer_from",
-                  demonstratedSkill: skill
-                    ? { id: skill.id, label: skill.label, bloom_level: skill.bloom_level }
-                    : { id: skillId },
-                  inferredSkills: inferred.map((i) => {
-                    const s = graph.skills.find((sk) => sk.id === i.id);
-                    return {
-                      id: i.id,
-                      label: s?.label ?? i.id,
-                      bloom_level: s?.bloom_level,
-                      confidence: i.confidence,
-                      path: i.path,
-                    };
-                  }),
-                  totalInferred: inferred.length,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+        return toolResponse({
+          operation: "infer_from",
+          demonstratedSkill: skill
+            ? { id: skill.id, label: skill.label, bloom_level: skill.bloom_level }
+            : { id: skillId },
+          inferredSkills: inferred.map((i) => {
+            const s = graph.skills.find((sk) => sk.id === i.id);
+            return {
+              id: i.id,
+              label: s?.label ?? i.id,
+              bloom_level: s?.bloom_level,
+              confidence: i.confidence,
+              path: i.path,
+            };
+          }),
+          totalInferred: inferred.length,
+        });
       }
 
       case "list_by_level": {
         if (!bloomLevel) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "bloomLevel is required for list_by_level operation" }),
-              },
-            ],
-            isError: true,
-          };
+          return toolResponse({ error: "bloomLevel is required for list_by_level operation" }, true);
         }
         const skills = listByLevel(graph, bloomLevel);
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  operation: "list_by_level",
-                  bloomLevel,
-                  skills: skills.map((s) => ({
-                    id: s.id,
-                    label: s.label,
-                    bloom_level: s.bloom_level,
-                    dependencies: s.dependencies,
-                  })),
-                  count: skills.length,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+        return toolResponse({
+          operation: "list_by_level",
+          bloomLevel,
+          skills: skills.map((s) => ({
+            id: s.id,
+            label: s.label,
+            bloom_level: s.bloom_level,
+            dependencies: s.dependencies,
+          })),
+          count: skills.length,
+        });
       }
 
       case "full_graph": {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  operation: "full_graph",
-                  domain,
-                  skills: graph.skills.map((s) => ({
-                    id: s.id,
-                    label: s.label,
-                    bloom_level: s.bloom_level,
-                    assessable: s.assessable,
-                    dependencies: s.dependencies,
-                  })),
-                  edges: graph.edges.map((e) => ({
-                    source: e.source,
-                    target: e.target,
-                    confidence: e.confidence,
-                    type: e.type,
-                  })),
-                  totalSkills: graph.skills.length,
-                  totalEdges: graph.edges.length,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+        return toolResponse({
+          operation: "full_graph",
+          domain,
+          skills: graph.skills.map((s) => ({
+            id: s.id,
+            label: s.label,
+            bloom_level: s.bloom_level,
+            assessable: s.assessable,
+            dependencies: s.dependencies,
+          })),
+          edges: graph.edges.map((e) => ({
+            source: e.source,
+            target: e.target,
+            confidence: e.confidence,
+            type: e.type,
+          })),
+          totalSkills: graph.skills.length,
+          totalEdges: graph.edges.length,
+        });
       }
     }
   }

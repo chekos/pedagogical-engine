@@ -2,8 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, loadGroupLearners, toolResponse } from "./shared.js";
 
 export const checkAssessmentStatusTool = tool(
   "check_assessment_status",
@@ -14,22 +13,12 @@ export const checkAssessmentStatusTool = tool(
   },
   async ({ groupName, domain }) => {
     const groupPath = path.join(DATA_DIR, "groups", `${groupName}.md`);
-    const learnersDir = path.join(DATA_DIR, "learners");
 
-    // Read group file to get member list
-    let groupContent: string;
+    // Verify group exists
     try {
-      groupContent = await fs.readFile(groupPath, "utf-8");
+      await fs.readFile(groupPath, "utf-8");
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ error: `Group '${groupName}' not found` }),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({ error: `Group '${groupName}' not found` }, true);
     }
 
     // Find learner profiles belonging to this group
@@ -41,45 +30,29 @@ export const checkAssessmentStatusTool = tool(
     }> = [];
     const notAssessed: Array<{ id: string; name: string }> = [];
 
-    try {
-      const files = await fs.readdir(learnersDir);
-      for (const file of files) {
-        if (!file.endsWith(".md")) continue;
-        const content = await fs.readFile(
-          path.join(learnersDir, file),
-          "utf-8"
-        );
-        if (!content.includes(`| **Group** | ${groupName} |`)) continue;
+    const groupLearners = await loadGroupLearners(groupName);
+    for (const gl of groupLearners) {
+      const content = gl.content;
 
-        const nameMatch = content.match(/# Learner Profile: (.+)/);
-        const name = nameMatch ? nameMatch[1] : file.replace(".md", "");
-        const id = file.replace(".md", "");
+      // Check if they have assessed skills
+      const hasAssessedSkills =
+        content.includes("## Assessed Skills") &&
+        !content.includes("_No skills assessed yet._");
 
-        // Check if they have assessed skills
-        const hasAssessedSkills =
-          content.includes("## Assessed Skills") &&
-          !content.includes("_No skills assessed yet._");
+      if (hasAssessedSkills) {
+        // Count assessed skills from parsed profile
+        const skillCount = gl.profile.skills.filter((s) => s.source === "assessed").length;
 
-        if (hasAssessedSkills) {
-          // Count skill lines (lines starting with "- " under Assessed Skills)
-          const assessedSection = content.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
-          const skillLines = assessedSection
-            .split("\n")
-            .filter((l) => l.startsWith("- ") && l.includes(":"));
-
-          const lastMatch = content.match(/\| \*\*Last assessed\*\* \| (.+) \|/);
-          assessed.push({
-            id,
-            name,
-            skillCount: skillLines.length,
-            lastAssessed: lastMatch ? lastMatch[1] : "unknown",
-          });
-        } else {
-          notAssessed.push({ id, name });
-        }
+        const lastMatch = content.match(/\| \*\*Last assessed\*\* \| (.+) \|/);
+        assessed.push({
+          id: gl.id,
+          name: gl.name,
+          skillCount,
+          lastAssessed: lastMatch ? lastMatch[1] : "unknown",
+        });
+      } else {
+        notAssessed.push({ id: gl.id, name: gl.name });
       }
-    } catch {
-      // No learner files
     }
 
     // Check for active assessment sessions
@@ -107,38 +80,27 @@ export const checkAssessmentStatusTool = tool(
           }
         }
       }
-    } catch {
-      // No assessment files
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== "ENOENT") throw err;
     }
 
     const total = assessed.length + notAssessed.length;
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              group: groupName,
-              domain,
-              summary: {
-                total,
-                assessed: assessed.length,
-                notAssessed: notAssessed.length,
-                completionRate:
-                  total > 0
-                    ? `${Math.round((assessed.length / total) * 100)}%`
-                    : "N/A",
-              },
-              assessedLearners: assessed,
-              notAssessedLearners: notAssessed,
-              activeAssessmentSessions: activeSessions,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      group: groupName,
+      domain,
+      summary: {
+        total,
+        assessed: assessed.length,
+        notAssessed: notAssessed.length,
+        completionRate:
+          total > 0
+            ? `${Math.round((assessed.length / total) * 100)}%`
+            : "N/A",
+      },
+      assessedLearners: assessed,
+      notAssessedLearners: notAssessed,
+      activeAssessmentSessions: activeSessions,
+    });
   }
 );

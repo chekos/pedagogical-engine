@@ -70,6 +70,12 @@ export default function LiveCompanionPage() {
     rate: 1.1,
   });
 
+  // Keep speak and ttsSupported in refs so handleMessage has a stable identity
+  const speakRef = useRef(speak);
+  const ttsSupportedRef = useRef(ttsSupported);
+  useEffect(() => { speakRef.current = speak; }, [speak]);
+  useEffect(() => { ttsSupportedRef.current = ttsSupported; }, [ttsSupported]);
+
   // Load lesson data
   useEffect(() => {
     if (!lessonId) return;
@@ -127,8 +133,8 @@ export default function LiveCompanionPage() {
               },
             ]);
             // Auto-speak responses in live mode
-            if (ttsSupported) {
-              speak(msg.text);
+            if (ttsSupportedRef.current) {
+              speakRef.current(msg.text);
             }
           }
           break;
@@ -149,7 +155,7 @@ export default function LiveCompanionPage() {
           break;
       }
     },
-    [ttsSupported, speak]
+    []
   );
 
   // Connect WebSocket

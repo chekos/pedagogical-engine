@@ -64,6 +64,10 @@ export default function ChatInterface() {
     stop: stopSpeaking,
   } = useSpeechSynthesis({ rate: 1.05 });
 
+  // Keep speak in a ref so handleMessage has a stable identity
+  const speakRef = useRef(speak);
+  useEffect(() => { speakRef.current = speak; }, [speak]);
+
   // Update input when transcript changes (interim results)
   const lastTranscriptRef = useRef("");
   useEffect(() => {
@@ -138,9 +142,9 @@ export default function ChatInterface() {
         setThinkingStartedAt(null);
         currentAssistantRef.current = null;
         // TTS: read back final assistant response if enabled
-        // (handled via ttsQueueRef so the callback doesn't need ttsEnabled in deps)
+        // (handled via ttsQueueRef and speakRef so the callback doesn't need speak in deps)
         if (ttsQueueRef.current) {
-          speak(ttsQueueRef.current);
+          speakRef.current(ttsQueueRef.current);
           ttsQueueRef.current = null;
         }
         // Surface error results to the user
@@ -189,7 +193,7 @@ export default function ChatInterface() {
         break;
       }
     }
-  }, [speak]);
+  }, []);
 
   useEffect(() => {
     const client = new ChatClient({

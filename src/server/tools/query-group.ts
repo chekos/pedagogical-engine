@@ -2,55 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
-
-interface SkillEntry {
-  skillId: string;
-  confidence: number;
-  bloomLevel: string;
-  source: "assessed" | "inferred";
-}
-
-function parseLearnerSkills(content: string): SkillEntry[] {
-  const skills: SkillEntry[] = [];
-
-  // Parse assessed skills section
-  const assessedSection =
-    content.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
-  for (const line of assessedSection.split("\n")) {
-    const match = line.match(
-      /^- (.+?):\s*([\d.]+)\s*confidence.*?(?:at\s+(\w+)\s+level)?/i
-    );
-    if (match) {
-      skills.push({
-        skillId: match[1].trim(),
-        confidence: parseFloat(match[2]),
-        bloomLevel: match[3] ?? "unknown",
-        source: "assessed",
-      });
-    }
-  }
-
-  // Parse inferred skills section
-  const inferredSection =
-    content.split("## Inferred Skills")[1]?.split("##")[0] ?? "";
-  for (const line of inferredSection.split("\n")) {
-    const match = line.match(
-      /^- (.+?):\s*([\d.]+)\s*confidence/i
-    );
-    if (match) {
-      skills.push({
-        skillId: match[1].trim(),
-        confidence: parseFloat(match[2]),
-        bloomLevel: "inferred",
-        source: "inferred",
-      });
-    }
-  }
-
-  return skills;
-}
+import { DATA_DIR, parseLearnerProfile, loadGroupLearners, toolResponse, type SkillEntry } from "./shared.js";
 
 export const queryGroupTool = tool(
   "query_group",
@@ -60,7 +12,6 @@ export const queryGroupTool = tool(
     domain: z.string().describe("Skill domain"),
   },
   async ({ groupName, domain }) => {
-    const learnersDir = path.join(DATA_DIR, "learners");
     const domainDir = path.join(DATA_DIR, "domains", domain);
 
     // Load skill graph
@@ -72,84 +23,27 @@ export const queryGroupTool = tool(
       );
       const skillsData = JSON.parse(skillsRaw);
       allSkillIds = skillsData.skills.map((s: { id: string }) => s.id);
-    } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ error: `Domain '${domain}' not found` }),
-          },
-        ],
-        isError: true,
-      };
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== "ENOENT") throw err;
+      return toolResponse({ error: `Domain '${domain}' not found` }, true);
     }
 
     // Load all learner profiles for this group
-    const learners: Array<{
-      id: string;
-      name: string;
-      skills: SkillEntry[];
-      affective: {
-        confidence: string;
-        socialDynamics: string;
-      } | null;
-    }> = [];
-
-    try {
-      const files = await fs.readdir(learnersDir);
-      for (const file of files) {
-        if (!file.endsWith(".md")) continue;
-        const content = await fs.readFile(
-          path.join(learnersDir, file),
-          "utf-8"
-        );
-        if (!content.includes(`| **Group** | ${groupName} |`)) continue;
-
-        const nameMatch = content.match(/# Learner Profile: (.+)/);
-
-        // Parse affective data if present
-        let affective: { confidence: string; socialDynamics: string } | null =
-          null;
-        if (content.includes("## Affective Profile")) {
-          const section =
-            content.split("## Affective Profile")[1]?.split(/\n## /)[0] ?? "";
-          const confMatch = section.match(
-            /\*\*Confidence:\*\*\s*(.+?)(?=\n|$)/
-          );
-          const socialMatch = section.match(
-            /\*\*Social dynamics:\*\*\s*(.+?)(?=\n-\s*\*\*|$)/s
-          );
-          affective = {
-            confidence: confMatch ? confMatch[1].trim() : "",
-            socialDynamics: socialMatch ? socialMatch[1].trim() : "",
-          };
-        }
-
-        learners.push({
-          id: file.replace(".md", ""),
-          name: nameMatch ? nameMatch[1] : file.replace(".md", ""),
-          skills: parseLearnerSkills(content),
-          affective,
-        });
-      }
-    } catch {
-      // No learner files
-    }
+    const groupLearners = await loadGroupLearners(groupName);
+    const learners = groupLearners.map((gl) => ({
+      id: gl.id,
+      name: gl.name,
+      skills: gl.profile.skills,
+      affective: gl.profile.affective,
+    }));
 
     if (learners.length === 0) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              group: groupName,
-              domain,
-              memberCount: 0,
-              message: "No learner profiles found for this group.",
-            }),
-          },
-        ],
-      };
+      return toolResponse({
+        group: groupName,
+        domain,
+        memberCount: 0,
+        message: "No learner profiles found for this group.",
+      });
     }
 
     // Aggregate skill distributions
@@ -340,33 +234,22 @@ export const queryGroupTool = tool(
       return aAvoided - bAvoided;
     });
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              group: groupName,
-              domain,
-              memberCount: learners.length,
-              members: learners.map((l) => ({
-                name: l.name,
-                assessedSkillCount: l.skills.filter(
-                  (s) => s.source === "assessed"
-                ).length,
-                totalSkillCount: l.skills.length,
-                affective: l.affective,
-              })),
-              commonGaps: commonGaps.slice(0, 10),
-              groupStrengths: groupStrengths.slice(0, 10),
-              pairingSuggestions: pairingSuggestions.slice(0, 8),
-              skillDistribution,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      group: groupName,
+      domain,
+      memberCount: learners.length,
+      members: learners.map((l) => ({
+        name: l.name,
+        assessedSkillCount: l.skills.filter(
+          (s) => s.source === "assessed"
+        ).length,
+        totalSkillCount: l.skills.length,
+        affective: l.affective,
+      })),
+      commonGaps: commonGaps.slice(0, 10),
+      groupStrengths: groupStrengths.slice(0, 10),
+      pairingSuggestions: pairingSuggestions.slice(0, 8),
+      skillDistribution,
+    });
   }
 );

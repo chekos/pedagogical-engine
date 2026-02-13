@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+import { BACKEND_URL } from "@/lib/constants";
 
 interface ExportButtonProps {
   /** The export endpoint path, e.g. "/api/export/lesson/my-lesson-id" */

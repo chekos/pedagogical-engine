@@ -1,9 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-
-const FRONTEND_URL =
-  process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
+import { FRONTEND_URL } from "@/lib/constants";
 
 interface PostMessageEvent {
   source: string;

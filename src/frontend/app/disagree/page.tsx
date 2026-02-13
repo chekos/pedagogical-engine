@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useCallback } from "react";
+import { BACKEND_URL } from "@/lib/constants";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -286,8 +287,7 @@ export default function DisagreePage() {
     setResult(null);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-      const res = await fetch(`${backendUrl}/api/tensions`, {
+      const res = await fetch(`${BACKEND_URL}/api/tensions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(scenario.params),

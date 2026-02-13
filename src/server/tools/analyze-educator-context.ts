@@ -3,8 +3,7 @@ import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
 import type { EducatorProfile } from "./load-educator-profile.js";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, toolResponse } from "./shared.js";
 
 export const analyzeEducatorContextTool = tool(
   "analyze_educator_context",
@@ -32,18 +31,11 @@ export const analyzeEducatorContextTool = tool(
       const raw = await fs.readFile(profilePath, "utf-8");
       profile = JSON.parse(raw);
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              error: `Educator profile '${educatorId}' not found`,
-              recommendation:
-                "Compose the lesson plan without educator customization, or create a profile first.",
-            }),
-          },
-        ],
-      };
+      return toolResponse({
+        error: `Educator profile '${educatorId}' not found`,
+        recommendation:
+          "Compose the lesson plan without educator customization, or create a profile first.",
+      });
     }
 
     // --- Activity type recommendations ---
@@ -215,13 +207,6 @@ export const analyzeEducatorContextTool = tool(
 ${growthNudge ? `6. GROWTH NUDGE: ${growthNudge}` : ""}`,
     };
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
-    };
+    return toolResponse(result);
   }
 );

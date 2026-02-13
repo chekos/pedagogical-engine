@@ -2,6 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
+import { DATA_DIR, toolResponse } from "./shared.js";
 import {
   BLOOM_LEVELS,
   DomainNameSchema,
@@ -15,8 +16,6 @@ import {
   loadDomain,
   saveDomain,
 } from "./domain-utils.js";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
 
 const AddSkillSchema = z.object({
   id: z
@@ -110,23 +109,9 @@ export const updateDomainTool = tool(
           )
           .map((r) => r.value);
 
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({ domains, total: domains.length }, null, 2),
-            },
-          ],
-        };
+        return toolResponse({ domains, total: domains.length });
       } catch {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({ domains: [], total: 0 }, null, 2),
-            },
-          ],
-        };
+        return toolResponse({ domains: [], total: 0 });
       }
     }
 
@@ -135,22 +120,10 @@ export const updateDomainTool = tool(
     try {
       loaded = await loadDomain(domain);
     } catch {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(
-              {
-                success: false,
-                error: `Domain "${domain}" not found. Use create_domain to create it first.`,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({
+        success: false,
+        error: `Domain "${domain}" not found. Use create_domain to create it first.`,
+      }, true);
     }
 
     let { skillsData, depsData } = loaded;
@@ -161,15 +134,7 @@ export const updateDomainTool = tool(
     switch (operation) {
       case "add_skills": {
         if (!skills || skills.length === 0) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ success: false, error: "skills array is required for add_skills" }, null, 2),
-              },
-            ],
-            isError: true,
-          };
+          return toolResponse({ success: false, error: "skills array is required for add_skills" }, true);
         }
         const existingIds = new Set(currentSkills.map((s) => s.id));
         const newSkills = skills.filter((s) => !existingIds.has(s.id));
@@ -200,15 +165,7 @@ export const updateDomainTool = tool(
 
       case "remove_skills": {
         if (!skillIds || skillIds.length === 0) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ success: false, error: "skillIds array is required for remove_skills" }, null, 2),
-              },
-            ],
-            isError: true,
-          };
+          return toolResponse({ success: false, error: "skillIds array is required for remove_skills" }, true);
         }
         const toRemove = new Set(skillIds);
         const before = currentSkills.length;
@@ -227,15 +184,7 @@ export const updateDomainTool = tool(
 
       case "modify_skills": {
         if (!modifications || modifications.length === 0) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ success: false, error: "modifications array is required for modify_skills" }, null, 2),
-              },
-            ],
-            isError: true,
-          };
+          return toolResponse({ success: false, error: "modifications array is required for modify_skills" }, true);
         }
 
         // Batch: collect all modified skill IDs, single-pass edge removal
@@ -275,15 +224,7 @@ export const updateDomainTool = tool(
 
       case "add_edges": {
         if (!edges || edges.length === 0) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ success: false, error: "edges array is required for add_edges" }, null, 2),
-              },
-            ],
-            isError: true,
-          };
+          return toolResponse({ success: false, error: "edges array is required for add_edges" }, true);
         }
         let added = 0;
         for (const edge of edges) {
@@ -306,15 +247,7 @@ export const updateDomainTool = tool(
 
       case "remove_edges": {
         if (!edgesToRemove || edgesToRemove.length === 0) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ success: false, error: "edgesToRemove array is required for remove_edges" }, null, 2),
-              },
-            ],
-            isError: true,
-          };
+          return toolResponse({ success: false, error: "edgesToRemove array is required for remove_edges" }, true);
         }
         let removed = 0;
         for (const er of edgesToRemove) {
@@ -342,27 +275,15 @@ export const updateDomainTool = tool(
     const validation = validateDomain(currentSkills, currentEdges);
 
     if (!validation.valid) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(
-              {
-                success: false,
-                operation,
-                changeDescription,
-                errors: validation.errors,
-                warnings: validation.warnings,
-                message:
-                  "Update would create an invalid graph. Fix the errors and try again. The domain was NOT modified.",
-              },
-              null,
-              2
-            ),
-          },
-        ],
-        isError: true,
-      };
+      return toolResponse({
+        success: false,
+        operation,
+        changeDescription,
+        errors: validation.errors,
+        warnings: validation.warnings,
+        message:
+          "Update would create an invalid graph. Fix the errors and try again. The domain was NOT modified.",
+      }, true);
     }
 
     // Save updated domain
@@ -373,25 +294,14 @@ export const updateDomainTool = tool(
 
     const stats = computeDomainStats(currentSkills, currentEdges);
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              success: true,
-              domain,
-              operation,
-              changeDescription,
-              stats,
-              warnings: validation.warnings,
-              message: `Domain "${domain}" updated: ${changeDescription}`,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      success: true,
+      domain,
+      operation,
+      changeDescription,
+      stats,
+      warnings: validation.warnings,
+      message: `Domain "${domain}" updated: ${changeDescription}`,
+    });
   }
 );

@@ -11,30 +11,18 @@ import { createEducatorQuery, createAssessmentQuery, createLiveCompanionQuery } 
 import { parseLesson, lessonIdFromPath } from "./lib/lesson-parser.js";
 import { exportRouter } from "./exports/router.js";
 import { runSimulation } from "./tools/simulate-lesson.js";
+import { runTensionAnalysis } from "./tools/analyze-tensions.js";
+import { runTransferAnalysis } from "./tools/analyze-cross-domain-transfer.js";
+import { DATA_DIR, parseGroupMembers } from "./tools/shared.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3001";
-const DATA_DIR = process.env.DATA_DIR || "./data";
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
 /** Reject path-traversal attempts in user-supplied slug values */
 function validateSlug(value: string): boolean {
   return /^[a-zA-Z0-9_-]+$/.test(value);
-}
-
-/** Parse group members from a group markdown file */
-function parseGroupMembers(content: string): Array<{ id: string; name: string }> {
-  const memberRegex = /- .+ \(`([^)]+)`\)/g;
-  const members: Array<{ id: string; name: string }> = [];
-  let match;
-  while ((match = memberRegex.exec(content)) !== null) {
-    const id = match[1];
-    const lineMatch = content.substring(match.index).match(/- ([^(]+) \(/);
-    const name = lineMatch ? lineMatch[1].trim() : id;
-    members.push({ id, name });
-  }
-  return members;
 }
 
 const app = express();
@@ -856,259 +844,14 @@ app.post("/api/tensions", async (req, res) => {
   }
 
   try {
-    // Import and use the tension analysis logic directly
-    const { loadGraph } = await import("./tools/shared.js");
-    const { BLOOM_ORDER } = await import("./tools/domain-utils.js");
-
-    const graph = await loadGraph(domain);
-
-    // Load learner profiles
-    const learnersDir = path.join(DATA_DIR, "learners");
-    const learners: Array<{ name: string; id: string; skills: Map<string, number> }> = [];
-    try {
-      const files = await fs.readdir(learnersDir);
-      for (const file of files) {
-        if (!file.endsWith(".md")) continue;
-        const content = await fs.readFile(path.join(learnersDir, file), "utf-8");
-        if (!content.includes(`| **Group** | ${groupName} |`)) continue;
-        const nameMatch = content.match(/# Learner Profile: (.+)/);
-        const skills = new Map<string, number>();
-        for (const section of ["## Assessed Skills", "## Inferred Skills"]) {
-          const sectionContent = content.split(section)[1]?.split("##")[0] ?? "";
-          for (const line of sectionContent.split("\n")) {
-            const match = line.match(/^- (.+?):\s*([\d.]+)\s*confidence/i);
-            if (match) {
-              const existing = skills.get(match[1].trim()) ?? 0;
-              skills.set(match[1].trim(), Math.max(existing, parseFloat(match[2])));
-            }
-          }
-        }
-        learners.push({
-          name: nameMatch ? nameMatch[1] : file.replace(".md", ""),
-          id: file.replace(".md", ""),
-          skills,
-        });
-      }
-    } catch { /* no learners */ }
-
-    // Run tension checks inline (simpler than invoking MCP tool from REST)
-    interface TensionResult {
-      type: string;
-      severity: string;
-      title: string;
-      detail: string;
-      evidence: Record<string, unknown>;
-      suggestion: string;
-    }
-    const tensions: TensionResult[] = [];
-
-    // 1. Dependency ordering
-    const edgeMap = new Map<string, Set<string>>();
-    for (const edge of graph.edges) {
-      if (edge.type !== "prerequisite") continue;
-      if (!edgeMap.has(edge.target)) edgeMap.set(edge.target, new Set());
-      edgeMap.get(edge.target)!.add(edge.source);
-    }
-
-    for (let i = 0; i < targetSkills.length; i++) {
-      const skill = targetSkills[i];
-      const prereqs = edgeMap.get(skill);
-      if (!prereqs) continue;
-      for (const prereq of prereqs) {
-        const prereqIndex = targetSkills.indexOf(prereq);
-        if (prereqIndex > i) {
-          const skillDef = graph.skills.find((s) => s.id === skill);
-          const prereqDef = graph.skills.find((s) => s.id === prereq);
-          tensions.push({
-            type: "dependency_ordering",
-            severity: "critical",
-            title: `"${skillDef?.label ?? skill}" taught before its prerequisite`,
-            detail: `"${skillDef?.label ?? skill}" comes before "${prereqDef?.label ?? prereq}", but ${prereq} is a prerequisite for ${skill}.`,
-            evidence: { skill, prerequisite: prereq, skillPosition: i + 1, prereqPosition: prereqIndex + 1 },
-            suggestion: `Move "${prereqDef?.label ?? prereq}" before "${skillDef?.label ?? skill}".`,
-          });
-        }
-      }
-    }
-
-    // 2. Scope-time mismatch
-    if (durationMinutes) {
-      const baseMinutes: Record<string, number> = {
-        knowledge: 5, comprehension: 10, application: 15, analysis: 20, synthesis: 30, evaluation: 25,
-      };
-      let totalMinutes = 15; // overhead
-      const breakdown: Array<{ skill: string; bloom: string; minutes: number }> = [];
-      for (const sid of targetSkills) {
-        const skillDef = graph.skills.find((s) => s.id === sid);
-        if (!skillDef) continue;
-        let readiness = 0;
-        for (const l of learners) { readiness += (l.skills.get(sid) ?? 0); }
-        readiness = learners.length > 0 ? readiness / learners.length : 0.5;
-        const mins = Math.round((baseMinutes[skillDef.bloom_level] ?? 15) * (1 + (1 - readiness) * 0.5));
-        totalMinutes += mins;
-        breakdown.push({ skill: sid, bloom: skillDef.bloom_level, minutes: mins });
-      }
-      if (totalMinutes > durationMinutes) {
-        const over = totalMinutes - durationMinutes;
-        tensions.push({
-          type: "scope_time_mismatch",
-          severity: over / durationMinutes > 0.3 ? "critical" : "warning",
-          title: `${targetSkills.length} skills in ${durationMinutes} min is ~${Math.round(over / durationMinutes * 100)}% over capacity`,
-          detail: `Estimated: ~${totalMinutes} min needed. Available: ${durationMinutes} min.`,
-          evidence: { estimatedMinutes: totalMinutes, availableMinutes: durationMinutes, breakdown },
-          suggestion: `Consider reducing scope by ~${over} minutes worth of content.`,
-        });
-      }
-    }
-
-    // 3. Prerequisite gaps
-    if (learners.length > 0) {
-      const allPrereqs = new Set<string>();
-      const queue = [...targetSkills];
-      const visited = new Set<string>(targetSkills);
-      while (queue.length > 0) {
-        const current = queue.shift()!;
-        for (const edge of graph.edges) {
-          if (edge.target === current && edge.type === "prerequisite") {
-            allPrereqs.add(edge.source);
-            if (!visited.has(edge.source)) { visited.add(edge.source); queue.push(edge.source); }
-          }
-        }
-      }
-      for (const prereq of allPrereqs) {
-        if (targetSkills.includes(prereq)) continue;
-        const prereqDef = graph.skills.find((s) => s.id === prereq);
-        const missing: string[] = [];
-        const weak: Array<{ name: string; confidence: number }> = [];
-        for (const l of learners) {
-          const c = l.skills.get(prereq);
-          if (c === undefined) missing.push(l.name);
-          else if (c < 0.5) weak.push({ name: l.name, confidence: c });
-        }
-        const atRisk = missing.length + weak.length;
-        const pct = Math.round(atRisk / learners.length * 100);
-        if (pct >= 40) {
-          tensions.push({
-            type: "prerequisite_gap",
-            severity: pct >= 60 ? "critical" : "warning",
-            title: `${atRisk} of ${learners.length} learners lack "${prereqDef?.label ?? prereq}"`,
-            detail: `${missing.length > 0 ? `Not assessed: ${missing.join(", ")}. ` : ""}${weak.length > 0 ? `Low confidence: ${weak.map(w => `${w.name} (${w.confidence})`).join(", ")}.` : ""}`,
-            evidence: { prerequisite: prereq, missing, weak, atRiskPercentage: pct },
-            suggestion: pct >= 60
-              ? `Add a 10-15 min prerequisite review at session start.`
-              : `Quick 5-min check-in on "${prereqDef?.label ?? prereq}" at session start.`,
-          });
-        }
-      }
-    }
-
-    // 4. Bloom's level mismatch
-    if (learners.length > 0) {
-      for (const sid of targetSkills) {
-        const skillDef = graph.skills.find((s) => s.id === sid);
-        if (!skillDef) continue;
-        const targetBloom = BLOOM_ORDER[skillDef.bloom_level] ?? 0;
-        if (targetBloom < 4) continue;
-        const maxBlooms: number[] = [];
-        for (const l of learners) {
-          let maxB = 0;
-          for (const [s, c] of l.skills) {
-            if (c >= 0.6) {
-              const sd = graph.skills.find((sk) => sk.id === s);
-              if (sd) maxB = Math.max(maxB, BLOOM_ORDER[sd.bloom_level] ?? 0);
-            }
-          }
-          maxBlooms.push(maxB);
-        }
-        const avg = maxBlooms.length > 0
-          ? maxBlooms.reduce((a, b) => a + b, 0) / maxBlooms.length
-          : 0;
-        const gap = targetBloom - avg;
-        if (gap >= 2) {
-          const bloomNames = Object.entries(BLOOM_ORDER).sort(([, a], [, b]) => a - b).map(([n]) => n);
-          const avgLevelName = bloomNames[Math.round(avg)] ?? "knowledge";
-          tensions.push({
-            type: "bloom_level_mismatch",
-            severity: gap >= 3 ? "critical" : "warning",
-            title: `"${skillDef.label}" is ${skillDef.bloom_level} — group is mostly at ${avgLevelName}`,
-            detail: `${Math.round(gap)}-level Bloom's gap. Students need intermediate scaffolding.`,
-            evidence: { skill: sid, skillBloom: skillDef.bloom_level, groupAvgBloom: avgLevelName, gap: Math.round(gap) },
-            suggestion: `Add scaffolding at ${bloomNames[targetBloom - 1] ?? "application"} level before attempting ${skillDef.bloom_level}-level work.`,
-          });
-        }
-      }
-    }
-
-    // 5. Constraint violations
-    if (constraints) {
-      const connectivity = (constraints.connectivity as string) ?? "";
-      const setting = (constraints.setting as string) ?? "";
-      const tools = (constraints.tools as string[]) ?? [];
-      const toolsLower = tools.map((t: string) => t.toLowerCase());
-
-      for (const sid of targetSkills) {
-        const skillDef = graph.skills.find((s) => s.id === sid);
-        if (!skillDef) continue;
-
-        if (connectivity.toLowerCase().includes("no internet") || connectivity.toLowerCase().includes("offline")) {
-          if (sid.includes("install-packages") || sid.includes("import-pandas") || skillDef.label.toLowerCase().includes("install")) {
-            tensions.push({
-              type: "constraint_violation", severity: "critical",
-              title: `"${skillDef.label}" may require internet — but connectivity is "${connectivity}"`,
-              detail: `Installing packages typically requires an internet connection. If packages aren't pre-installed, this activity will fail.`,
-              evidence: { skill: sid, constraint: "connectivity", constraintValue: connectivity },
-              suggestion: `Ensure all required packages are pre-installed on student machines before the session.`,
-            });
-          }
-        }
-
-        if ((sid.includes("jupyter") || sid.includes("use-jupyter")) && toolsLower.length > 0 && !toolsLower.some((t: string) => t.includes("jupyter"))) {
-          tensions.push({
-            type: "constraint_violation", severity: "warning",
-            title: `"${skillDef.label}" requires Jupyter — not listed in available tools`,
-            detail: `Available tools: ${tools.join(", ")}. Jupyter is not listed.`,
-            evidence: { skill: sid, constraint: "tools", required: "Jupyter", available: tools },
-            suggestion: `Add Jupyter to prerequisites, or plan a script-based alternative.`,
-          });
-        }
-      }
-
-      if (setting.toLowerCase().includes("outdoor") || setting.toLowerCase().includes("park")) {
-        const techSkills = targetSkills.filter((s: string) =>
-          s.includes("jupyter") || s.includes("pandas") || s.includes("plotting") || s.includes("python")
-        );
-        if (techSkills.length > 0) {
-          tensions.push({
-            type: "constraint_violation", severity: "warning",
-            title: `Computer-based skills planned for an outdoor setting`,
-            detail: `${techSkills.length} skills require a computer, but the setting is "${setting}".`,
-            evidence: { setting, techSkills },
-            suggestion: `Bring laptops with sufficient battery, or redesign as conceptual exercises for the outdoor portion.`,
-          });
-        }
-      }
-    }
-
-    // Sort by severity
-    const sevOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 };
-    tensions.sort((a, b) => (sevOrder[a.severity] ?? 2) - (sevOrder[b.severity] ?? 2));
-
-    const critCount = tensions.filter(t => t.severity === "critical").length;
-    const warnCount = tensions.filter(t => t.severity === "warning").length;
-
-    res.json({
+    const result = await runTensionAnalysis({
       domain,
-      group: groupName,
+      groupName,
       targetSkills,
-      durationMinutes: durationMinutes ?? null,
-      tensionCount: tensions.length,
-      critical: critCount,
-      warnings: warnCount,
-      tensions,
-      learnersAnalyzed: learners.length,
-      skillsInGraph: graph.skills.length,
-      edgesInGraph: graph.edges.length,
+      durationMinutes,
+      constraints,
     });
+    res.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[tensions] Error:", message);
@@ -1500,226 +1243,20 @@ app.get("/api/transfer/:learnerId", async (req, res) => {
   }
 
   try {
-    // Load learner profile
-    const learnerPath = path.join(DATA_DIR, "learners", `${learnerId}.md`);
-    const learnerContent = await fs.readFile(learnerPath, "utf-8");
-
-    // Load both domain graphs
-    const [sourceSkillsRaw, sourceDepsRaw, targetSkillsRaw, targetDepsRaw] =
-      await Promise.all([
-        fs.readFile(path.join(DATA_DIR, "domains", sourceDomain, "skills.json"), "utf-8"),
-        fs.readFile(path.join(DATA_DIR, "domains", sourceDomain, "dependencies.json"), "utf-8"),
-        fs.readFile(path.join(DATA_DIR, "domains", targetDomain, "skills.json"), "utf-8"),
-        fs.readFile(path.join(DATA_DIR, "domains", targetDomain, "dependencies.json"), "utf-8"),
-      ]);
-
-    const sourceGraph = {
-      skills: JSON.parse(sourceSkillsRaw).skills,
-      edges: JSON.parse(sourceDepsRaw).edges,
-    };
-    const targetGraph = {
-      skills: JSON.parse(targetSkillsRaw).skills,
-      edges: JSON.parse(targetDepsRaw).edges,
-    };
-
-    // Parse learner skills from profile markdown
-    interface LearnerSkillEntry {
-      skillId: string;
-      confidence: number;
-      bloomLevel: string;
-      source: "assessed" | "inferred";
-    }
-    const learnerSkills: LearnerSkillEntry[] = [];
-
-    const assessedMatch = learnerContent.match(
-      /## Assessed Skills\n\n([\s\S]*?)(?=\n## |\n$)/
-    );
-    if (assessedMatch) {
-      const lines = assessedMatch[1].split("\n").filter((l: string) => l.startsWith("- "));
-      for (const line of lines) {
-        const match = line.match(
-          /- ([^:]+): ([\d.]+) confidence.*?(?:demonstrated at (\w+) level)?/
-        );
-        if (match) {
-          learnerSkills.push({
-            skillId: match[1].trim(),
-            confidence: parseFloat(match[2]),
-            bloomLevel: match[3] || "unknown",
-            source: "assessed",
-          });
-        }
-      }
-    }
-
-    // Fill bloom levels from graph
-    const sourceSkillMap = new Map(
-      sourceGraph.skills.map((s: { id: string; bloom_level: string }) => [s.id, s])
-    );
-    for (const ls of learnerSkills) {
-      if (ls.bloomLevel === "unknown") {
-        const gs = sourceSkillMap.get(ls.skillId) as { bloom_level: string } | undefined;
-        if (gs) ls.bloomLevel = gs.bloom_level;
-      }
-    }
-
-    // Filter to source domain skills
-    const sourceSkillIds = new Set(
-      sourceGraph.skills.map((s: { id: string }) => s.id)
-    );
-    const sourceSkills = learnerSkills.filter((s: LearnerSkillEntry) =>
-      sourceSkillIds.has(s.skillId)
-    );
-
-    if (sourceSkills.length === 0) {
-      res.status(404).json({
-        error: `Learner '${learnerId}' has no assessed skills in '${sourceDomain}'`,
-      });
-      return;
-    }
-
-    // Bloom's order for transfer calculation
-    const bloomOrder: Record<string, number> = {
-      knowledge: 0, comprehension: 1, application: 2,
-      analysis: 3, synthesis: 4, evaluation: 5,
-    };
-
-    // Transfer analysis — inline implementation for API endpoint
-    const BASE_RATE = 0.35;
-    interface TransferResult {
-      sourceSkill: { id: string; label: string; bloom_level: string; domain: string };
-      targetSkill: { id: string; label: string; bloom_level: string; domain: string };
-      transferConfidence: number;
-      reasons: string[];
-      transferType: string;
-    }
-    const candidates: TransferResult[] = [];
-
-    const cogOps = [
-      "analyze", "evaluate", "design", "compare", "interpret",
-      "identify", "explain", "construct", "critique", "plan",
-    ];
-
-    // Compute skill generality (number of transitive prereqs / total)
-    function skillGenerality(skillId: string, graph: { skills: { id: string; bloom_level: string }[]; edges: { source: string; target: string }[] }): number {
-      const visited = new Set<string>();
-      const queue = [skillId];
-      visited.add(skillId);
-      while (queue.length > 0) {
-        const cur = queue.shift()!;
-        for (const e of graph.edges) {
-          if (e.target === cur && !visited.has(e.source)) {
-            visited.add(e.source);
-            queue.push(e.source);
-          }
-        }
-      }
-      const prereqCount = visited.size - 1;
-      const depthScore = Math.min(prereqCount / Math.max(graph.skills.length * 0.5, 1), 1.0);
-      const skill = graph.skills.find((s: { id: string }) => s.id === skillId);
-      const bScore = (bloomOrder[skill?.bloom_level ?? "knowledge"] ?? 0) / 5;
-      return 0.4 * depthScore + 0.6 * bScore;
-    }
-
-    for (const ls of sourceSkills) {
-      if (ls.confidence < 0.5 || ls.source !== "assessed") continue;
-      const srcSkill = sourceGraph.skills.find((s: { id: string }) => s.id === ls.skillId);
-      if (!srcSkill) continue;
-      const srcGen = skillGenerality(srcSkill.id, sourceGraph);
-      if (srcGen < 0.2) continue;
-
-      for (const tgt of targetGraph.skills) {
-        const bloomDist = Math.abs(
-          (bloomOrder[srcSkill.bloom_level] ?? 0) - (bloomOrder[tgt.bloom_level] ?? 0)
-        );
-        let bloomMult = 0;
-        if (bloomDist === 0) bloomMult = 1.0;
-        else if (bloomDist === 1) bloomMult = 0.6;
-        else if (bloomDist === 2) bloomMult = 0.3;
-        if (bloomMult === 0) continue;
-
-        const srcWords = srcSkill.label.toLowerCase().split(/\s+/);
-        const tgtWords = tgt.label.toLowerCase().split(/\s+/);
-        const sharedOps = cogOps.filter(
-          (op) => srcWords.some((w: string) => w.startsWith(op)) && tgtWords.some((w: string) => w.startsWith(op))
-        );
-
-        const tgtGen = skillGenerality(tgt.id, targetGraph);
-        let conf = BASE_RATE * bloomMult * ls.confidence * (0.5 + 0.5 * srcGen);
-        const reasons: string[] = [];
-        let transferType = "structural";
-
-        if (sharedOps.length > 0) {
-          conf *= 1.3;
-          transferType = "cognitive_operation";
-          reasons.push(`Shared cognitive operation: ${sharedOps.join(", ")}`);
-        }
-        if (srcGen > 0.6 && tgtGen > 0.6) {
-          conf *= 1.2;
-          if (sharedOps.length === 0) transferType = "metacognitive";
-          reasons.push("Both are high-order skills");
-        }
-        reasons.push(bloomDist === 0 ? `Same Bloom's level: ${srcSkill.bloom_level}` : `Adjacent Bloom's: ${srcSkill.bloom_level} -> ${tgt.bloom_level}`);
-
-        conf = Math.min(Math.round(conf * 100) / 100, 0.55);
-        if (conf >= 0.10) {
-          candidates.push({
-            sourceSkill: { id: srcSkill.id, label: srcSkill.label, bloom_level: srcSkill.bloom_level, domain: sourceDomain },
-            targetSkill: { id: tgt.id, label: tgt.label, bloom_level: tgt.bloom_level, domain: targetDomain },
-            transferConfidence: conf,
-            reasons,
-            transferType,
-          });
-        }
-      }
-    }
-
-    // Keep best per target
-    candidates.sort((a, b) => b.transferConfidence - a.transferConfidence);
-    const bestPerTarget = new Map<string, TransferResult>();
-    for (const c of candidates) {
-      if (!bestPerTarget.has(c.targetSkill.id) || c.transferConfidence > bestPerTarget.get(c.targetSkill.id)!.transferConfidence) {
-        bestPerTarget.set(c.targetSkill.id, c);
-      }
-    }
-    const finalCandidates = Array.from(bestPerTarget.values()).sort(
-      (a, b) => b.transferConfidence - a.transferConfidence
-    );
-
-    // Readiness
-    const avgConf = finalCandidates.length > 0
-      ? finalCandidates.reduce((s, c) => s + c.transferConfidence, 0) / finalCandidates.length
-      : 0;
-    const strongCount = finalCandidates.filter((c) => c.transferConfidence >= 0.3).length;
-    const readinessScore = Math.round((avgConf * 0.6 + Math.min(strongCount / 5, 1) * 0.4) * 100) / 100;
-    let readinessLevel: string;
-    if (readinessScore >= 0.4) readinessLevel = "high";
-    else if (readinessScore >= 0.25) readinessLevel = "moderate";
-    else if (readinessScore >= 0.1) readinessLevel = "low";
-    else readinessLevel = "none";
-
-    // Extract learner name
-    const nameMatch = learnerContent.match(/\| \*\*Name\*\* \| ([^|]+)/);
-    const learnerName = nameMatch?.[1]?.trim() ?? learnerId;
-
-    res.json({
-      learner: { id: learnerId, name: learnerName },
+    const result = await runTransferAnalysis({
+      learnerId,
       sourceDomain,
       targetDomain,
-      sourceGraph: {
-        skills: sourceGraph.skills.map((s: { id: string; label: string; bloom_level: string }) => ({ id: s.id, label: s.label, bloom_level: s.bloom_level })),
-        edges: sourceGraph.edges,
-      },
-      targetGraph: {
-        skills: targetGraph.skills.map((s: { id: string; label: string; bloom_level: string }) => ({ id: s.id, label: s.label, bloom_level: s.bloom_level })),
-        edges: targetGraph.edges,
-      },
-      learnerSourceSkills: sourceSkills,
-      transferCandidates: finalCandidates,
-      overallReadiness: { level: readinessLevel, score: readinessScore },
     });
+    res.json(result);
   } catch (e) {
-    console.error("[transfer]", e);
-    res.status(500).json({ error: (e as Error).message });
+    const message = (e as Error).message;
+    console.error("[transfer]", message);
+    if (message.includes("not found") || message.includes("no assessed skills")) {
+      res.status(404).json({ error: message });
+    } else {
+      res.status(500).json({ error: message });
+    }
   }
 });
 

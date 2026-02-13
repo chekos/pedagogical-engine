@@ -2,8 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, toolResponse } from "./shared.js";
 
 export const processDebriefTool = tool(
   "process_debrief",
@@ -315,35 +314,24 @@ ${teachingNotesLines}
     const debriefPath = path.join(debriefDir, debriefFilename);
     await fs.writeFile(debriefPath, debriefContent, "utf-8");
 
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: JSON.stringify(
-            {
-              debriefSaved: true,
-              debriefPath,
-              debriefFilename,
-              lessonId,
-              groupName,
-              domain,
-              overallRating,
-              profileUpdates: {
-                count: profileUpdates.length,
-                learners: [
-                  ...new Set(profileUpdates.map((p) => p.learnerId)),
-                ],
-                updates: profileUpdates,
-              },
-              timingAdjustments,
-              teachingNotesSaved: teachingNotes?.length ?? 0,
-              timestamp: now.toISOString(),
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+    return toolResponse({
+      debriefSaved: true,
+      debriefPath,
+      debriefFilename,
+      lessonId,
+      groupName,
+      domain,
+      overallRating,
+      profileUpdates: {
+        count: profileUpdates.length,
+        learners: [
+          ...new Set(profileUpdates.map((p) => p.learnerId)),
+        ],
+        updates: profileUpdates,
+      },
+      timingAdjustments,
+      teachingNotesSaved: teachingNotes?.length ?? 0,
+      timestamp: now.toISOString(),
+    });
   }
 );
