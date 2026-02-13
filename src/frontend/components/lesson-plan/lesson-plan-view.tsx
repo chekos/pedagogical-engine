@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import ExportButton from "@/components/export-button";
 
 interface LessonPlanViewProps {
   content: string;
+  /** Lesson file ID (e.g. "2026-02-12-pandas-groupby-tuesday-cohort") for enabling exports */
+  lessonId?: string;
 }
 
 interface LessonSection {
@@ -78,7 +81,7 @@ const SECTION_COLORS = [
   "border-l-teal-400",
 ];
 
-export default function LessonPlanView({ content }: LessonPlanViewProps) {
+export default function LessonPlanView({ content, lessonId }: LessonPlanViewProps) {
   const [collapsed, setCollapsed] = useState(false);
   const { title, sections } = parseLessonPlan(content);
 
@@ -112,19 +115,39 @@ export default function LessonPlanView({ content }: LessonPlanViewProps) {
             </div>
           </div>
         </div>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="text-text-tertiary hover:text-text-primary transition-colors p-1"
-        >
-          <svg
-            className={`w-5 h-5 transition-transform ${collapsed ? "rotate-180" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        <div className="flex items-center gap-2">
+          {lessonId && (
+            <>
+              <ExportButton
+                href={`/api/export/lesson/${lessonId}`}
+                label="PDF"
+                filename={`lesson-${lessonId}.pdf`}
+                variant="ghost"
+                size="sm"
+              />
+              <ExportButton
+                href={`/api/export/lesson/${lessonId}/prerequisites`}
+                label="Prereqs"
+                filename={`prerequisites-${lessonId}.pdf`}
+                variant="ghost"
+                size="sm"
+              />
+            </>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="text-text-tertiary hover:text-text-primary transition-colors p-1"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+            <svg
+              className={`w-5 h-5 transition-transform ${collapsed ? "rotate-180" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Timeline */}

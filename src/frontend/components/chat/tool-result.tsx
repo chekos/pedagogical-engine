@@ -173,7 +173,20 @@ export default function ToolResult({ tool, isActive = false, onSendMessage }: To
 
   // Special rendering for lesson plan composition
   if (isLessonPlanInput(tool) && (tool.input.planContent || tool.input.content)) {
-    return <LessonPlanView content={String(tool.input.planContent || tool.input.content)} />;
+    // Derive lessonId from file_path if available (e.g. data/lessons/2026-02-12-foo.md → 2026-02-12-foo)
+    let lessonId: string | undefined;
+    if (typeof tool.input.file_path === "string") {
+      const match = tool.input.file_path.match(/lessons\/(.+?)\.md$/);
+      if (match) lessonId = match[1];
+    } else if (typeof tool.input.filename === "string") {
+      lessonId = tool.input.filename.replace(/\.md$/, "");
+    }
+    return (
+      <LessonPlanView
+        content={String(tool.input.planContent || tool.input.content)}
+        lessonId={lessonId}
+      />
+    );
   }
 
   return (
