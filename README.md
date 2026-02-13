@@ -2,50 +2,47 @@
 
 **An AI teaching partner that reasons about pedagogy — then argues with you about it.**
 
-Built with Claude Opus 4.6 and the Claude Agent SDK at the Cerebral Valley x Anthropic Hackathon (Feb 2026).
+Built with Claude Opus 4.6 and the Claude Agent SDK for the Cerebral Valley x Anthropic Hackathon (Feb 2026).
 
 ---
 
 ## The story
 
-It started with a simple insight: if a student can run a pandas groupby, they probably already know how to filter data, declare variables, and open a terminal. Test the high-level skill, infer the rest. That's **dependency inference** — and it makes assessment 3-5x faster.
+If a student can run a pandas groupby, they probably already know how to filter data, declare variables, and open a terminal. Test the high-level skill, infer the rest. That's dependency inference, and it makes assessment 3-5x faster.
 
-Then things got interesting.
+That was the starting point. Then things got weird.
 
-We taught the engine to **simulate lessons before they happen** — predicting where students will get stuck, where timing will blow up, where the energy will drop. It runs friction analysis on your plan before a single student walks in.
+The engine learned to simulate lessons before they happen — running friction analysis against actual student profiles. It'll tell you that Sofia will get stuck at minute 22 because her data cleaning skills are at Remember level, not Apply.
 
-Then we gave it the ability to **push back**. Ask for a 30-minute lecture for beginners and the engine will tell you why that's a bad idea — citing your students' actual skill profiles, not generic advice. It's pedagogical disagreement, grounded in evidence.
+Then it learned to argue. Ask for a 30-minute lecture for beginners and it'll tell you why that's a bad idea, citing Marcus's skill gaps and Alex's prerequisite holes. Not generic warnings. Your students, your data.
 
-Then it learned to **explain itself**. Ask "why did you put the hands-on exercise before the lecture?" and it retrieves its reasoning traces — the specific learner profiles, skill graph paths, and Bloom's levels that drove the decision. Not a hallucinated justification. The actual reasoning chain.
+Then it learned to explain itself. "Why did you pair Marcus with Sofia?" returns the actual reasoning chain — the skill graph traversal, the Bloom's level comparison, the alternatives it considered and rejected.
 
-Then it started **getting smarter**. After each teaching session, it debriefs with the educator, extracts patterns, and feeds them back into future plans. 18 sessions later, it knows that hands-on exercises consistently run 3 minutes over for evening cohorts.
+Then it started remembering. After each session, it debriefs with the educator and extracts patterns. 18 sessions in, it knows hands-on exercises run 3 minutes over for evening cohorts.
 
-Now it does all of this — across 4 domains, with educator-specific profiling, cross-domain skill transfer, affective context analysis, and assessment integrity checking — powered by 27 custom MCP tools.
+27 MCP tools. 4 domains. Educator profiling. Cross-domain skill transfer. All built in a week.
 
-**Built by [chekos](https://github.com/chekos) in a week.**
+*— [chekos](https://github.com/chekos)*
 
 ---
 
 ## What it does
 
-Most AI teaching tools generate content. This one *reasons about teaching* — and then reasons about its own reasoning.
+Most AI teaching tools generate content. This one reasons about teaching — and then reasons about its own reasoning.
 
-### Core engine
-- **Educator interviews** — structured conversation to understand context, constraints, and goals
-- **Adaptive assessment** — Bloom's taxonomy-calibrated questioning with dependency inference
-- **Lesson composition** — stage-directed plans with minute-by-minute timing, differentiated for each student
-- **Skill graph traversal** — 4 domains, each with skills, dependencies, and Bloom's levels
+**Core engine:** educator interviews, adaptive assessment (Bloom's taxonomy + dependency inference), stage-directed lesson plans with per-student differentiation, skill graph traversal across 4 domains.
 
-### Moonshot features (built overnight)
-- 🎭 **Lesson simulation** — predict friction points, timing risks, and energy drops *before* you teach
-- ⚔️ **Pedagogical disagreement** — the engine pushes back on bad plans, citing evidence from student profiles
-- 🌉 **Cross-domain transfer** — a biology PhD's analysis skills partially predict data science readiness
-- 🧠 **Meta-pedagogical reasoning** — ask "why?" about any decision and get the actual reasoning chain
-- 📊 **Assessment integrity** — detect gaming, inconsistency, and confidence-competence mismatches
-- 💚 **Affective dimension** — analyze emotional and motivational context for the group
-- 📝 **Post-session debrief** — structured reflection that feeds back into the wisdom layer
-- 📚 **Accumulated teaching wisdom** — patterns from past sessions improve future plans (flywheel effect)
-- 👤 **Educator profiling** — learns your teaching style and customizes plans to your strengths
+**On top of that:**
+
+- Lesson simulation — predict friction, timing risks, and energy drops before you teach
+- Pedagogical disagreement — the engine pushes back on bad plans, citing your students' actual profiles
+- Cross-domain transfer — a biology PhD's analysis skills partially predict data science readiness
+- Meta-pedagogical reasoning — ask "why?" about any decision and get the actual reasoning chain
+- Assessment integrity — detect gaming, inconsistency, and confidence-competence mismatches
+- Affective dimension — emotional and motivational context for the group
+- Post-session debrief — structured reflection that feeds back into the wisdom layer
+- Accumulated teaching wisdom — patterns from past sessions improve future plans
+- Educator profiling — learns your teaching style and customizes plans to your strengths
 
 ## Architecture
 
@@ -88,31 +85,31 @@ Most AI teaching tools generate content. This one *reasons about teaching* — a
 └──────────────────────────────────────────────────────────┘
 ```
 
-**Key architectural decisions:**
+**Why this architecture:**
 
-- **Claude Agent SDK** — not a wrapper around the API. The same SDK that powers Claude Code, with subagents, skills, custom MCP tools, session persistence, and context compaction.
-- **Skills as progressive disclosure** — pedagogical methodology lives in `SKILL.md` files loaded on-demand. The context window stays lean.
-- **Three subagents with isolated context** — assessment, roster analysis, and lesson composition each run in their own context window.
-- **Filesystem as working memory** — Markdown for human-readable artifacts, JSON for graph data and structured traces. No database needed.
-- **27 custom MCP tools** — in-process tools spanning skill graph traversal, dependency inference, lesson simulation, pedagogical disagreement, assessment integrity, cross-domain transfer, teaching wisdom, educator profiling, meta-pedagogical reasoning, and debrief processing.
+- **Claude Agent SDK** — the same SDK that powers Claude Code. Subagents, skills, MCP tools, session persistence, context compaction.
+- **Skills as progressive disclosure** — pedagogical methodology in `SKILL.md` files, loaded on-demand. Context window stays lean.
+- **Three subagents with isolated context** — assessment, roster analysis, and lesson composition each get their own context window.
+- **Filesystem as working memory** — Markdown for what humans read, JSON for what tools traverse. No database.
+- **27 MCP tools** — skill graph traversal, dependency inference, lesson simulation, pedagogical disagreement, assessment integrity, cross-domain transfer, teaching wisdom, educator profiling, meta-pedagogical reasoning, debrief processing.
 
 ## What makes it different
 
-**Dependency inference.** The skill graph isn't decoration — it's the reasoning substrate. When Priya demonstrates she can do a pandas groupby, the engine infers she can also filter data, write functions, and use variables, with confidence values that decay over multi-hop chains. Assessment becomes 3-5x more efficient.
+**Dependency inference.** The skill graph is the reasoning substrate. When Priya demonstrates she can do a pandas groupby, the engine infers she can also filter data, write functions, and use variables, with confidence decaying over multi-hop chains. Assessment becomes 3-5x faster.
 
-**The engine pushes back.** Ask for something pedagogically unsound and it won't just comply — it'll cite your students' profiles and explain why a different approach would work better. This is pedagogical disagreement, not generic warnings.
+**It pushes back.** Ask for something pedagogically unsound and it won't comply — it'll cite your students' profiles and explain why a different approach would work better.
 
-**Predict friction before teaching.** Lesson simulation runs your plan through the group's skill profiles and flags where timing will blow up, where beginners will get lost, and where advanced students will disengage — before you walk into the room.
+**It simulates before you teach.** Lesson simulation runs your plan against the group's profiles and flags where timing blows up, where beginners get lost, and where advanced students disengage.
 
-**It explains itself.** Every major decision in a lesson plan is traced: which skill graph paths were traversed, which learner profiles were consulted, what alternatives were considered and rejected. Ask "why?" and get the real reasoning, not a post-hoc rationalization.
+**It explains itself.** Every decision is traced: which graph paths were traversed, which profiles consulted, what alternatives were rejected. Ask "why?" and get the actual reasoning, not a post-hoc justification.
 
-**It gets smarter.** Post-session debriefs extract timing patterns, confusion points, and success patterns. After enough sessions, the engine knows that your Tuesday cohort needs +3 minutes on hands-on exercises. This accumulated wisdom feeds into every future plan.
+**It gets smarter.** Debriefs extract timing patterns, confusion points, and success patterns. After enough sessions, it knows your Tuesday cohort needs +3 minutes on hands-on exercises.
 
-**It knows you.** Educator profiling learns your teaching style — discussion-heavy or lecture-focused, structured or improvisational — and customizes plans to your strengths while occasionally nudging you to grow.
+**It knows you.** Educator profiling learns your teaching style and customizes plans to your strengths while occasionally nudging you to grow.
 
-**Stage direction, not bullet points.** Lesson plans include timing beats: *"By minute 14, if the group hasn't completed the warmup, skip the extension and move directly to the main activity."*
+**Stage direction, not bullet points.** Lesson plans include timing beats: *"By minute 14, if the group hasn't completed the warmup, skip the extension and move to the main activity."*
 
-**Bloom's taxonomy as calibration.** Assessment gauges *at what level* a student knows something. Remembering that pandas exists is different from evaluating when to use it vs. SQL.
+**Bloom's as calibration.** Assessment gauges at what *level* a student knows something. Remembering that pandas exists is different from evaluating when to use it vs. SQL.
 
 ## Running locally
 
@@ -169,15 +166,13 @@ The repo comes with pre-seeded data across 4 domains: **python-data-analysis**, 
 
 ## Why Opus 4.6
 
-This project exercises exactly the capabilities that make Opus 4.6 distinctive:
+The moonshot features require reasoning chains that span skill graphs, learner profiles, Bloom's taxonomy, teaching wisdom, and educator preferences at the same time. Lesson simulation alone means predicting friction across 5 learners × 25 skills × 6 Bloom's levels.
 
-- **Deep, multi-branch reasoning** — the moonshot features require reasoning chains that span skill graphs, learner profiles, Bloom's taxonomy, teaching wisdom, and educator preferences *simultaneously*. Lesson simulation alone requires predicting friction across 5 learners × 25 skills × 6 Bloom's levels.
-- **Pedagogical disagreement** — the engine must reason about *why* a plan is suboptimal, construct a counter-argument grounded in evidence, and propose alternatives. This requires the kind of sustained, multi-step reasoning Opus 4.6 excels at.
-- **Meta-pedagogical explanation** — retrieving reasoning traces and composing natural-language explanations that reference specific students, skills, and alternatives demands deep contextual reasoning.
-- **Progressive disclosure via Skills** — pedagogical methodology loaded on-demand from the filesystem, not crammed into a system prompt
-- **The Agent SDK as an operating system** — subagents, 27 custom MCP tools, session persistence, context compaction, and filesystem access are all first-class features
+Pedagogical disagreement is where it gets hard: the engine has to figure out *why* a plan is suboptimal, build a counter-argument from evidence, and propose alternatives — all in one turn. Meta-pedagogical explanation retrieves stored reasoning traces and composes natural-language answers that reference specific students by name and cite specific graph paths.
 
-This isn't a chatbot with a teaching-themed system prompt. It's a reasoning engine that happens to reason about pedagogy.
+The Agent SDK handles the rest: subagents with isolated context, 27 MCP tools, session persistence, context compaction, on-demand skill loading from the filesystem.
+
+Not a chatbot with a teaching-themed system prompt. A reasoning engine that happens to reason about pedagogy.
 
 ## Project structure
 
