@@ -6,6 +6,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { BACKEND_URL, WS_URL } from "@/lib/constants";
+import { LoadingSpinner, ErrorBanner } from "@/components/ui/loading";
 
 interface LessonSection {
   id: string;
@@ -211,8 +212,8 @@ Use the debrief-session skill to guide this conversation. When we're done, use t
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+      <div className="flex items-center justify-center py-20">
+        <LoadingSpinner message="Loading debrief..." />
       </div>
     );
   }
@@ -220,13 +221,8 @@ Use the debrief-session skill to guide this conversation. When we're done, use t
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-surface-0">
-        <Nav />
-        <main className="max-w-3xl mx-auto px-6 py-10">
-          <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-4 text-sm text-red-400">
-            {error}. Make sure the backend server is running on port 3000.
-          </div>
-        </main>
+      <div>
+        <ErrorBanner message={`${error}. Make sure the backend server is running on port 3000.`} />
       </div>
     );
   }
@@ -234,24 +230,19 @@ Use the debrief-session skill to guide this conversation. When we're done, use t
   // Lesson not found
   if (!readyData?.lessonExists) {
     return (
-      <div className="min-h-screen bg-surface-0">
-        <Nav />
-        <main className="max-w-3xl mx-auto px-6 py-10">
-          <div className="text-center py-20">
-            <h1 className="text-xl font-bold text-text-primary mb-2">
-              Lesson Not Found
-            </h1>
-            <p className="text-sm text-text-tertiary">
-              No lesson plan found with ID &ldquo;{lessonId}&rdquo;.
-            </p>
-            <Link
-              href="/lessons"
-              className="inline-block mt-4 text-sm text-accent hover:underline"
-            >
-              Browse all lessons
-            </Link>
-          </div>
-        </main>
+      <div className="text-center py-20">
+        <h1 className="text-xl font-bold text-text-primary mb-2">
+          Lesson Not Found
+        </h1>
+        <p className="text-sm text-text-tertiary">
+          No lesson plan found with ID &ldquo;{lessonId}&rdquo;.
+        </p>
+        <Link
+          href="/lessons"
+          className="inline-block mt-4 text-sm text-accent hover:underline"
+        >
+          Browse all lessons
+        </Link>
       </div>
     );
   }
@@ -259,10 +250,7 @@ Use the debrief-session skill to guide this conversation. When we're done, use t
   const lesson = readyData.lesson!;
 
   return (
-    <div className="min-h-screen bg-surface-0 flex flex-col">
-      <Nav />
-
-      <main className="flex-1 flex flex-col max-w-3xl w-full mx-auto px-6 py-6">
+    <div className="flex flex-col flex-1">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
@@ -487,56 +475,6 @@ Use the debrief-session skill to guide this conversation. When we're done, use t
             </div>
           </div>
         )}
-      </main>
     </div>
-  );
-}
-
-function Nav() {
-  return (
-    <nav className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
-      <div className="flex items-center gap-2.5">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-            <svg
-              className="w-4 h-4 text-accent"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-              />
-            </svg>
-          </div>
-          <span className="text-sm font-semibold text-text-primary">
-            Pedagogical Engine
-          </span>
-        </Link>
-      </div>
-      <div className="flex items-center gap-4">
-        <Link
-          href="/teach"
-          className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-        >
-          Teach
-        </Link>
-        <Link
-          href="/lessons"
-          className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-        >
-          Lessons
-        </Link>
-        <Link
-          href="/dashboard"
-          className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-        >
-          Dashboard
-        </Link>
-      </div>
-    </nav>
   );
 }

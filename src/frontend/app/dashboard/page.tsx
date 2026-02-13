@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import ExportButton from "@/components/export-button";
 import { getSkillGraphData, getGroupDashboardData, getLearnerIds } from "@/lib/demo-data";
+import { LoadingSpinner } from "@/components/ui/loading";
 
 // Dynamic import for ReactFlow (requires client-side only)
 const SkillDependencyGraph = dynamic(
@@ -14,16 +15,13 @@ const SkillDependencyGraph = dynamic(
 // Dynamic import for GroupDashboard (only shown when user clicks tab)
 const GroupDashboard = dynamic(
   () => import("@/components/visualizations/group-dashboard"),
-  { loading: () => <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" /></div> }
+  { loading: () => <LoadingSpinner message="Loading group dashboard..." /> }
 );
 
 function GraphSkeleton() {
   return (
     <div className="w-full h-[650px] rounded-xl border border-white/[0.06] bg-[#06060a] flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-10 h-10 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-xs text-gray-500">Loading skill dependency graph...</p>
-      </div>
+      <LoadingSpinner message="Loading skill dependency graph..." />
     </div>
   );
 }

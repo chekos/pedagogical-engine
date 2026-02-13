@@ -1,13 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { sendAssessmentMessage } from "@/lib/api";
-
-interface AssessmentMessage {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-}
+import { useEffect, useRef } from "react";
+import { useAssessmentChat } from "@/lib/hooks/use-assessment-chat";
 
 interface SkillArea {
   name: string;
@@ -20,24 +14,7 @@ interface AssessmentChatProps {
   learnerName: string;
 }
 
-/**
- * Parse skill areas from assistant messages.
- * The backend assessment agent mentions skill areas as it covers them.
- * We estimate progress based on the conversation flow.
- */
-function estimateProgress(messages: AssessmentMessage[]): {
-  covered: number;
-  total: number;
-  skillAreas: SkillArea[];
-} {
-  const assistantMsgs = messages.filter((m) => m.role === "assistant");
-  const userMsgs = messages.filter((m) => m.role === "user");
-
-  // Estimate: typical assessment covers ~6 skill areas in ~12 exchanges
-  const total = 6;
-  const exchanges = userMsgs.length;
-  const covered = Math.min(Math.floor(exchanges / 2), total);
-
+function getSkillAreas(covered: number): SkillArea[] {
   const defaultAreas = [
     "Foundations",
     "Core concepts",
@@ -47,129 +24,41 @@ function estimateProgress(messages: AssessmentMessage[]): {
     "Advanced topics",
   ];
 
-  const skillAreas: SkillArea[] = defaultAreas.map((name, i) => ({
+  return defaultAreas.map((name, i) => ({
     name,
     status: i < covered ? "covered" : i === covered ? "current" : "upcoming",
   }));
-
-  return { covered, total, skillAreas };
 }
 
 export default function AssessmentChat({
   code,
   learnerName,
 }: AssessmentChatProps) {
-  const [messages, setMessages] = useState<AssessmentMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const {
+    messages,
+    input,
+    setInput,
+    isLoading,
+    isComplete,
+    progress,
+    error,
+    setError,
+    sendMessage,
+    messagesEndRef,
+    inputRef,
+  } = useAssessmentChat({
+    code,
+    learnerName,
+    autoStartMessage: `Hi, I'm ${learnerName}. I'm ready to start my assessment.`,
+  });
+
   const completionRef = useRef<HTMLHeadingElement>(null);
-  const hasStarted = useRef(false);
-
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
 
   useEffect(() => {
     if (isComplete && completionRef.current) {
       completionRef.current.focus();
     }
   }, [isComplete]);
-
-  // Start assessment on mount
-  useEffect(() => {
-    if (hasStarted.current) return;
-    hasStarted.current = true;
-
-    async function start() {
-      setIsLoading(true);
-      try {
-        const res = await sendAssessmentMessage(
-          code,
-          learnerName,
-          `Hi, I'm ${learnerName}. I'm ready to start my assessment.`
-        );
-
-        const assistantMessages: AssessmentMessage[] = res.messages.map(
-          (m, i) => ({
-            id: `init-${i}`,
-            role: "assistant" as const,
-            text: m.text,
-          })
-        );
-
-        setMessages(assistantMessages);
-
-        if (res.result?.subtype === "success") {
-          setIsComplete(true);
-        }
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to start assessment";
-        if (message.includes("not found")) {
-          setError(
-            `Assessment code "${code}" was not found. Please check the code and try again.`
-          );
-        } else if (message.includes("completed")) {
-          setError("This assessment has already been completed.");
-          setIsComplete(true);
-        } else {
-          setError(message);
-        }
-      } finally {
-        setIsLoading(false);
-        inputRef.current?.focus();
-      }
-    }
-
-    start();
-  }, [code, learnerName]);
-
-  const sendMessage = useCallback(async () => {
-    const trimmed = input.trim();
-    if (!trimmed || isLoading || isComplete) return;
-
-    const userMsg: AssessmentMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      text: trimmed,
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const res = await sendAssessmentMessage(code, learnerName, trimmed);
-
-      const assistantMessages: AssessmentMessage[] = res.messages.map(
-        (m, i) => ({
-          id: `resp-${Date.now()}-${i}`,
-          role: "assistant" as const,
-          text: m.text,
-        })
-      );
-
-      setMessages((prev) => [...prev, ...assistantMessages]);
-
-      if (res.result?.subtype === "success") {
-        setIsComplete(true);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send message");
-    } finally {
-      setIsLoading(false);
-      inputRef.current?.focus();
-    }
-  }, [input, isLoading, isComplete, code, learnerName]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -178,8 +67,8 @@ export default function AssessmentChat({
     }
   };
 
-  const { covered, total, skillAreas } = estimateProgress(messages);
-  const progressPercent = total > 0 ? Math.round((covered / total) * 100) : 0;
+  const { covered, total, percent: progressPercent } = progress;
+  const skillAreas = getSkillAreas(covered);
 
   return (
     <div className="flex flex-col h-screen bg-surface-0">

@@ -15,6 +15,7 @@ import {
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useSpeechSynthesis } from "@/hooks/use-speech-synthesis";
 import VoiceMicButton from "@/components/chat/voice-mic-button";
+import { ErrorBanner, LoadingSpinner } from "@/components/ui/loading";
 
 type SectionFeedback = "went-well" | "struggled" | "skipped";
 
@@ -224,17 +225,13 @@ export default function LiveCompanionPage() {
   if (loadError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-0 px-6">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01" />
-            </svg>
+        <div className="max-w-md w-full space-y-4">
+          <ErrorBanner message={loadError} />
+          <div className="text-center">
+            <Link href="/lessons" className="text-sm text-accent hover:text-accent-muted">
+              Browse lessons
+            </Link>
           </div>
-          <h1 className="text-lg font-semibold text-text-primary mb-2">Lesson not found</h1>
-          <p className="text-sm text-text-secondary mb-4">{loadError}</p>
-          <Link href="/lessons" className="text-sm text-accent hover:text-accent-muted">
-            Browse lessons
-          </Link>
         </div>
       </div>
     );
@@ -243,7 +240,7 @@ export default function LiveCompanionPage() {
   if (!meta) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-0">
-        <div className="animate-pulse-subtle text-text-tertiary">Loading lesson...</div>
+        <LoadingSpinner message="Loading lesson..." />
       </div>
     );
   }

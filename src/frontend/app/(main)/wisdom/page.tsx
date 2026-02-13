@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import { BACKEND_URL } from "@/lib/constants";
 
 interface TeachingNote {
@@ -187,60 +186,7 @@ export default function WisdomPage() {
   );
 
   return (
-    <div className="min-h-screen bg-surface-0">
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
-        <div className="flex items-center gap-2.5">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-accent"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                />
-              </svg>
-            </div>
-            <span className="text-sm font-semibold text-text-primary">
-              Pedagogical Engine
-            </span>
-          </Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/teach"
-            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            Teach
-          </Link>
-          <Link
-            href="/dashboard"
-            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/lessons"
-            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            Lessons
-          </Link>
-          <Link
-            href="/domains"
-            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            Domains
-          </Link>
-        </div>
-      </nav>
-
-      <main className="max-w-5xl mx-auto px-6 py-10">
+    <div>
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-text-primary">
@@ -596,7 +542,6 @@ export default function WisdomPage() {
             </div>
           </>
         )}
-      </main>
     </div>
   );
 }

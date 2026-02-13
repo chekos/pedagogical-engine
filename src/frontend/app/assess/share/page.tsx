@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import QRCodeDisplay from "@/components/assessment/qr-code";
 import { BACKEND_URL, FRONTEND_URL } from "@/lib/constants";
+import { ErrorBanner } from "@/components/ui/loading";
 
 interface AssessmentLink {
   code: string;
@@ -222,9 +223,9 @@ export default function ShareAssessmentPage() {
 
           <div aria-live="assertive" aria-atomic="true">
             {error && (
-              <p className="text-sm text-red-400 mt-3 animate-fade-in" role="alert">
-                {error}
-              </p>
+              <div className="mt-3 animate-fade-in" role="alert">
+                <ErrorBanner message={error} />
+              </div>
             )}
           </div>
         </div>

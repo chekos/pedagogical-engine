@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { fetchIntegrityReport, type IntegrityReport, type IntegrityLearnerReport } from "@/lib/api";
+import { ErrorBanner } from "@/components/ui/loading";
 
 function IntegrityBadge({ level }: { level: string }) {
   const config: Record<string, { bg: string; text: string; label: string }> = {
@@ -274,8 +275,8 @@ export default function IntegrityReportPage() {
 
         {/* Error */}
         {error && (
-          <div className="mb-6 p-3 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 text-sm" role="alert">
-            {error}
+          <div className="mb-6" role="alert">
+            <ErrorBanner message={error} onRetry={loadReport} />
           </div>
         )}
 

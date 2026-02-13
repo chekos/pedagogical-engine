@@ -1,28 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { sendAssessmentMessage } from "@/lib/api";
-
-interface AssessmentMessage {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-}
+import { useCallback, useEffect, useRef } from "react";
+import { useAssessmentChat } from "@/lib/hooks/use-assessment-chat";
 
 interface EmbedAssessmentChatProps {
   code: string;
   learnerName: string;
-}
-
-function estimateProgress(messages: AssessmentMessage[]): {
-  covered: number;
-  total: number;
-} {
-  const userMsgs = messages.filter((m) => m.role === "user");
-  const total = 6;
-  const exchanges = userMsgs.length;
-  const covered = Math.min(Math.floor(exchanges / 2), total);
-  return { covered, total };
 }
 
 /**
@@ -34,22 +17,26 @@ export default function EmbedAssessmentChat({
   code,
   learnerName,
 }: EmbedAssessmentChatProps) {
-  const [messages, setMessages] = useState<AssessmentMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const hasStarted = useRef(false);
+  const {
+    messages,
+    input,
+    setInput,
+    isLoading,
+    isComplete,
+    progress,
+    error,
+    setError,
+    sendMessage,
+    messagesEndRef,
+    inputRef,
+  } = useAssessmentChat({
+    code,
+    learnerName,
+    autoStartMessage: `Hi, I'm ${learnerName}. I'm ready to start my assessment.`,
+  });
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+  const hasNotifiedStart = useRef(false);
+  const prevProgressRef = useRef(0);
 
   // Notify parent window of events via postMessage
   const notifyParent = useCallback(
@@ -63,115 +50,41 @@ export default function EmbedAssessmentChat({
     [code, learnerName]
   );
 
-  // Start assessment on mount
+  // Notify parent on start
   useEffect(() => {
-    if (hasStarted.current) return;
-    hasStarted.current = true;
-
+    if (hasNotifiedStart.current) return;
+    hasNotifiedStart.current = true;
     notifyParent("assessment:started");
+  }, [notifyParent]);
 
-    async function start() {
-      setIsLoading(true);
-      try {
-        const res = await sendAssessmentMessage(
-          code,
-          learnerName,
-          `Hi, I'm ${learnerName}. I'm ready to start my assessment.`
-        );
-
-        const assistantMessages: AssessmentMessage[] = res.messages.map(
-          (m, i) => ({
-            id: `init-${i}`,
-            role: "assistant" as const,
-            text: m.text,
-          })
-        );
-
-        setMessages(assistantMessages);
-
-        if (res.result?.subtype === "success") {
-          setIsComplete(true);
-        }
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to start assessment";
-        if (message.includes("not found")) {
-          setError(
-            `Assessment code "${code}" was not found. Please check the code and try again.`
-          );
-        } else if (message.includes("completed")) {
-          setError("This assessment has already been completed.");
-          setIsComplete(true);
-        } else {
-          setError(message);
-        }
-        notifyParent("assessment:error", { error: message });
-      } finally {
-        setIsLoading(false);
-        inputRef.current?.focus();
-      }
+  // Notify parent on error
+  useEffect(() => {
+    if (error) {
+      notifyParent("assessment:error", { error });
     }
-
-    start();
-  }, [code, learnerName, notifyParent]);
+  }, [error, notifyParent]);
 
   // Notify parent on completion
   useEffect(() => {
     if (isComplete) {
-      const { covered, total } = estimateProgress(messages);
       notifyParent("assessment:completed", {
         messageCount: messages.length,
-        covered,
-        total,
+        covered: progress.covered,
+        total: progress.total,
       });
     }
-  }, [isComplete, messages, notifyParent]);
+  }, [isComplete, messages.length, progress.covered, progress.total, notifyParent]);
 
-  const sendMessage = useCallback(async () => {
-    const trimmed = input.trim();
-    if (!trimmed || isLoading || isComplete) return;
-
-    const userMsg: AssessmentMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      text: trimmed,
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const res = await sendAssessmentMessage(code, learnerName, trimmed);
-
-      const assistantMessages: AssessmentMessage[] = res.messages.map(
-        (m, i) => ({
-          id: `resp-${Date.now()}-${i}`,
-          role: "assistant" as const,
-          text: m.text,
-        })
-      );
-
-      setMessages((prev) => [...prev, ...assistantMessages]);
-
-      if (res.result?.subtype === "success") {
-        setIsComplete(true);
-      } else {
-        const updated = [...messages, userMsg, ...assistantMessages];
-        const { covered, total } = estimateProgress(updated);
-        notifyParent("assessment:progress", { covered, total });
-      }
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to send message";
-      setError(message);
-      notifyParent("assessment:error", { error: message });
-    } finally {
-      setIsLoading(false);
-      inputRef.current?.focus();
+  // Notify parent on progress changes
+  useEffect(() => {
+    if (!isComplete && progress.covered > prevProgressRef.current) {
+      prevProgressRef.current = progress.covered;
+      notifyParent("assessment:progress", {
+        covered: progress.covered,
+        total: progress.total,
+      });
     }
-  }, [input, isLoading, isComplete, code, learnerName, messages, notifyParent]);
+  }, [isComplete, progress.covered, progress.total, notifyParent]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -180,8 +93,7 @@ export default function EmbedAssessmentChat({
     }
   };
 
-  const { covered, total } = estimateProgress(messages);
-  const progressPercent = total > 0 ? Math.round((covered / total) * 100) : 0;
+  const { covered, total, percent: progressPercent } = progress;
 
   return (
     <div className="flex flex-col h-screen bg-surface-0">

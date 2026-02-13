@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { BACKEND_URL } from "@/lib/constants";
+import { LoadingSpinner, ErrorBanner } from "@/components/ui/loading";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -259,19 +260,14 @@ export default function TransferPage() {
             </button>
 
             {error && (
-              <p className="text-xs text-red-400">{error}</p>
+              <ErrorBanner message={error} />
             )}
           </div>
         </div>
 
         {/* Loading state */}
         {loading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="w-10 h-10 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-xs text-gray-500">Loading both domain graphs and analyzing transfer...</p>
-            </div>
-          </div>
+          <LoadingSpinner message="Loading both domain graphs and analyzing transfer..." />
         )}
 
         {/* Results */}
