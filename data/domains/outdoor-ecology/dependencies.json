@@ -1,0 +1,187 @@
+{
+  "domain": "outdoor-ecology",
+  "version": "1.0.0",
+  "description": "Directed dependency edges between outdoor-ecology skills. Source is the prerequisite; target is the dependent skill.",
+  "edges": [
+    {
+      "source": "use-field-guide",
+      "target": "identify-local-trees",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "use-field-guide",
+      "target": "identify-local-birds",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "use-field-guide",
+      "target": "identify-animal-tracks",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "use-field-guide",
+      "target": "keep-field-journal",
+      "confidence": 0.70,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-local-trees",
+      "target": "describe-habitat-types",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "use-water-test-kit",
+      "target": "identify-water-pollutants",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-local-trees",
+      "target": "conduct-species-survey",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-local-birds",
+      "target": "conduct-species-survey",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "keep-field-journal",
+      "target": "conduct-species-survey",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "conduct-species-survey",
+      "target": "measure-biodiversity",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-local-trees",
+      "target": "map-food-web",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-local-birds",
+      "target": "map-food-web",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-animal-tracks",
+      "target": "map-food-web",
+      "confidence": 0.75,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-water-pollutants",
+      "target": "assess-water-quality",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "conduct-species-survey",
+      "target": "assess-water-quality",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "describe-habitat-types",
+      "target": "analyze-habitat-health",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "measure-biodiversity",
+      "target": "analyze-habitat-health",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "describe-habitat-types",
+      "target": "explain-succession",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "analyze-habitat-health",
+      "target": "compare-ecosystems",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "map-food-web",
+      "target": "compare-ecosystems",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "compare-ecosystems",
+      "target": "evaluate-human-impact",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "assess-water-quality",
+      "target": "evaluate-human-impact",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "measure-biodiversity",
+      "target": "design-monitoring-plan",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "assess-water-quality",
+      "target": "design-monitoring-plan",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "keep-field-journal",
+      "target": "design-monitoring-plan",
+      "confidence": 0.75,
+      "type": "prerequisite"
+    },
+    {
+      "source": "evaluate-human-impact",
+      "target": "design-restoration-plan",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "explain-succession",
+      "target": "design-restoration-plan",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "design-monitoring-plan",
+      "target": "design-restoration-plan",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "use-compass-map",
+      "target": "conduct-species-survey",
+      "confidence": 0.65,
+      "type": "recommended"
+    },
+    {
+      "source": "read-weather-signs",
+      "target": "conduct-species-survey",
+      "confidence": 0.50,
+      "type": "recommended"
+    }
+  ]
+}

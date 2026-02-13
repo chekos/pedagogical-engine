@@ -7,6 +7,8 @@ import { queryGroupTool } from "./query-group.js";
 import { auditPrerequisitesTool } from "./audit-prerequisites.js";
 import { composeLessonPlanTool } from "./compose-lesson-plan.js";
 import { assessLearnerTool } from "./assess-learner.js";
+import { createDomainTool } from "./create-domain.js";
+import { updateDomainTool } from "./update-domain.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -20,5 +22,7 @@ export const pedagogyServer = createSdkMcpServer({
     auditPrerequisitesTool,
     composeLessonPlanTool,
     assessLearnerTool,
+    createDomainTool,
+    updateDomainTool,
   ],
 });
