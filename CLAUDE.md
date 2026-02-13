@@ -14,15 +14,26 @@ an experienced teacher, not a content generator.
 ## Architecture
 - Skills in .claude/skills/ encode your pedagogical methodology
 - Subagents in .claude/agents/ handle specialized reasoning branches
-- Custom tools in the pedagogy MCP server access data in data/
+- 27 custom MCP tools in the pedagogy MCP server access data in data/
 - All persistent data lives in data/ as JSON and Markdown files
 
 ## What's built (as of Session 11 — Feb 13, 2026)
 
+### 9 Moonshot features
+1. **Lesson simulation** — predict friction before teaching
+2. **Pedagogical disagreement** — the engine pushes back on bad plans
+3. **Cross-domain transfer** — skills transfer across domain boundaries
+4. **Meta-pedagogical reasoning** — "why did you choose that?" with real traces
+5. **Assessment integrity** — detect gaming and inconsistency
+6. **Affective dimension** — emotional/motivational context analysis
+7. **Post-session debrief** — structured reflection feeding the wisdom layer
+8. **Accumulated teaching wisdom** — flywheel effect from session patterns
+9. **Educator profiling** — personalized plans based on teaching style
+
 ### Backend (src/server/)
 - Express + WebSocket server on port 3000
 - Agent SDK integration with Opus 4.6 for educator conversations, Sonnet for assessments
-- 18 custom MCP tools via `createSdkMcpServer`:
+- 27 custom MCP tools via `createSdkMcpServer`:
   - `load_roster` — load or create groups and learner profiles
   - `query_skill_graph` — BFS/DFS traversal, dependency inference, Bloom's level filtering
   - `generate_assessment_link` — create assessment sessions with shareable codes
@@ -31,6 +42,15 @@ an experienced teacher, not a content generator.
   - `audit_prerequisites` — cross-reference lesson needs against group profiles
   - `compose_lesson_plan` — orchestrate graph + profiles + constraints into lesson markdown
   - `assess_learner` — update profiles with assessment results, run dependency inference
+  - `create_domain` — create a new skill domain from scratch
+  - `update_domain` — update an existing domain's skills and dependencies
+  - `compose_curriculum` — compose a multi-session curriculum plan
+  - `advance_curriculum` — advance curriculum state after a session
+  - `simulate_lesson` — predict friction points, timing risks, and energy drops before teaching (Moonshot 1)
+  - `analyze_tensions` — pedagogical disagreement: push back on suboptimal plans with evidence (Moonshot 2)
+  - `analyze_assessment_integrity` — detect gaming, inconsistency, and confidence-competence mismatches (Moonshot 5)
+  - `analyze_affective_context` — analyze emotional and motivational context for a group (Moonshot 6)
+  - `process_debrief` — structured post-session reflection that feeds into wisdom layer (Moonshot 7)
   - `query_teaching_wisdom` — retrieve accumulated teaching notes and patterns for a domain, filtered by skill, type, confidence, and group level
   - `analyze_teaching_patterns` — scan all debriefs for a domain to detect recurring timing, engagement, confusion, and success patterns
   - `add_teaching_note` — add educator-direct teaching notes with high confidence to the domain's wisdom layer
@@ -121,6 +141,44 @@ an experienced teacher, not a content generator.
   - GET /api/reasoning/:lessonId/:traceId — get a specific reasoning trace
 - Demo data: 8 reasoning traces for the basic-plotting-with-matplotlib lesson plan, covering all 6 decision types
 - Compose-lesson SKILL.md updated with reasoning trace generation methodology
+
+### Lesson simulation layer (Moonshot 1)
+- Pre-teaching friction analysis: run a lesson plan through the group's skill profiles before teaching
+- Predicts timing risks, energy drops, and engagement issues per section
+- Per-learner friction points: identifies where specific students will struggle based on skill gaps
+- Generates timing risk scores and suggested adjustments
+- MCP tool: `simulate_lesson`
+- Frontend: `/simulate` and `/simulate/[id]` pages with section-by-section friction visualization
+
+### Pedagogical disagreement layer (Moonshot 2)
+- Evidence-based pushback: when an educator requests something pedagogically suboptimal, the engine disagrees
+- Cites specific learner profiles, skill gaps, and Bloom's levels in its counter-arguments
+- Tension types: timing constraints, skill mismatches, activity-audience misalignment, scope issues
+- Not generic warnings — grounded in the actual group's data
+- MCP tool: `analyze_tensions`
+- Frontend: `/disagree` page with tension cards and alternative suggestions
+
+### Assessment integrity layer (Moonshot 5)
+- Detects gaming patterns: suspiciously fast responses, inconsistent skill demonstrations
+- Confidence-competence mismatch detection: high self-reported confidence with low demonstrated skill
+- Cross-question consistency analysis
+- MCP tool: `analyze_assessment_integrity`
+- Frontend: `/assess/integrity` page
+
+### Affective dimension layer (Moonshot 6)
+- Analyzes emotional and motivational context for the group
+- Considers factors: time of day, session history, group dynamics, individual stressors
+- Feeds into lesson composition for pacing and activity selection
+- MCP tool: `analyze_affective_context`
+
+### Post-session debrief layer (Moonshot 7)
+- Structured post-teaching reflection: what worked, what didn't, what surprised
+- Extracts timing patterns, confusion points, success patterns
+- Feeds observations into the teaching wisdom layer (Moonshot 8) as teaching notes
+- Updates educator profiles (Moonshot 9) with timing adjustments
+- MCP tool: `process_debrief`
+- Frontend: `/debrief/[lesson-id]` page
+- Demo data: pre-seeded debriefs available
 
 ### Cross-domain transfer layer (Moonshot 3)
 - Cross-domain inference: when a learner has assessed skills in one domain, predict partial readiness in another
@@ -245,7 +303,7 @@ an experienced teacher, not a content generator.
   - Inline export buttons in lesson plan view, dashboard header
 
 ## Current limitations
-- Single domain (python-data-analysis) — multi-domain is architecturally supported but not demo'd
+- 4 domains (python-data-analysis, farm-science, outdoor-ecology, culinary-fundamentals) — extensible to more
 - Assessment flow requires the backend server running (no offline mode)
 - Dashboard uses embedded demo data (not live from backend) for standalone viewing
 - No persistent storage beyond filesystem — sessions lost on server restart
