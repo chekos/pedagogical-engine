@@ -42,6 +42,12 @@ an experienced teacher, not a content generator.
   - Interactive AskUserQuestion cards (selectable options with submit, replaces raw JSON)
   - Persistent progress indicator with elapsed time counter and stage-aware labels
 - Student assessment (/assess/[code]) — code entry + HTTP assessment chat
+- Embeddable assessment widget (/assess/embed/[code]) — self-contained iframe version
+  - No navigation, no header/footer — just the assessment conversation
+  - Responsive sizing, works at any width/height
+  - postMessage API: assessment:started, assessment:progress, assessment:completed, assessment:error
+  - Embed demo page (/assess/embed-demo) with live preview, code snippets, and event log
+  - Embed code generation integrated into share page (/assess/share)
 - Skill analytics dashboard (/dashboard) — two views:
   - Dependency graph: interactive React Flow DAG with learner overlay, auto-cycle demo mode
   - Group dashboard: heatmap, Bloom's radar chart, common gaps analysis, pairing suggestions, learner summary cards
