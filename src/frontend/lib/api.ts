@@ -344,6 +344,100 @@ export async function sendAssessmentMessage(
   return res.json();
 }
 
+// ─── Simulation HTTP Client ───────────────────────────────────
+
+export interface LearnerSectionStatus {
+  learnerId: string;
+  learnerName: string;
+  readiness: "ready" | "partial" | "gap";
+  confidence: number;
+  missingSkills: string[];
+  weakSkills: Array<{ skillId: string; confidence: number }>;
+}
+
+export interface FrictionPoint {
+  sectionIndex: number;
+  sectionTitle: string;
+  startMin: number;
+  severity: number;
+  affectedCount: number;
+  totalCount: number;
+  affectedLearners: Array<{ id: string; name: string; missingSkills: string[] }>;
+  description: string;
+}
+
+export interface CollisionMoment {
+  sectionIndex: number;
+  sectionTitle: string;
+  startMin: number;
+  simultaneousGaps: number;
+  commonGapSkills: string[];
+  description: string;
+}
+
+export interface CascadeRisk {
+  upstreamSection: number;
+  upstreamTitle: string;
+  downstreamSection: number;
+  downstreamTitle: string;
+  affectedLearners: string[];
+  chainedSkills: string[];
+  description: string;
+}
+
+export interface PivotSuggestion {
+  sectionIndex: number;
+  type: "reteach" | "pair" | "substitute" | "restructure";
+  description: string;
+  timeCostMin: number;
+}
+
+export interface SectionAnalysis {
+  sectionIndex: number;
+  sectionTitle: string;
+  startMin: number;
+  endMin: number;
+  requiredSkills: string[];
+  taughtSkills: string[];
+  learnerStatuses: LearnerSectionStatus[];
+  readyCount: number;
+  partialCount: number;
+  gapCount: number;
+}
+
+export interface SimulationResult {
+  lessonId: string;
+  lessonTitle: string;
+  groupName: string;
+  domain: string;
+  overallConfidence: number;
+  sectionAnalysis: SectionAnalysis[];
+  frictionPoints: FrictionPoint[];
+  collisionMoments: CollisionMoment[];
+  cascadeRisks: CascadeRisk[];
+  pivotSuggestions: PivotSuggestion[];
+}
+
+export async function fetchSimulation(
+  lessonId: string,
+  domain?: string,
+  group?: string
+): Promise<SimulationResult> {
+  const params = new URLSearchParams();
+  if (domain) params.set("domain", domain);
+  if (group) params.set("group", group);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await fetch(
+    `${BACKEND_URL}/api/simulate/${encodeURIComponent(lessonId)}${qs}`
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Request failed" }));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.simulation;
+}
+
 // ─── Health Check ──────────────────────────────────────────────
 
 export async function checkBackendStatus(): Promise<{

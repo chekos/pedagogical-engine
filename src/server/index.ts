@@ -10,6 +10,7 @@ import { SessionManager } from "./sessions/manager.js";
 import { createEducatorQuery, createAssessmentQuery, createLiveCompanionQuery } from "./agent.js";
 import { parseLesson, lessonIdFromPath } from "./lib/lesson-parser.js";
 import { exportRouter } from "./exports/router.js";
+import { runSimulation } from "./tools/simulate-lesson.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -656,6 +657,66 @@ app.post("/api/lessons/:id/feedback", async (req, res) => {
     res.json({ saved: true });
   } catch {
     res.status(500).json({ error: "Failed to save feedback" });
+  }
+});
+
+// ─── Lesson simulation endpoint ──────────────────────────────────
+app.get("/api/simulate/:lessonId", async (req, res) => {
+  const { lessonId } = req.params;
+  if (lessonId.includes("/") || lessonId.includes("\\") || lessonId.includes("..")) {
+    res.status(400).json({ error: "Invalid lesson ID" });
+    return;
+  }
+
+  const domain = (req.query.domain as string) || "";
+  const groupName = (req.query.group as string) || "";
+
+  if (!domain || !groupName) {
+    // Try to extract from lesson plan metadata
+    const lessonPath = path.join(DATA_DIR, "lessons", `${lessonId}.md`);
+    try {
+      const content = await fs.readFile(lessonPath, "utf-8");
+      const parsed = parseLesson(content);
+      const effectiveDomain = domain || parsed.meta.domain || "";
+      const effectiveGroup = groupName || parsed.meta.group || "";
+
+      if (!effectiveDomain || !effectiveGroup) {
+        res.status(400).json({
+          error: "Missing domain or group. Provide as query params: ?domain=xxx&group=yyy",
+        });
+        return;
+      }
+
+      // Normalize group name to slug
+      const groupSlug = effectiveGroup
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      try {
+        const result = await runSimulation(lessonId, effectiveDomain, groupSlug);
+        res.json({ simulation: result });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        res.status(500).json({ error: message });
+      }
+    } catch {
+      res.status(404).json({ error: `Lesson '${lessonId}' not found` });
+    }
+    return;
+  }
+
+  if (!validateSlug(domain) || !validateSlug(groupName)) {
+    res.status(400).json({ error: "Invalid domain or group slug" });
+    return;
+  }
+
+  try {
+    const result = await runSimulation(lessonId, domain, groupName);
+    res.json({ simulation: result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.status(500).json({ error: message });
   }
 });
 
