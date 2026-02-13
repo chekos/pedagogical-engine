@@ -118,6 +118,88 @@ Update the learner profile at `data/learners/{id}.md` with:
 - {actionable recommendations for the educator}
 ```
 
+## Assessment integrity methodology
+
+In 2026, every student has ChatGPT in another tab. The engine designs assessments
+that are inherently resistant to gaming — not through proctoring or surveillance,
+but through the *nature of the questions themselves.*
+
+The goal is never to catch cheaters. It is to design assessments where the honest
+path is easier than the dishonest path, and where even a student who tries to game
+the system reveals useful information about what they actually know.
+
+Read `references/integrity-strategies.md` for full strategy details.
+
+### Question design strategies
+
+Every question should require synthesis, context, or chained reasoning. If a question
+can be answered with a simple Google search and doesn't chain on previous context,
+that's a design failure.
+
+1. **Contextual synthesis** — Ask the student to apply the skill to their own
+   situation or context. "You mentioned you're analyzing [thing they said earlier].
+   How would you approach [skill] in that context?" You can't Google your own situation.
+
+2. **Chained reasoning** — Design question sequences where each answer depends on
+   the previous. "You said you'd use a left join. What happens to the rows that
+   don't match? How would that affect your analysis?" Looking up answers
+   independently produces inconsistencies the engine can detect.
+
+3. **Explain-to-teach** — "How would you explain this to someone who doesn't know
+   anything about it?" Tests comprehension depth beyond recall. Requires the student
+   to model another person's understanding.
+
+4. **Error diagnosis** — Present flawed reasoning or code with a subtle error.
+   "What's wrong with this approach?" Tests application-level understanding — the
+   student needs to actually understand the concept to spot the issue.
+
+5. **Transfer probes** — Ask the student to apply a concept in a different context
+   than the one they learned it in. "You know how to filter data in Python. If you
+   had to do the same thing in a spreadsheet with no code, how would you approach it?"
+
+### Response pattern awareness
+
+Track these patterns (without revealing to the student) to calibrate confidence:
+
+- **Response depth** — Is the student elaborating or giving minimal answers?
+  "Yes, I'd use a left join" vs. "I'd use a left join because I want to keep all
+  customers even if they haven't made a purchase, then check for nulls" — both
+  correct, but different depth.
+
+- **Consistency** — Do answers across the conversation tell a coherent story about
+  the student's understanding? If they demonstrate synthesis-level understanding on
+  one question but struggle with a prerequisite on the next, that's a signal.
+
+- **Engagement patterns** — Does the student's comfort level match what you'd expect
+  at their demonstrated level? Deep fluency produces confident, quick answers on
+  basics and thoughtful pauses on complex topics.
+
+### Confidence calibration from integrity signals
+
+These patterns influence the confidence values assigned to assessed skills:
+
+| Pattern | Confidence effect |
+|---|---|
+| High depth + high consistency | Full confidence (1.0x) |
+| High depth + inconsistency | Reduce confidence (0.7x) — flag for educator |
+| Minimal answers + consistency | Moderate confidence (0.8x) — may know more than shown |
+| Minimal answers + inconsistency | Low confidence (0.5x) — flag for educator |
+
+### When confidence is low
+
+Never flag the student. Instead, note in the learner profile that assessment
+confidence is below threshold, with a recommendation for the educator:
+
+> "James's assessment showed some inconsistencies in the data manipulation section.
+> Consider a brief in-person check before building activities on those skills."
+
+### The assessment must still feel warm and conversational
+
+The integrity layer shapes *what questions are asked*, not *how they're asked*.
+The student should feel like they're having a helpful conversation, not being
+interrogated. Use the same warm, encouraging tone from the main assessment rules.
+
 ## Reference files
 
 - `references/blooms-taxonomy.md` — Bloom's levels with example questions per level
+- `references/integrity-strategies.md` — Assessment integrity question design and response analysis
