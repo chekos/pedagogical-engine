@@ -34,7 +34,7 @@ export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps
         {/* Friendly wave illustration */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400/20 to-orange-400/20 flex items-center justify-center mx-auto mb-5">
-            <span className="text-4xl">👋</span>
+            <span className="text-4xl" aria-hidden="true">👋</span>
           </div>
           <h1 className="text-2xl font-semibold text-text-primary">
             Hey there!
@@ -44,7 +44,7 @@ export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps
             make your session more useful.
           </p>
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-medium">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Not a test &mdash; no grades, no pressure
@@ -91,16 +91,18 @@ export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-400 text-center animate-fade-in">{error}</p>
-          )}
+          <div aria-live="assertive" aria-atomic="true">
+            {error && (
+              <p className="text-sm text-red-400 text-center animate-fade-in" role="alert">{error}</p>
+            )}
+          </div>
 
           <button
             type="submit"
             className="w-full rounded-xl bg-accent text-white py-3.5 text-sm font-medium hover:bg-accent-muted transition-colors flex items-center justify-center gap-2"
           >
             Let&apos;s get started
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </button>

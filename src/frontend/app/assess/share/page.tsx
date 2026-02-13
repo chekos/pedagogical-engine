@@ -118,6 +118,7 @@ export default function ShareAssessmentPage() {
         <div className="max-w-4xl mx-auto flex items-center gap-3">
           <a
             href="/"
+            aria-label="Back to home"
             className="text-text-tertiary hover:text-text-secondary transition-colors"
           >
             <svg
@@ -153,10 +154,11 @@ export default function ShareAssessmentPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1.5">
+              <label htmlFor="group-name" className="block text-sm font-medium text-text-secondary mb-1.5">
                 Group
               </label>
               <input
+                id="group-name"
                 type="text"
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
@@ -164,10 +166,11 @@ export default function ShareAssessmentPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1.5">
+              <label htmlFor="domain-name" className="block text-sm font-medium text-text-secondary mb-1.5">
                 Domain
               </label>
               <input
+                id="domain-name"
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
@@ -219,11 +222,13 @@ export default function ShareAssessmentPage() {
             </button>
           </div>
 
-          {error && (
-            <p className="text-sm text-red-400 mt-3 animate-fade-in">
-              {error}
-            </p>
-          )}
+          <div aria-live="assertive" aria-atomic="true">
+            {error && (
+              <p className="text-sm text-red-400 mt-3 animate-fade-in" role="alert">
+                {error}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Group Link Result */}

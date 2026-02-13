@@ -66,6 +66,7 @@ export default function AssessmentChat({
   const [isComplete, setIsComplete] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const completionRef = useRef<HTMLHeadingElement>(null);
   const hasStarted = useRef(false);
 
   const scrollToBottom = useCallback(() => {
@@ -75,6 +76,12 @@ export default function AssessmentChat({
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    if (isComplete && completionRef.current) {
+      completionRef.current.focus();
+    }
+  }, [isComplete]);
 
   // Start assessment on mount
   useEffect(() => {
@@ -180,7 +187,7 @@ export default function AssessmentChat({
       <header className="border-b border-border-subtle">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400/20 to-orange-400/20 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400/20 to-orange-400/20 flex items-center justify-center" aria-hidden="true">
               <span className="text-sm">💬</span>
             </div>
             <div>
@@ -210,13 +217,20 @@ export default function AssessmentChat({
         {!isComplete && messages.length > 0 && (
           <div className="px-6 pb-3">
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
+              <div
+                className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden"
+                role="progressbar"
+                aria-valuenow={progressPercent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Assessment progress: ${covered} of ${total} areas covered`}
+              >
                 <div
                   className="h-full bg-gradient-to-r from-accent to-accent-muted rounded-full transition-all duration-700 ease-out"
                   style={{ width: `${Math.max(progressPercent, 5)}%` }}
                 />
               </div>
-              <span className="text-xs text-text-tertiary tabular-nums">
+              <span className="text-xs text-text-tertiary tabular-nums" aria-hidden="true">
                 {progressPercent}%
               </span>
             </div>
@@ -225,6 +239,7 @@ export default function AssessmentChat({
               {skillAreas.map((area) => (
                 <span
                   key={area.name}
+                  aria-label={`${area.name}: ${area.status === "covered" ? "completed" : area.status === "current" ? "in progress" : "not yet covered"}`}
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all duration-300 ${
                     area.status === "covered"
                       ? "bg-green-500/10 text-green-600 dark:text-green-400"
@@ -260,14 +275,14 @@ export default function AssessmentChat({
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4" role="log" aria-label="Assessment conversation">
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
           >
             {msg.role === "assistant" && (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent/20 to-accent-muted/20 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent/20 to-accent-muted/20 flex items-center justify-center mr-2 mt-1 flex-shrink-0" aria-hidden="true">
                 <span className="text-xs">🎓</span>
               </div>
             )}
@@ -283,24 +298,26 @@ export default function AssessmentChat({
           </div>
         ))}
 
-        {isLoading && (
-          <div className="flex items-center gap-2 animate-fade-in">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent/20 to-accent-muted/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs">🎓</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-surface-2 rounded-bl-md">
-              <div className="flex space-x-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:0ms]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:150ms]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
+        <div aria-live="polite" aria-atomic="true">
+          {isLoading && (
+            <div className="flex items-center gap-2 animate-fade-in">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent/20 to-accent-muted/20 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+                <span className="text-xs">🎓</span>
               </div>
-              <span className="text-xs text-text-tertiary">Thinking...</span>
+              <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-surface-2 rounded-bl-md">
+                <div className="flex space-x-1" aria-hidden="true">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:0ms]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
+                </div>
+                <span className="text-xs text-text-tertiary">Thinking...</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {error && (
-          <div className="text-center animate-fade-in">
+          <div className="text-center animate-fade-in" role="alert">
             <p className="text-sm text-red-400">{error}</p>
             <button
               onClick={() => setError(null)}
@@ -316,10 +333,10 @@ export default function AssessmentChat({
           <div className="animate-slide-up">
             {/* Celebration */}
             <div className="text-center py-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400/20 to-emerald-400/20 flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400/20 to-emerald-400/20 flex items-center justify-center mx-auto mb-4" aria-hidden="true">
                 <span className="text-3xl">🎉</span>
               </div>
-              <h2 className="text-xl font-semibold text-text-primary mb-2">
+              <h2 ref={completionRef} tabIndex={-1} className="text-xl font-semibold text-text-primary mb-2 outline-none">
                 You&apos;re all set, {learnerName}!
               </h2>
               <p className="text-sm text-text-secondary max-w-sm mx-auto">
@@ -448,12 +465,14 @@ export default function AssessmentChat({
                   ? "Say hi to get started..."
                   : "Just tell me what you know — no wrong answers"
               }
+              aria-label="Type your response"
               disabled={isLoading}
               className="flex-1 rounded-xl border border-border bg-surface-1 px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent disabled:opacity-50 transition-all"
             />
             <button
               onClick={sendMessage}
               disabled={!input.trim() || isLoading}
+              aria-label="Send message"
               className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent text-white flex items-center justify-center hover:bg-accent-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <svg
@@ -461,6 +480,7 @@ export default function AssessmentChat({
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"

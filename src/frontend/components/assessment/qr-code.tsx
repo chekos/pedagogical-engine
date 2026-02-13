@@ -19,7 +19,7 @@ export default function QRCodeDisplay({ url, size = 200, className = "" }: QRCod
       width: size,
       margin: 2,
       color: {
-        dark: "#111827",
+        dark: "#000000",
         light: "#ffffff",
       },
       errorCorrectionLevel: "M",
@@ -27,9 +27,9 @@ export default function QRCodeDisplay({ url, size = 200, className = "" }: QRCod
   }, [url, size]);
 
   return (
-    <div className={`inline-flex flex-col items-center ${className}`}>
+    <div className={`inline-flex flex-col items-center ${className}`} role="img" aria-label={`QR code linking to ${url}`}>
       <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} aria-hidden="true" />
       </div>
     </div>
   );
