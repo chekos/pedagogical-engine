@@ -41,6 +41,15 @@ an experienced teacher, not a content generator.
   - Markdown rendering via react-markdown + remark-gfm (GFM tables, code blocks, bold, lists, etc.)
   - Interactive AskUserQuestion cards (selectable options with submit, replaces raw JSON)
   - Persistent progress indicator with elapsed time counter and stage-aware labels
+  - Voice input via Web Speech API — mic button with recording state animation
+  - Optional TTS readback of assistant responses (toggle in input area)
+- Live teaching companion (/teach/live/[lesson-id]) — voice-first mobile interface
+  - Loads parsed lesson plan with timed sections and "you are here" tracking
+  - Session timer with progress bar and time-remaining warnings
+  - Horizontal section cards with feedback buttons (went well / struggled / skipped)
+  - Large mic button as primary input — auto-sends voice, auto-speaks responses
+  - Quick-ask suggestions for common teaching needs
+  - Connects to /ws/live WebSocket with sectionContext
 - Student assessment (/assess/[code]) — code entry + HTTP assessment chat
 - Embeddable assessment widget (/assess/embed/[code]) — self-contained iframe version
   - No navigation, no header/footer — just the assessment conversation
