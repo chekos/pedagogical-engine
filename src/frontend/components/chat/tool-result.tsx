@@ -6,11 +6,16 @@ import type { ToolUse } from "@/lib/api";
 import LessonPlanView from "@/components/lesson-plan/lesson-plan-view";
 import GroupDashboard from "@/components/visualizations/group-dashboard";
 import AskUserQuestionCard from "./ask-user-question-card";
-import { getSkillGraphData, getGroupDashboardData } from "@/lib/demo-data";
+import { getSkillGraphData, getGroupDashboardData, getLiveGraphData, getLiveGraphDataWithGroupOverlay } from "@/lib/demo-data";
 
-// Dynamic import for ReactFlow (client-side only)
+// Dynamic imports for ReactFlow components (client-side only)
 const SkillDependencyGraph = dynamic(
   () => import("@/components/visualizations/skill-dependency-graph"),
+  { ssr: false }
+);
+
+const LiveDependencyGraph = dynamic(
+  () => import("@/components/visualizations/live-dependency-graph"),
   { ssr: false }
 );
 
@@ -64,9 +69,10 @@ function GroupSummaryCard({ input }: { input: Record<string, unknown> }) {
   );
 }
 
-// Render skill graph query — with live visualization for full_graph operations
+// Render skill graph query — with live dependency visualization
 function SkillGraphCard({ input }: { input: Record<string, unknown> }) {
   const showGraph = input.operation === "full_graph" || input.operation === "prerequisites" || input.operation === "infer_from";
+  const learnerId = typeof input.learnerId === "string" ? input.learnerId : undefined;
 
   return (
     <div className="space-y-3">
@@ -93,7 +99,10 @@ function SkillGraphCard({ input }: { input: Record<string, unknown> }) {
         </p>
       ) : null}
       {showGraph && (
-        <SkillDependencyGraph data={getSkillGraphData()} height={400} />
+        <LiveDependencyGraph
+          data={getLiveGraphDataWithGroupOverlay(learnerId)}
+          height={450}
+        />
       )}
     </div>
   );
@@ -114,11 +123,14 @@ function GroupAnalysisCard({ input }: { input: Record<string, unknown> }) {
   );
 }
 
-// Render assessment status
+// Render assessment status with live dependency graph
 function AssessmentStatusCard({ input }: { input: Record<string, unknown> }) {
   const targetSkills = Array.isArray(input.targetSkills) ? input.targetSkills : [];
+  const learnerId = typeof input.learnerId === "string" ? input.learnerId : undefined;
+  const showGraph = !!learnerId;
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {input.learnerId ? (
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-400" />
@@ -137,6 +149,12 @@ function AssessmentStatusCard({ input }: { input: Record<string, unknown> }) {
           ))}
         </div>
       ) : null}
+      {showGraph && (
+        <LiveDependencyGraph
+          data={getLiveGraphData(learnerId)}
+          height={400}
+        />
+      )}
     </div>
   );
 }
