@@ -355,7 +355,8 @@ export function getCascadeDemoData(): {
   after: LiveGraphData;
   assessedSkill: string;
 } {
-  const alex = learnerProfiles.find((l) => l.id === "alex-chen")!;
+  const alex = learnerProfiles.find((l) => l.id === "alex-chen");
+  if (!alex) throw new Error("Demo data error: alex-chen profile not found");
   const before = getLiveGraphData("alex-chen");
 
   // Simulate Alex passing pandas-groupby

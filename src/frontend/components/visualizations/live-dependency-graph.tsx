@@ -5,6 +5,7 @@ import {
   ReactFlow,
   type Node,
   type Edge,
+  type NodeTypes,
   Position,
   useNodesState,
   useEdgesState,
@@ -59,6 +60,28 @@ export interface LiveGraphData {
   groupOverlays?: LearnerOverlay[];
   showGroupOverlay?: boolean;
 }
+
+type LiveSkillNodeData = {
+  skillId: string;
+  label: string;
+  bloomLevel: string;
+  status: SkillNodeStatus | undefined;
+  shortLabel: string;
+  scale: number;
+  onNodeClick: (skillId: string) => void;
+  groupCounts?: { confirmed: number; gap: number; inferred: number; unknown: number; total: number };
+  showGroupOverlay: boolean;
+};
+
+type EdgeData = {
+  sourceId: string;
+  targetId: string;
+  confidence: number;
+  edgeType: string;
+};
+
+type LiveSkillNode = Node<LiveSkillNodeData, "liveSkill">;
+type LiveEdge = Edge<EdgeData>;
 
 // ─── Constants ──────────────────────────────────────────────────
 
@@ -150,7 +173,7 @@ function getNodeStyle(status: SkillNodeStatus | undefined, bloomLevel: string) {
 
 // ─── Custom Skill Node ──────────────────────────────────────────
 
-function LiveSkillNode({ data }: NodeProps) {
+function LiveSkillNodeComponent({ data }: NodeProps<LiveSkillNode>) {
   const {
     label,
     bloomLevel,
@@ -160,16 +183,7 @@ function LiveSkillNode({ data }: NodeProps) {
     onNodeClick,
     groupCounts,
     showGroupOverlay,
-  } = data as {
-    label: string;
-    bloomLevel: string;
-    status: SkillNodeStatus | undefined;
-    shortLabel: string;
-    scale: number;
-    onNodeClick: (skillId: string) => void;
-    groupCounts?: { confirmed: number; gap: number; inferred: number; unknown: number; total: number };
-    showGroupOverlay: boolean;
-  };
+  } = data;
 
   const style = getNodeStyle(status, bloomLevel);
   const bloomColor = BLOOM_COLORS[bloomLevel] || "#64748b";
@@ -198,7 +212,7 @@ function LiveSkillNode({ data }: NodeProps) {
           padding: `${8 * scale}px ${12 * scale}px`,
           animationDelay: cascadeDelay,
         }}
-        onClick={() => onNodeClick(data.skillId as string)}
+        onClick={() => onNodeClick(data.skillId)}
       >
         {/* Bloom level color strip on left */}
         <div
@@ -301,7 +315,7 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-const nodeTypes = { liveSkill: LiveSkillNode };
+const nodeTypes = { liveSkill: LiveSkillNodeComponent } satisfies NodeTypes;
 
 // ─── DAG Layout ─────────────────────────────────────────────────
 
@@ -340,7 +354,8 @@ function calculateLayout(
   }
 
   while (queue.length > 0) {
-    const node = queue.shift()!;
+    const node = queue.shift();
+    if (!node) break;
     for (const child of children[node] || []) {
       depth[child] = Math.max(depth[child] || 0, depth[node] + 1);
       inDeg[child]--;
@@ -365,15 +380,16 @@ function calculateLayout(
   for (let d = 0; d <= maxDepth; d++) {
     const group = byDepth[d] || [];
     if (d > 0) {
-      group.sort((a, b) => {
-        const avgA =
-          (parents[a.id] || []).reduce((sum, p) => sum + (nodeX[p] || 0), 0) /
-          Math.max(1, (parents[a.id] || []).length);
-        const avgB =
-          (parents[b.id] || []).reduce((sum, p) => sum + (nodeX[p] || 0), 0) /
-          Math.max(1, (parents[b.id] || []).length);
-        return avgA - avgB;
-      });
+      // Precompute average parent X to avoid O(n^2) in sort comparator
+      const avgParentX = new Map<string, number>();
+      for (const skill of group) {
+        const parentList = parents[skill.id] || [];
+        const avg = parentList.length > 0
+          ? parentList.reduce((sum, p) => sum + (nodeX[p] || 0), 0) / parentList.length
+          : 0;
+        avgParentX.set(skill.id, avg);
+      }
+      group.sort((a, b) => (avgParentX.get(a.id) || 0) - (avgParentX.get(b.id) || 0));
     }
 
     const totalWidth = group.length * COL_WIDTH;
@@ -424,7 +440,9 @@ function computeInferenceCascade(
   }
 
   while (cascadeQueue.length > 0) {
-    const { id, depth, parentConfidence } = cascadeQueue.shift()!;
+    const item = cascadeQueue.shift();
+    if (!item) break;
+    const { id, depth, parentConfidence } = item;
     if (visited.has(id)) continue;
     visited.add(id);
 
@@ -679,7 +697,7 @@ function GraphInner({
     return counts;
   }, [data.skills, data.groupOverlays, showGroupOverlay]);
 
-  const initialNodes: Node[] = useMemo(() => {
+  const initialNodes: LiveSkillNode[] = useMemo(() => {
     return data.skills.map((skill) => {
       const pos = positions[skill.id] || { x: 0, y: 0 };
       const status = data.learnerStatuses?.[skill.id];
@@ -694,7 +712,7 @@ function GraphInner({
 
       return {
         id: skill.id,
-        type: "liveSkill",
+        type: "liveSkill" as const,
         position: pos,
         data: {
           skillId: skill.id,
@@ -711,7 +729,7 @@ function GraphInner({
     });
   }, [data.skills, data.learnerStatuses, positions, onNodeClick, groupCounts, showGroupOverlay]);
 
-  const initialEdges: Edge[] = useMemo(() => {
+  const initialEdges: LiveEdge[] = useMemo(() => {
     return data.edges.map((edge, i) => {
       const sourceStatus = data.learnerStatuses?.[edge.source];
       const targetStatus = data.learnerStatuses?.[edge.target];
@@ -793,14 +811,15 @@ function GraphInner({
   }, [data.learnerStatuses]);
 
   const handleEdgeMouseEnter = useCallback(
-    (event: React.MouseEvent, edge: Edge) => {
+    (event: React.MouseEvent, edge: LiveEdge) => {
+      if (!edge.data) return;
       setEdgeTooltip({
         x: event.clientX,
         y: event.clientY,
-        source: edge.data?.sourceId as string,
-        target: edge.data?.targetId as string,
-        confidence: edge.data?.confidence as number,
-        edgeType: edge.data?.edgeType as string,
+        source: edge.data.sourceId,
+        target: edge.data.targetId,
+        confidence: edge.data.confidence,
+        edgeType: edge.data.edgeType,
       });
     },
     []
@@ -1000,9 +1019,6 @@ export interface LiveDependencyGraphProps {
   data: LiveGraphData;
   height?: number | string;
   showGroupOverlay?: boolean;
-  onToggleGroupOverlay?: () => void;
-  /** Enable the inference cascade demo animation */
-  enableCascadeDemo?: boolean;
 }
 
 export default function LiveDependencyGraph({

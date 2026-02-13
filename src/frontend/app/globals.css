@@ -272,6 +272,7 @@ body {
 }
 
 .live-graph .node-cascade-enter {
+  will-change: transform, opacity, filter;
   animation: cascadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
              glowExpand 0.8s ease-out forwards;
 }

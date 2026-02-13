@@ -6,14 +6,9 @@ import type { ToolUse } from "@/lib/api";
 import LessonPlanView from "@/components/lesson-plan/lesson-plan-view";
 import GroupDashboard from "@/components/visualizations/group-dashboard";
 import AskUserQuestionCard from "./ask-user-question-card";
-import { getSkillGraphData, getGroupDashboardData, getLiveGraphData, getLiveGraphDataWithGroupOverlay } from "@/lib/demo-data";
+import { getGroupDashboardData, getLiveGraphData, getLiveGraphDataWithGroupOverlay } from "@/lib/demo-data";
 
-// Dynamic imports for ReactFlow components (client-side only)
-const SkillDependencyGraph = dynamic(
-  () => import("@/components/visualizations/skill-dependency-graph"),
-  { ssr: false }
-);
-
+// Dynamic import for ReactFlow component (client-side only)
 const LiveDependencyGraph = dynamic(
   () => import("@/components/visualizations/live-dependency-graph"),
   { ssr: false }
