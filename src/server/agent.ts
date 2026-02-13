@@ -97,6 +97,93 @@ export async function createEducatorQuery(
   return query({ prompt: message, options: queryOptions });
 }
 
+/** Create a live companion query for real-time teaching support */
+export async function createLiveCompanionQuery(
+  message: string,
+  lessonId: string,
+  options: AgentQueryOptions & { sectionContext?: string } = {}
+): Promise<Query> {
+  // Load the lesson plan
+  let lessonContent = "";
+  let groupContent = "";
+
+  if (lessonId) {
+    const lessonPath = path.join(DATA_DIR, "lessons", `${lessonId}.md`);
+    try {
+      lessonContent = await fs.readFile(lessonPath, "utf-8");
+    } catch {
+      // Lesson not found — still provide support
+    }
+
+    // Try to extract group name from lesson and load group profile
+    const groupMatch = lessonContent.match(/\*\*Prepared for:\*\*\s*(.+)/);
+    if (groupMatch) {
+      const groupName = groupMatch[1].trim().toLowerCase().replace(/\s+/g, "-");
+      const groupPath = path.join(DATA_DIR, "groups", `${groupName}.md`);
+      try {
+        groupContent = await fs.readFile(groupPath, "utf-8");
+      } catch { /* no group file */ }
+    }
+  }
+
+  const sectionInfo = options.sectionContext
+    ? `\n\nCurrent section context:\n${options.sectionContext}`
+    : "";
+
+  const systemPrompt = `You are a real-time teaching companion. The educator is CURRENTLY in front of their class and needs immediate, actionable help. You are their co-teacher whispering in their ear.
+
+CRITICAL RULES:
+- Be EXTREMELY concise. The educator is reading this on a phone while teaching.
+- Use bullet points, not paragraphs.
+- Lead with the action: what to DO, not background explanation.
+- Never say "I'd suggest..." — just say what to do.
+- If asked for an alternative activity, give ONE specific activity with exact timing.
+- If students are struggling, give a concrete intervention, not theory.
+
+You have full context of the lesson plan and the group:
+
+=== LESSON PLAN ===
+${lessonContent || "(No lesson plan loaded)"}
+
+=== GROUP PROFILE ===
+${groupContent || "(No group profile loaded)"}
+${sectionInfo}
+
+When the educator asks a question:
+1. Ground your answer in the specific lesson plan, student profiles, and skill graph
+2. Reference students by name when relevant
+3. Give time-aware suggestions ("You have X minutes left — try this...")
+4. For emergency pivots, provide a complete activity with timing, materials, and expected outcome`;
+
+  const queryOptions: Options = {
+    model: "sonnet", // Fast responses for real-time use
+    cwd: PROJECT_ROOT,
+    settingSources: ["project"],
+    mcpServers: {
+      pedagogy: pedagogyServer,
+    },
+    allowedTools: [
+      "Read",
+      "Glob",
+      "mcp__pedagogy__query_skill_graph",
+      "mcp__pedagogy__query_group",
+    ],
+    permissionMode: "bypassPermissions",
+    allowDangerouslySkipPermissions: true,
+    systemPrompt,
+    persistSession: true,
+  };
+
+  if (options.resume) {
+    queryOptions.resume = options.resume;
+  }
+  if (options.sessionId && !options.resume) {
+    queryOptions.sessionId = options.sessionId;
+  }
+
+  return query({ prompt: message, options: queryOptions });
+}
+
 /** Create a focused assessment query for a student */
 export async function createAssessmentQuery(
   assessmentCode: string,

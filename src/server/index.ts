@@ -2,9 +2,12 @@ import express from "express";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { randomUUID } from "crypto";
+import fs from "fs/promises";
+import path from "path";
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { SessionManager } from "./sessions/manager.js";
-import { createEducatorQuery, createAssessmentQuery } from "./agent.js";
+import { createEducatorQuery, createAssessmentQuery, createLiveCompanionQuery } from "./agent.js";
+import { parseLesson, lessonIdFromPath } from "./lib/lesson-parser.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -24,8 +27,11 @@ app.use((req, res, next) => {
   next();
 });
 
+const DATA_DIR = process.env.DATA_DIR || "./data";
+
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws/chat" });
+const wssLive = new WebSocketServer({ server, path: "/ws/live" });
 const sessionManager = new SessionManager();
 
 // ─── Health check ────────────────────────────────────────────────
@@ -46,11 +52,9 @@ app.get("/api/status", (_req, res) => {
 // ─── Assessment validation endpoint ───────────────────────────────
 app.get("/api/assess/:code", async (req, res) => {
   const { code } = req.params;
-  const dataDir = process.env.DATA_DIR || "./data";
-  const assessmentPath = `${dataDir}/assessments/${code}.md`;
+  const assessmentPath = path.join(DATA_DIR, "assessments", `${code}.md`);
   try {
-    const fsModule = await import("fs/promises");
-    await fsModule.access(assessmentPath);
+    await fs.access(assessmentPath);
     res.json({ valid: true, code });
   } catch {
     res.status(404).json({ valid: false, error: `Assessment '${code}' not found` });
@@ -103,6 +107,90 @@ app.post("/api/assess", async (req, res) => {
     } else {
       res.status(500).json({ error });
     }
+  }
+});
+
+// ─── Lesson plan endpoints ────────────────────────────────────────
+
+/** List all lesson plans with metadata */
+app.get("/api/lessons", async (_req, res) => {
+  const lessonsDir = path.join(DATA_DIR, "lessons");
+  try {
+    const files = await fs.readdir(lessonsDir);
+    const mdFiles = files.filter((f) => f.endsWith(".md"));
+
+    const lessons = await Promise.all(
+      mdFiles.map(async (file) => {
+        const content = await fs.readFile(path.join(lessonsDir, file), "utf-8");
+        const parsed = parseLesson(content);
+        return {
+          id: lessonIdFromPath(file),
+          ...parsed.meta,
+          sectionCount: parsed.sections.length,
+          objectiveCount: parsed.objectives.length,
+        };
+      })
+    );
+
+    res.json({ lessons });
+  } catch {
+    res.json({ lessons: [] });
+  }
+});
+
+/** Get a specific lesson plan with full parsed data */
+app.get("/api/lessons/:id", async (req, res) => {
+  const { id } = req.params;
+  // Sanitize: reject path traversal attempts
+  if (id.includes("/") || id.includes("\\") || id.includes("..")) {
+    res.status(400).json({ error: "Invalid lesson ID" });
+    return;
+  }
+  const lessonPath = path.join(DATA_DIR, "lessons", `${id}.md`);
+  try {
+    const content = await fs.readFile(lessonPath, "utf-8");
+    const parsed = parseLesson(content);
+    res.json({ lesson: parsed });
+  } catch {
+    res.status(404).json({ error: `Lesson '${id}' not found` });
+  }
+});
+
+/** Save section feedback from live companion */
+app.post("/api/lessons/:id/feedback", async (req, res) => {
+  const { id } = req.params;
+  // Sanitize: reject path traversal attempts
+  if (id.includes("/") || id.includes("\\") || id.includes("..")) {
+    res.status(400).json({ error: "Invalid lesson ID" });
+    return;
+  }
+  const { sectionId, feedback, notes, elapsedMin } = req.body;
+
+  if (!sectionId || !feedback) {
+    res.status(400).json({ error: "Missing sectionId or feedback" });
+    return;
+  }
+
+  // Append feedback to a session log file
+  const logDir = path.join(DATA_DIR, "live-sessions");
+  try {
+    await fs.mkdir(logDir, { recursive: true });
+  } catch { /* exists */ }
+
+  const logPath = path.join(logDir, `${id}-${new Date().toISOString().slice(0, 10)}.jsonl`);
+  const entry = JSON.stringify({
+    timestamp: new Date().toISOString(),
+    sectionId,
+    feedback,
+    notes: notes || "",
+    elapsedMin: elapsedMin ?? null,
+  });
+
+  try {
+    await fs.appendFile(logPath, entry + "\n");
+    res.json({ saved: true });
+  } catch {
+    res.status(500).json({ error: "Failed to save feedback" });
   }
 });
 
@@ -270,6 +358,108 @@ wss.on("connection", (ws: WebSocket) => {
   });
 });
 
+// ─── WebSocket handler for live teaching companion ───────────────
+wssLive.on("connection", (ws: WebSocket, req) => {
+  const sessionId = randomUUID();
+  const session = sessionManager.create(sessionId);
+  let processing = false;
+  let lessonId: string | null = null;
+
+  // Parse lessonId from query string: /ws/live?lessonId=xxx
+  const url = new URL(req.url ?? "", `http://localhost:${PORT}`);
+  lessonId = url.searchParams.get("lessonId");
+
+  console.log(`[ws/live] New live session: ${sessionId}, lesson: ${lessonId}`);
+
+  ws.send(JSON.stringify({ type: "session", sessionId }));
+
+  ws.on("message", async (data: Buffer) => {
+    let parsed: { type: string; message?: string; sectionContext?: string };
+    try {
+      parsed = JSON.parse(data.toString());
+    } catch {
+      ws.send(JSON.stringify({ type: "error", error: "Invalid JSON" }));
+      return;
+    }
+
+    if (parsed.type === "message" && parsed.message) {
+      if (processing) {
+        ws.send(JSON.stringify({ type: "error", error: "Still processing. Please wait." }));
+        return;
+      }
+
+      processing = true;
+      sessionManager.touch(sessionId);
+
+      try {
+        const prevQuery = session.query;
+        if (prevQuery) {
+          try { prevQuery.close(); } catch { /* already finished */ }
+        }
+
+        const q = await createLiveCompanionQuery(
+          parsed.message,
+          lessonId ?? "",
+          {
+            sessionId: session.id,
+            resume: prevQuery ? session.id : undefined,
+            sectionContext: parsed.sectionContext,
+          }
+        );
+
+        sessionManager.setQuery(sessionId, q);
+
+        for await (const msg of q) {
+          if (ws.readyState !== WebSocket.OPEN) break;
+
+          switch (msg.type) {
+            case "assistant": {
+              if (msg.error) {
+                ws.send(JSON.stringify({ type: "error", error: `API error: ${msg.error}` }));
+                break;
+              }
+              const textBlocks = msg.message.content.filter(
+                (b: { type: string }) => b.type === "text"
+              );
+              const text = textBlocks.map((b: { text: string }) => b.text).join("\n");
+              if (text.trim()) {
+                ws.send(JSON.stringify({ type: "assistant", text, sessionId: msg.session_id }));
+              }
+              break;
+            }
+            case "result": {
+              processing = false;
+              ws.send(JSON.stringify({
+                type: "result",
+                subtype: msg.subtype,
+                ...(msg.subtype === "success" ? { result: msg.result } : { errors: msg.errors }),
+              }));
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        const error = err instanceof Error ? err.message : "Unknown error";
+        console.error(`[ws/live] Error in session ${sessionId}:`, error);
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "error", error }));
+        }
+      } finally {
+        processing = false;
+      }
+    }
+  });
+
+  ws.on("close", () => {
+    console.log(`[ws/live] Session disconnected: ${sessionId}`);
+    sessionManager.remove(sessionId);
+  });
+
+  ws.on("error", (err) => {
+    console.error(`[ws/live] Error in session ${sessionId}:`, err.message);
+  });
+});
+
 // ─── Periodic cleanup ────────────────────────────────────────────
 setInterval(() => {
   const removed = sessionManager.cleanup();
@@ -284,10 +474,12 @@ function shutdown(signal: string) {
   for (const session of sessionManager.list()) {
     sessionManager.remove(session.id);
   }
-  wss.close(() => {
-    server.close(() => {
-      console.log("[shutdown] Server closed.");
-      process.exit(0);
+  wssLive.close(() => {
+    wss.close(() => {
+      server.close(() => {
+        console.log("[shutdown] Server closed.");
+        process.exit(0);
+      });
     });
   });
   // Force exit after 5 seconds if graceful shutdown hangs
@@ -305,7 +497,9 @@ server.listen(PORT, () => {
 ║                                                          ║
 ║  HTTP:      http://localhost:${PORT}                       ║
 ║  WebSocket: ws://localhost:${PORT}/ws/chat                 ║
+║  Live WS:   ws://localhost:${PORT}/ws/live                 ║
 ║  Health:    http://localhost:${PORT}/api/status             ║
+║  Lessons:   http://localhost:${PORT}/api/lessons            ║
 ║  Assess:    POST http://localhost:${PORT}/api/assess        ║
 ╚══════════════════════════════════════════════════════════╝
   `);
