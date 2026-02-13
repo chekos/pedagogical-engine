@@ -18,6 +18,9 @@
   --animate-fade-in: fadeIn 0.3s ease-out;
   --animate-slide-up: slideUp 0.3s ease-out;
   --animate-pulse-subtle: pulseSubtle 2s ease-in-out infinite;
+  --animate-inference-pulse: inferencePulse 1.8s ease-in-out infinite;
+  --animate-cascade-in: cascadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  --animate-glow-expand: glowExpand 0.8s ease-out forwards;
 }
 
 @keyframes fadeIn {
@@ -33,6 +36,53 @@
 @keyframes pulseSubtle {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+/* Inference cascade animations */
+@keyframes inferencePulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(96, 165, 250, 0.3), 0 0 20px rgba(96, 165, 250, 0.1);
+    border-color: rgba(96, 165, 250, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(96, 165, 250, 0.5), 0 0 40px rgba(96, 165, 250, 0.2);
+    border-color: rgba(96, 165, 250, 0.9);
+  }
+}
+
+@keyframes cascadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+    filter: brightness(2) saturate(1.5);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+    filter: brightness(1.4) saturate(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1) saturate(1);
+  }
+}
+
+@keyframes glowExpand {
+  0% {
+    box-shadow: 0 0 0 rgba(96, 165, 250, 0);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(96, 165, 250, 0.6), 0 0 60px rgba(96, 165, 250, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 12px rgba(96, 165, 250, 0.3), 0 0 24px rgba(96, 165, 250, 0.1);
+  }
+}
+
+@keyframes edgeCascade {
+  0% { stroke-dashoffset: 100; opacity: 0.3; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
 }
 
 :root {
@@ -214,4 +264,28 @@ body {
 .skill-graph .react-flow__controls-button:hover {
   background: rgba(255, 255, 255, 0.05) !important;
   fill: white !important;
+}
+
+/* Live dependency graph — inference cascade */
+.live-graph .node-inferred {
+  animation: inferencePulse 1.8s ease-in-out infinite;
+}
+
+.live-graph .node-cascade-enter {
+  will-change: transform, opacity, filter;
+  animation: cascadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             glowExpand 0.8s ease-out forwards;
+}
+
+.live-graph .edge-cascade {
+  stroke-dasharray: 100;
+  animation: edgeCascade 0.5s ease-out forwards;
+}
+
+.live-graph .react-flow__edge path {
+  transition: stroke 0.5s ease, stroke-width 0.5s ease, opacity 0.5s ease;
+}
+
+.live-graph .react-flow__node {
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }

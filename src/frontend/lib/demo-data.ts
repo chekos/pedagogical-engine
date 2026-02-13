@@ -4,6 +4,11 @@
 
 import type { SkillGraphData } from "@/components/visualizations/skill-dependency-graph";
 import type { GroupDashboardData } from "@/components/visualizations/group-dashboard";
+import type {
+  LiveGraphData,
+  SkillNodeStatus,
+  LearnerOverlay,
+} from "@/components/visualizations/live-dependency-graph";
 
 // ─── Skills from data/domains/python-data-analysis/skills.json ──
 
@@ -275,4 +280,131 @@ export function getGroupDashboardData(): GroupDashboardData {
 
 export function getLearnerIds(): { id: string; name: string }[] {
   return learnerProfiles.map((l) => ({ id: l.id, name: l.name }));
+}
+
+// ─── Build LiveGraphData (new 4-state format) ───────────────────
+
+/** Gap threshold: assessed skills with confidence below this are "gaps" */
+const GAP_THRESHOLD = 0.5;
+
+function toLiveStatuses(profile: LearnerProfile): Record<string, SkillNodeStatus> {
+  const statuses: Record<string, SkillNodeStatus> = {};
+
+  for (const skill of skills) {
+    const assessed = profile.assessed[skill.id];
+    const inferred = profile.inferred[skill.id];
+
+    if (assessed) {
+      statuses[skill.id] = {
+        state: assessed.confidence < GAP_THRESHOLD ? "assessed-gap" : "assessed-confirmed",
+        confidence: assessed.confidence,
+        bloom_demonstrated: assessed.bloom,
+      };
+    } else if (inferred) {
+      statuses[skill.id] = {
+        state: "inferred",
+        confidence: inferred.confidence,
+      };
+    } else {
+      statuses[skill.id] = {
+        state: "unknown",
+        confidence: 0,
+      };
+    }
+  }
+
+  return statuses;
+}
+
+export function getLiveGraphData(learnerId?: string): LiveGraphData {
+  const learner = learnerId
+    ? learnerProfiles.find((l) => l.id === learnerId)
+    : undefined;
+
+  return {
+    skills,
+    edges,
+    learnerStatuses: learner ? toLiveStatuses(learner) : undefined,
+    learnerName: learner?.name,
+  };
+}
+
+export function getLiveGraphDataWithGroupOverlay(learnerId?: string): LiveGraphData {
+  const base = getLiveGraphData(learnerId);
+
+  const groupOverlays: LearnerOverlay[] = learnerProfiles.map((lp) => ({
+    id: lp.id,
+    name: lp.name,
+    statuses: toLiveStatuses(lp),
+  }));
+
+  return {
+    ...base,
+    groupOverlays,
+  };
+}
+
+/**
+ * Generate a cascade demo scenario:
+ * Start with Alex Chen (beginner, only 6 assessed skills) and simulate
+ * assessing "pandas-groupby" — which should cascade inferences down to
+ * all prerequisites not yet assessed.
+ */
+export function getCascadeDemoData(): {
+  before: LiveGraphData;
+  after: LiveGraphData;
+  assessedSkill: string;
+} {
+  const alex = learnerProfiles.find((l) => l.id === "alex-chen");
+  if (!alex) throw new Error("Demo data error: alex-chen profile not found");
+  const before = getLiveGraphData("alex-chen");
+
+  // Simulate Alex passing pandas-groupby
+  const afterStatuses = { ...toLiveStatuses(alex) };
+
+  // Mark pandas-groupby as assessed-confirmed
+  afterStatuses["pandas-groupby"] = {
+    state: "assessed-confirmed",
+    confidence: 0.8,
+    bloom_demonstrated: "application",
+  };
+
+  // Inference cascade: if they can do pandas-groupby, they can likely do its prerequisites
+  // select-filter-data, python-functions, python-control-flow, etc.
+  const cascadeTargets: [string, number][] = [
+    ["select-filter-data", 1],
+    ["python-functions", 1],
+    ["inspect-dataframe", 2],
+    ["python-control-flow", 2],
+    ["import-pandas", 3],
+    ["install-packages", 3],
+    ["python-variables-types", 3],
+    ["run-python-script", 4],
+    ["navigate-directories", 5],
+    ["install-python", 5],
+    ["open-terminal", 6],
+  ];
+
+  for (const [skillId, order] of cascadeTargets) {
+    const existing = afterStatuses[skillId];
+    // Only infer if not already assessed
+    if (!existing || existing.state === "unknown") {
+      afterStatuses[skillId] = {
+        state: "inferred",
+        confidence: Math.max(0.4, 0.85 - order * 0.07),
+        cascadeOrder: order,
+      };
+    }
+  }
+
+  return {
+    before,
+    after: {
+      skills,
+      edges,
+      learnerStatuses: afterStatuses,
+      learnerName: "Alex Chen",
+    },
+    assessedSkill: "pandas-groupby",
+  };
 }
