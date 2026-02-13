@@ -1116,6 +1116,129 @@ app.post("/api/tensions", async (req, res) => {
   }
 });
 
+// ─── Debrief endpoints ───────────────────────────────────────────
+
+/** List all debriefs */
+app.get("/api/debriefs", async (_req, res) => {
+  const debriefDir = path.join(DATA_DIR, "debriefs");
+  try {
+    const files = await fs.readdir(debriefDir);
+    const mdFiles = files.filter((f) => f.endsWith(".md"));
+
+    const debriefs = await Promise.all(
+      mdFiles.map(async (file) => {
+        const content = await fs.readFile(path.join(debriefDir, file), "utf-8");
+        const lessonMatch = content.match(/\| \*\*Lesson\*\* \| (.+) \|/);
+        const groupMatch = content.match(/\| \*\*Group\*\* \| (.+) \|/);
+        const domainMatch = content.match(/\| \*\*Domain\*\* \| (.+) \|/);
+        const dateMatch = content.match(/\| \*\*Date\*\* \| (.+) \|/);
+        const ratingMatch = content.match(/\| \*\*Overall rating\*\* \| (.+) \|/);
+
+        return {
+          id: file.replace(/\.md$/, ""),
+          lessonId: lessonMatch?.[1] ?? "",
+          group: groupMatch?.[1] ?? "",
+          domain: domainMatch?.[1] ?? "",
+          date: dateMatch?.[1] ?? "",
+          overallRating: ratingMatch?.[1] ?? "",
+        };
+      })
+    );
+
+    res.json({ debriefs });
+  } catch {
+    res.json({ debriefs: [] });
+  }
+});
+
+/** Get a specific debrief by lesson ID */
+app.get("/api/debriefs/:lessonId", async (req, res) => {
+  const { lessonId } = req.params;
+  if (lessonId.includes("/") || lessonId.includes("\\") || lessonId.includes("..")) {
+    res.status(400).json({ error: "Invalid lesson ID" });
+    return;
+  }
+
+  const debriefDir = path.join(DATA_DIR, "debriefs");
+  try {
+    const files = await fs.readdir(debriefDir);
+    const matching = files.filter(
+      (f) => f.startsWith(lessonId) && f.endsWith(".md")
+    );
+    if (matching.length === 0) {
+      res.status(404).json({ error: `No debrief found for lesson '${lessonId}'` });
+      return;
+    }
+    // Return the most recent debrief
+    matching.sort().reverse();
+    const content = await fs.readFile(
+      path.join(debriefDir, matching[0]),
+      "utf-8"
+    );
+    res.json({ debrief: content, filename: matching[0] });
+  } catch {
+    res.status(404).json({ error: "No debriefs directory found" });
+  }
+});
+
+/** Check if a lesson is ready for debrief (has a plan, no debrief yet) */
+app.get("/api/debrief-ready/:lessonId", async (req, res) => {
+  const { lessonId } = req.params;
+  if (lessonId.includes("/") || lessonId.includes("\\") || lessonId.includes("..")) {
+    res.status(400).json({ error: "Invalid lesson ID" });
+    return;
+  }
+
+  // Check lesson exists
+  const lessonPath = path.join(DATA_DIR, "lessons", `${lessonId}.md`);
+  let lessonExists = false;
+  try {
+    await fs.access(lessonPath);
+    lessonExists = true;
+  } catch {
+    // Lesson not found
+  }
+
+  // Check if debrief already exists
+  let hasDebrief = false;
+  try {
+    const debriefDir = path.join(DATA_DIR, "debriefs");
+    const files = await fs.readdir(debriefDir);
+    hasDebrief = files.some(
+      (f) => f.startsWith(lessonId) && f.endsWith(".md")
+    );
+  } catch {
+    // No debriefs directory
+  }
+
+  // Parse lesson for section data (needed for debrief form)
+  let lessonData = null;
+  if (lessonExists) {
+    const content = await fs.readFile(lessonPath, "utf-8");
+    const parsed = parseLesson(content);
+    lessonData = {
+      meta: parsed.meta,
+      sections: parsed.sections.map((s) => ({
+        id: s.id,
+        title: s.title,
+        phase: s.phase,
+        startMin: s.startMin,
+        endMin: s.endMin,
+        durationMin: s.durationMin,
+      })),
+      objectives: parsed.objectives,
+    };
+  }
+
+  res.json({
+    lessonId,
+    lessonExists,
+    hasDebrief,
+    readyForDebrief: lessonExists && !hasDebrief,
+    lesson: lessonData,
+  });
+});
+
 // ─── WebSocket handler for educator chat ─────────────────────────
 wss.on("connection", (ws: WebSocket) => {
   const sessionId = randomUUID();
