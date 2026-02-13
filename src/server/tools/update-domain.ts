@@ -2,18 +2,21 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-import { validateDomain } from "./create-domain.js";
+import {
+  BLOOM_LEVELS,
+  DomainNameSchema,
+  DEFAULT_EDGE_CONFIDENCE,
+  MAX_SKILLS,
+  MAX_EDGES,
+  type Skill,
+  type Edge,
+  validateDomain,
+  computeDomainStats,
+  loadDomain,
+  saveDomain,
+} from "./domain-utils.js";
 
 const DATA_DIR = process.env.DATA_DIR || "./data";
-
-const BLOOM_LEVELS = [
-  "knowledge",
-  "comprehension",
-  "application",
-  "analysis",
-  "synthesis",
-  "evaluation",
-] as const;
 
 const AddSkillSchema = z.object({
   id: z
@@ -40,60 +43,11 @@ const ModifySkillSchema = z.object({
   dependencies: z.array(z.string()).optional().describe("Replace dependencies list"),
 });
 
-interface Skill {
-  id: string;
-  label: string;
-  bloom_level: string;
-  assessable: boolean;
-  dependencies: string[];
-}
-
-interface Edge {
-  source: string;
-  target: string;
-  confidence: number;
-  type: string;
-}
-
-async function loadDomain(domain: string) {
-  const domainDir = path.join(DATA_DIR, "domains", domain);
-  const [skillsRaw, depsRaw] = await Promise.all([
-    fs.readFile(path.join(domainDir, "skills.json"), "utf-8"),
-    fs.readFile(path.join(domainDir, "dependencies.json"), "utf-8"),
-  ]);
-  const skillsData = JSON.parse(skillsRaw);
-  const depsData = JSON.parse(depsRaw);
-  return {
-    skillsData,
-    depsData,
-    skills: skillsData.skills as Skill[],
-    edges: depsData.edges as Edge[],
-  };
-}
-
-async function saveDomain(
-  domain: string,
-  skillsData: any,
-  depsData: any
-) {
-  const domainDir = path.join(DATA_DIR, "domains", domain);
-  await Promise.all([
-    fs.writeFile(
-      path.join(domainDir, "skills.json"),
-      JSON.stringify(skillsData, null, 2) + "\n"
-    ),
-    fs.writeFile(
-      path.join(domainDir, "dependencies.json"),
-      JSON.stringify(depsData, null, 2) + "\n"
-    ),
-  ]);
-}
-
 export const updateDomainTool = tool(
   "update_domain",
   "Modify an existing skill domain. Supports adding, removing, and modifying skills and edges. Validates the resulting graph before saving.",
   {
-    domain: z.string().describe("Domain identifier (e.g. 'outdoor-ecology')"),
+    domain: DomainNameSchema.describe("Domain identifier (e.g. 'outdoor-ecology')"),
     operation: z
       .enum([
         "add_skills",
@@ -106,6 +60,7 @@ export const updateDomainTool = tool(
       .describe("The update operation to perform"),
     skills: z
       .array(AddSkillSchema)
+      .max(MAX_SKILLS, `Cannot add more than ${MAX_SKILLS} skills at once`)
       .optional()
       .describe("Skills to add (for add_skills operation)"),
     skillIds: z
@@ -118,6 +73,7 @@ export const updateDomainTool = tool(
       .describe("Skill modifications (for modify_skills)"),
     edges: z
       .array(AddEdgeSchema)
+      .max(MAX_EDGES, `Cannot add more than ${MAX_EDGES} edges at once`)
       .optional()
       .describe("Edges to add (for add_edges)"),
     edgesToRemove: z
@@ -131,24 +87,29 @@ export const updateDomainTool = tool(
       const domainsDir = path.join(DATA_DIR, "domains");
       try {
         const entries = await fs.readdir(domainsDir, { withFileTypes: true });
-        const domains = [];
-        for (const entry of entries) {
-          if (!entry.isDirectory()) continue;
-          try {
+        const directories = entries.filter((e) => e.isDirectory());
+
+        const results = await Promise.allSettled(
+          directories.map(async (entry) => {
             const raw = await fs.readFile(
               path.join(domainsDir, entry.name, "skills.json"),
               "utf-8"
             );
             const data = JSON.parse(raw);
-            domains.push({
+            return {
               name: entry.name,
               description: data.description,
               skillCount: data.skills?.length ?? 0,
-            });
-          } catch {
-            // Skip directories without valid skills.json
-          }
-        }
+            };
+          })
+        );
+
+        const domains = results
+          .filter((r): r is PromiseFulfilledResult<{ name: string; description: string; skillCount: number }> =>
+            r.status === "fulfilled"
+          )
+          .map((r) => r.value);
+
         return {
           content: [
             {
@@ -226,7 +187,7 @@ export const updateDomainTool = tool(
               currentEdges.push({
                 source: dep,
                 target: skill.id,
-                confidence: 0.85,
+                confidence: DEFAULT_EDGE_CONFIDENCE,
                 type: "prerequisite",
               });
             }
@@ -276,6 +237,18 @@ export const updateDomainTool = tool(
             isError: true,
           };
         }
+
+        // Batch: collect all modified skill IDs, single-pass edge removal
+        const modifiedIds = new Set(modifications.map((m) => m.id));
+        const depsChanged = modifications.some((m) => m.dependencies !== undefined);
+
+        if (depsChanged) {
+          // Remove prerequisite edges for all skills being modified (single pass)
+          currentEdges = currentEdges.filter(
+            (e) => !(modifiedIds.has(e.target) && e.type === "prerequisite")
+          );
+        }
+
         let modified = 0;
         for (const mod of modifications) {
           const skill = currentSkills.find((s) => s.id === mod.id);
@@ -285,13 +258,11 @@ export const updateDomainTool = tool(
           if (mod.assessable !== undefined) skill.assessable = mod.assessable;
           if (mod.dependencies !== undefined) {
             skill.dependencies = mod.dependencies;
-            // Update edges to match
-            currentEdges = currentEdges.filter((e) => e.target !== skill.id || e.type !== "prerequisite");
             for (const dep of mod.dependencies) {
               currentEdges.push({
                 source: dep,
                 target: skill.id,
-                confidence: 0.85,
+                confidence: DEFAULT_EDGE_CONFIDENCE,
                 type: "prerequisite",
               });
             }
@@ -400,11 +371,7 @@ export const updateDomainTool = tool(
 
     await saveDomain(domain, skillsData, depsData);
 
-    // Compute summary
-    const bloomDist: Record<string, number> = {};
-    for (const s of currentSkills) {
-      bloomDist[s.bloom_level] = (bloomDist[s.bloom_level] || 0) + 1;
-    }
+    const stats = computeDomainStats(currentSkills, currentEdges);
 
     return {
       content: [
@@ -416,11 +383,7 @@ export const updateDomainTool = tool(
               domain,
               operation,
               changeDescription,
-              stats: {
-                totalSkills: currentSkills.length,
-                totalEdges: currentEdges.length,
-                bloomDistribution: bloomDist,
-              },
+              stats,
               warnings: validation.warnings,
               message: `Domain "${domain}" updated: ${changeDescription}`,
             },
