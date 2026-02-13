@@ -110,6 +110,7 @@ app.post("/api/assess", async (req, res) => {
 wss.on("connection", (ws: WebSocket) => {
   const sessionId = randomUUID();
   const session = sessionManager.create(sessionId);
+  let processing = false;
 
   console.log(`[ws] New educator session: ${sessionId}`);
 
@@ -131,12 +132,24 @@ wss.on("connection", (ws: WebSocket) => {
     }
 
     if (parsed.type === "message" && parsed.message) {
+      if (processing) {
+        ws.send(JSON.stringify({ type: "error", error: "Still processing the previous message. Please wait." }));
+        return;
+      }
+
+      processing = true;
       sessionManager.touch(sessionId);
 
       try {
+        // Close previous query if it exists to avoid resource leaks
+        const prevQuery = session.query;
+        if (prevQuery) {
+          try { prevQuery.close(); } catch { /* already finished */ }
+        }
+
         const q = await createEducatorQuery(parsed.message, {
           sessionId: session.id,
-          resume: session.query ? session.id : undefined,
+          resume: prevQuery ? session.id : undefined,
         });
 
         sessionManager.setQuery(sessionId, q);
@@ -147,6 +160,17 @@ wss.on("connection", (ws: WebSocket) => {
           // Forward relevant message types to the frontend
           switch (msg.type) {
             case "assistant": {
+              // Handle SDK-level errors (rate limit, auth, etc.)
+              if (msg.error) {
+                ws.send(
+                  JSON.stringify({
+                    type: "error",
+                    error: `API error: ${msg.error}`,
+                  })
+                );
+                break;
+              }
+
               const textBlocks = msg.message.content.filter(
                 (b: { type: string }) => b.type === "text"
               );
@@ -174,16 +198,24 @@ wss.on("connection", (ws: WebSocket) => {
             }
 
             case "result": {
-              ws.send(
-                JSON.stringify({
-                  type: "result",
-                  subtype: msg.subtype,
-                  result: msg.subtype === "success" ? msg.result : undefined,
-                  costUsd: msg.total_cost_usd,
-                  numTurns: msg.num_turns,
-                  sessionId: msg.session_id,
-                })
-              );
+              // Reset processing BEFORE sending the result to the client,
+              // so the client can immediately send a follow-up message
+              // without hitting the "still processing" guard.
+              processing = false;
+
+              const payload: Record<string, unknown> = {
+                type: "result",
+                subtype: msg.subtype,
+                costUsd: msg.total_cost_usd,
+                numTurns: msg.num_turns,
+                sessionId: msg.session_id,
+              };
+              if (msg.subtype === "success") {
+                payload.result = msg.result;
+              } else {
+                payload.errors = msg.errors;
+              }
+              ws.send(JSON.stringify(payload));
               break;
             }
 
@@ -202,6 +234,18 @@ wss.on("connection", (ws: WebSocket) => {
               }
               break;
             }
+
+            case "tool_progress": {
+              ws.send(
+                JSON.stringify({
+                  type: "tool_progress",
+                  toolName: msg.tool_name,
+                  toolUseId: msg.tool_use_id,
+                  elapsed: msg.elapsed_time_seconds,
+                })
+              );
+              break;
+            }
           }
         }
       } catch (err) {
@@ -210,6 +254,8 @@ wss.on("connection", (ws: WebSocket) => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "error", error }));
         }
+      } finally {
+        processing = false;
       }
     }
   });

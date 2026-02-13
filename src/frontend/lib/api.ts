@@ -15,8 +15,9 @@ export interface AssistantMessage {
 
 export interface ResultMessage {
   type: "result";
-  subtype: "success" | "error";
+  subtype: "success" | string;
   result?: string;
+  errors?: string[];
   costUsd?: number;
   numTurns?: number;
   sessionId?: string;
@@ -41,12 +42,20 @@ export interface ErrorMessage {
   error: string;
 }
 
+export interface ToolProgressMessage {
+  type: "tool_progress";
+  toolName: string;
+  toolUseId: string;
+  elapsed: number;
+}
+
 export type ServerMessage =
   | AssistantMessage
   | ResultMessage
   | SystemMessage
   | SessionMessage
-  | ErrorMessage;
+  | ErrorMessage
+  | ToolProgressMessage;
 
 // ─── Configuration ─────────────────────────────────────────────
 
@@ -78,20 +87,23 @@ export class ChatClient {
     this.intentionalClose = false;
     this.options.onStatusChange("connecting");
 
+    let socket: WebSocket;
     try {
-      this.ws = new WebSocket(`${WS_URL}/ws/chat`);
+      socket = new WebSocket(`${WS_URL}/ws/chat`);
     } catch {
       this.options.onStatusChange("error");
       this.scheduleReconnect();
       return;
     }
 
-    this.ws.onopen = () => {
+    this.ws = socket;
+
+    socket.onopen = () => {
       this.reconnectAttempts = 0;
       this.options.onStatusChange("connected");
     };
 
-    this.ws.onmessage = (event) => {
+    socket.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data) as ServerMessage;
         this.options.onMessage(msg);
@@ -100,16 +112,22 @@ export class ChatClient {
       }
     };
 
-    this.ws.onclose = () => {
-      this.ws = null;
-      if (!this.intentionalClose) {
-        this.options.onStatusChange("disconnected");
-        this.scheduleReconnect();
+    socket.onclose = () => {
+      // Only clear this.ws if it's still the same socket (prevents race
+      // where a reconnect has already created a newer socket)
+      if (this.ws === socket) {
+        this.ws = null;
+        if (!this.intentionalClose) {
+          this.options.onStatusChange("disconnected");
+          this.scheduleReconnect();
+        }
       }
     };
 
-    this.ws.onerror = () => {
-      this.options.onStatusChange("error");
+    socket.onerror = () => {
+      if (this.ws === socket) {
+        this.options.onStatusChange("error");
+      }
     };
   }
 

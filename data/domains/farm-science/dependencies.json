@@ -1,0 +1,61 @@
+{
+  "domain": "farm-science",
+  "version": "1.0.0",
+  "description": "Directed dependency edges between farm-science skills. Source is the prerequisite; target is the dependent skill.",
+  "edges": [
+    {
+      "source": "identify-farm-animals",
+      "target": "animal-products",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-plant-parts",
+      "target": "plant-needs",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-plant-parts",
+      "target": "seed-to-plant",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "plant-needs",
+      "target": "seed-to-plant",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-plant-parts",
+      "target": "food-from-plants",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "animal-products",
+      "target": "food-from-animals",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "food-from-plants",
+      "target": "farm-to-table",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "food-from-animals",
+      "target": "farm-to-table",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "observe-living-things",
+      "target": "record-observations",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    }
+  ]
+}

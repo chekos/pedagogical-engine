@@ -47,7 +47,7 @@ export class SessionManager {
   remove(sessionId: string): void {
     const session = this.sessions.get(sessionId);
     if (session?.query) {
-      session.query.close();
+      try { session.query.close(); } catch { /* already finished */ }
     }
     this.sessions.delete(sessionId);
   }

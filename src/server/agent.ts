@@ -10,7 +10,7 @@ import { pedagogyServer } from "./tools/index.js";
 import { agentDefinitions } from "./agents/index.js";
 
 // agent.ts is at src/server/ — go up 2 levels to project root
-const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(import.meta.dirname, "../..");
+const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(import.meta.dirname ?? process.cwd(), import.meta.dirname ? "../.." : ".");
 const DATA_DIR = process.env.DATA_DIR || path.join(PROJECT_ROOT, "data");
 
 const EDUCATOR_SYSTEM_PROMPT = `You are a pedagogical reasoning engine — an AI teaching partner that helps educators plan and deliver effective learning experiences. You think like an experienced teacher, not a content generator.
@@ -109,17 +109,22 @@ export async function createAssessmentQuery(
     throw new Error(`Assessment session '${assessmentCode}' has already been completed.`);
   }
 
-  const assessmentPrompt = `You are conducting a skill assessment for learner "${learnerName}" as part of assessment session ${assessmentCode}.
+  const systemPrompt = `You are conducting a skill assessment for learner "${learnerName}" as part of assessment session ${assessmentCode}.
 
 Assessment context:
 ${assessmentContext}
 
 Use the assess-skills and reason-dependencies skills for methodology. Query the skill graph to understand dependencies. Update the learner's profile with results using the assess_learner tool.
 
-The learner's message: ${message}`;
+Rules:
+- Ask ONE question at a time
+- Acknowledge what the learner shares before moving on
+- Never test a skill you can confidently infer
+- Record confidence levels for every skill (assessed or inferred)
+- Note the Bloom's level demonstrated, not just pass/fail`;
 
   return query({
-    prompt: assessmentPrompt,
+    prompt: `Hi, I'm ${learnerName}. ${message}`,
     options: {
       model: "sonnet",
       cwd: PROJECT_ROOT,
@@ -137,7 +142,7 @@ The learner's message: ${message}`;
       permissionMode: "bypassPermissions",
       allowDangerouslySkipPermissions: true,
       agents: agentDefinitions,
-      systemPrompt: assessmentPrompt,
+      systemPrompt,
       persistSession: false,
     },
   });

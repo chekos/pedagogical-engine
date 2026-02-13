@@ -94,6 +94,21 @@ export default function ChatInterface() {
         setActiveTools([]);
         setThinkingStartedAt(null);
         currentAssistantRef.current = null;
+        // Surface error results to the user
+        if (msg.subtype !== "success") {
+          const errors = msg.errors ?? [];
+          if (errors.length > 0) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `error-${Date.now()}`,
+                role: "assistant",
+                text: `Something went wrong: ${errors.join(", ")}`,
+                timestamp: new Date(),
+              },
+            ]);
+          }
+        }
         break;
 
       case "error":
@@ -114,6 +129,16 @@ export default function ChatInterface() {
       case "system":
         // System init — could show available tools/skills
         break;
+
+      case "tool_progress": {
+        // Update active tools with the currently running tool for better progress display
+        setActiveTools((prev) => {
+          const existing = prev.find((t) => t.id === msg.toolUseId);
+          if (existing) return prev;
+          return [...prev, { id: msg.toolUseId, name: msg.toolName, input: {} }];
+        });
+        break;
+      }
     }
   }, []);
 
@@ -169,6 +194,7 @@ export default function ChatInterface() {
       },
     ]);
     setIsThinking(true);
+    setThinkingStartedAt(Date.now());
     setActiveTools([]);
     clientRef.current.send(text);
   }, []);

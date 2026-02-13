@@ -1,0 +1,77 @@
+{
+  "domain": "farm-science",
+  "version": "1.0.0",
+  "description": "Skills for understanding farms, food origins, and plant life cycles — grades K-3",
+  "skills": [
+    {
+      "id": "identify-farm-animals",
+      "label": "Can name common farm animals (cow, pig, chicken, goat)",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "animal-products",
+      "label": "Can name what farm animals provide (milk, eggs, wool, meat)",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["identify-farm-animals"]
+    },
+    {
+      "id": "identify-plant-parts",
+      "label": "Can name basic plant parts (seed, root, stem, leaf, flower, fruit)",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "plant-needs",
+      "label": "Can describe what plants need to grow (sun, water, soil)",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["identify-plant-parts"]
+    },
+    {
+      "id": "seed-to-plant",
+      "label": "Can sequence the stages of a plant life cycle (seed, sprout, plant, flower, fruit/seed)",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["identify-plant-parts", "plant-needs"]
+    },
+    {
+      "id": "food-from-plants",
+      "label": "Can identify which foods come from plants and name the plant part we eat",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["identify-plant-parts"]
+    },
+    {
+      "id": "food-from-animals",
+      "label": "Can identify which foods come from animals and name the animal",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["animal-products"]
+    },
+    {
+      "id": "farm-to-table",
+      "label": "Can trace a food item from its farm origin to the plate",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["food-from-plants", "food-from-animals"]
+    },
+    {
+      "id": "observe-living-things",
+      "label": "Can use senses to observe and describe a living thing (animal or plant)",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "record-observations",
+      "label": "Can draw and label an observation of a living thing",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["observe-living-things"]
+    }
+  ]
+}
