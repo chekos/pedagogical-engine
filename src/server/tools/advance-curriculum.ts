@@ -1,9 +1,7 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
-import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
+import { DATA_DIR, safePath } from "./shared.js";
 
 export const advanceCurriculumTool = tool(
   "advance_curriculum",
@@ -24,7 +22,20 @@ export const advanceCurriculumTool = tool(
     skillsConfirmed,
     skillsStruggled,
   }) => {
-    const filePath = path.join(DATA_DIR, "curricula", `${curriculumSlug}.md`);
+    // Sanitize slug to prevent path traversal
+    const safeSlug = curriculumSlug.replace(/[^a-z0-9-]/g, "-").replace(/^-|-$/g, "");
+    if (!safeSlug) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ error: "Invalid curriculum slug" }),
+          },
+        ],
+        isError: true,
+      };
+    }
+    const filePath = safePath(DATA_DIR, "curricula", `${safeSlug}.md`);
 
     let content: string;
     try {
@@ -34,7 +45,7 @@ export const advanceCurriculumTool = tool(
         content: [
           {
             type: "text" as const,
-            text: JSON.stringify({ error: `Curriculum file not found: ${curriculumSlug}.md` }),
+            text: JSON.stringify({ error: `Curriculum file not found: ${safeSlug}.md` }),
           },
         ],
         isError: true,
@@ -64,7 +75,7 @@ export const advanceCurriculumTool = tool(
 
     // Update the status field
     content = content.replace(
-      /\| \*\*Status\*\* \| \w+ \|/,
+      /\| \*\*Status\*\* \| .+? \|/,
       `| **Status** | active (session ${completedSession}/${totalSessions} completed) |`
     );
 

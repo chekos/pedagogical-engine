@@ -2,28 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
-
-interface Skill {
-  id: string;
-  label: string;
-  bloom_level: string;
-  assessable: boolean;
-  dependencies: string[];
-}
-
-interface Edge {
-  source: string;
-  target: string;
-  confidence: number;
-  type: string;
-}
-
-interface SkillGraph {
-  skills: Skill[];
-  edges: Edge[];
-}
+import { DATA_DIR, loadGraph, safePath, type SkillGraph } from "./shared.js";
 
 interface LearnerSkill {
   id: string;
@@ -38,19 +17,8 @@ interface GroupSkillProfile {
 
 const BLOOM_ORDER = ["knowledge", "comprehension", "application", "analysis", "synthesis", "evaluation"];
 
-async function loadGraph(domain: string): Promise<SkillGraph> {
-  const domainDir = path.join(DATA_DIR, "domains", domain);
-  const [skillsRaw, depsRaw] = await Promise.all([
-    fs.readFile(path.join(domainDir, "skills.json"), "utf-8"),
-    fs.readFile(path.join(domainDir, "dependencies.json"), "utf-8"),
-  ]);
-  const skillsData = JSON.parse(skillsRaw);
-  const depsData = JSON.parse(depsRaw);
-  return { skills: skillsData.skills, edges: depsData.edges };
-}
-
 async function loadGroupProfile(groupName: string): Promise<{ domain: string; members: string[]; context: string }> {
-  const groupPath = path.join(DATA_DIR, "groups", `${groupName}.md`);
+  const groupPath = safePath(DATA_DIR, "groups", `${groupName}.md`);
   const content = await fs.readFile(groupPath, "utf-8");
 
   const domainMatch = content.match(/\*\*Domain\*\*\s*\|\s*(.+)/);
@@ -68,20 +36,23 @@ async function loadGroupProfile(groupName: string): Promise<{ domain: string; me
 
 function parseLearnerSkills(content: string): LearnerSkill[] {
   const skills: LearnerSkill[] = [];
-  const assessedRegex = /^- ([a-z0-9-]+):\s*([\d.]+)\s*confidence/gm;
-  const inferredRegex = /^- ([a-z0-9-]+):\s*([\d.]+)\s*confidence\s*\(inferred\)/gm;
+  const skillLineRegex = /^- (.+?):\s*([\d.]+)\s*confidence/im;
 
-  const inferredIds = new Set<string>();
-  let m;
-  while ((m = inferredRegex.exec(content)) !== null) {
-    inferredIds.add(m[1]);
-    skills.push({ id: m[1], confidence: parseFloat(m[2]), type: "inferred" });
+  // Parse assessed skills section
+  const assessedSection = content.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
+  for (const line of assessedSection.split("\n")) {
+    const match = line.match(skillLineRegex);
+    if (match) {
+      skills.push({ id: match[1].trim(), confidence: parseFloat(match[2]), type: "assessed" });
+    }
   }
 
-  assessedRegex.lastIndex = 0;
-  while ((m = assessedRegex.exec(content)) !== null) {
-    if (!inferredIds.has(m[1])) {
-      skills.push({ id: m[1], confidence: parseFloat(m[2]), type: "assessed" });
+  // Parse inferred skills section
+  const inferredSection = content.split("## Inferred Skills")[1]?.split("##")[0] ?? "";
+  for (const line of inferredSection.split("\n")) {
+    const match = line.match(skillLineRegex);
+    if (match) {
+      skills.push({ id: match[1].trim(), confidence: parseFloat(match[2]), type: "inferred" });
     }
   }
 
@@ -94,7 +65,7 @@ async function buildGroupSkillProfile(members: string[]): Promise<GroupSkillProf
 
   for (const memberId of members) {
     try {
-      const profilePath = path.join(DATA_DIR, "learners", `${memberId}.md`);
+      const profilePath = safePath(DATA_DIR, "learners", `${memberId}.md`);
       const content = await fs.readFile(profilePath, "utf-8");
       const skills = parseLearnerSkills(content);
       loadedCount++;
@@ -212,8 +183,11 @@ function criticalPathLength(graph: SkillGraph, skillIds: string[]): number {
   const skillSet = new Set(skillIds);
   const memo: Record<string, number> = {};
 
-  function longestPath(id: string): number {
+  function longestPath(id: string, visiting: Set<string>): number {
     if (memo[id] !== undefined) return memo[id];
+    if (visiting.has(id)) return 1; // cycle detected — break it
+    visiting.add(id);
+
     const dependents = graph.edges
       .filter((e) => e.source === id && skillSet.has(e.target))
       .map((e) => e.target);
@@ -221,14 +195,15 @@ function criticalPathLength(graph: SkillGraph, skillIds: string[]): number {
     if (dependents.length === 0) {
       memo[id] = 1;
     } else {
-      memo[id] = 1 + Math.max(...dependents.map(longestPath));
+      memo[id] = 1 + Math.max(...dependents.map((d) => longestPath(d, visiting)));
     }
+    visiting.delete(id);
     return memo[id];
   }
 
   let maxLen = 0;
   for (const id of skillIds) {
-    maxLen = Math.max(maxLen, longestPath(id));
+    maxLen = Math.max(maxLen, longestPath(id, new Set()));
   }
   return maxLen;
 }
@@ -238,8 +213,7 @@ function distributeSkillsToSessions(
   graph: SkillGraph,
   sortedSkills: string[],
   numberOfSessions: number,
-  sessionDuration: number,
-  groupProfile: GroupSkillProfile
+  sessionDuration: number
 ): Array<{ skills: string[]; bloomFocus: string; reviewSkills: string[] }> {
   // Estimate skills per session based on duration and group level
   const effectiveMinutes = sessionDuration * 0.65; // Account for opening, closing, transitions
@@ -343,8 +317,36 @@ export const composeCurriculumTool = tool(
     curriculumContent,
   }) => {
     // Load graph and group
-    const graph = await loadGraph(domain);
-    const groupData = await loadGroupProfile(groupName);
+    let graph: SkillGraph;
+    try {
+      graph = await loadGraph(domain);
+    } catch {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ error: `Domain '${domain}' not found or has invalid skill data` }),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    let groupData: { domain: string; members: string[]; context: string };
+    try {
+      groupData = await loadGroupProfile(groupName);
+    } catch {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ error: `Group '${groupName}' not found` }),
+          },
+        ],
+        isError: true,
+      };
+    }
+
     const groupProfile = await buildGroupSkillProfile(groupData.members);
 
     // Determine target skills
@@ -354,6 +356,24 @@ export const composeCurriculumTool = tool(
       targetSkills = graph.skills
         .filter((s) => BLOOM_ORDER.indexOf(s.bloom_level) >= 3) // analysis and above
         .map((s) => s.id);
+    }
+
+    // Validate target skills exist in the graph
+    const graphSkillIds = new Set(graph.skills.map((s) => s.id));
+    const unknownSkills = targetSkills.filter((id) => !graphSkillIds.has(id));
+    if (unknownSkills.length > 0) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({
+              error: `Unknown skill IDs not found in ${domain} graph: ${unknownSkills.join(", ")}`,
+              validSkillIds: Array.from(graphSkillIds),
+            }),
+          },
+        ],
+        isError: true,
+      };
     }
 
     // Find the teaching frontier — skills the group needs to learn
@@ -368,7 +388,7 @@ export const composeCurriculumTool = tool(
 
     // Distribute skills across sessions
     const sessionPlan = distributeSkillsToSessions(
-      graph, sortedSkills, numberOfSessions, sessionDuration, groupProfile
+      graph, sortedSkills, numberOfSessions, sessionDuration
     );
 
     // Build readiness map for each session
