@@ -141,6 +141,102 @@ Report:
 - **Missing prerequisites:** Skills nobody in the group has demonstrated
 - **Recommended order:** Teach missing prerequisites in dependency order (leaves first)
 
+## Cross-domain transfer inference
+
+### When to use
+
+Cross-domain transfer activates when:
+- A learner with an existing profile in Domain A is being assessed or placed in Domain B
+- An educator asks about a student's readiness for a new subject
+- Planning a lesson in a new domain for a group with profiles in another domain
+
+### The principle
+
+Skills don't exist in isolation across domains. A student who can "analyze habitat
+health" in ecology exercises the same analytical cognition as "identify data quality
+issues" in data analysis. The operation — decompose, examine evidence, evaluate
+against criteria — is structurally similar even though the content is entirely different.
+
+Cross-domain transfer identifies these structural similarities and generates
+**hypotheses** (not conclusions) about where a learner might have partial readiness
+in a new domain.
+
+### What transfers and what doesn't
+
+| Transfers well | Transfers poorly |
+|---|---|
+| Higher-order Bloom's operations (analysis, synthesis, evaluation) | Domain-specific knowledge (identifying tree species, opening a terminal) |
+| Metacognitive frameworks (designing experiments, planning pipelines) | Tool-specific skills (using pandas, using a field guide) |
+| Cognitive operations shared across domains (analyze, compare, interpret, evaluate) | Foundational skills low in the dependency chain |
+
+### Confidence model
+
+Cross-domain confidence is **significantly lower** than within-domain inference:
+
+- **Base transfer rate:** 0.35 (vs. 0.85–0.95 for within-domain prerequisite edges)
+- **Bloom's alignment multiplier:**
+  - Same level: 1.0×
+  - Adjacent level (e.g., analysis → synthesis): 0.6×
+  - Two levels apart: 0.3×
+  - Three+ levels apart: 0.0× (no transfer)
+- **Cognitive operation bonus:** +30% when both skill labels share a cognitive verb
+  (e.g., both involve "analyze" or "compare")
+- **Generality bonus:** +20% when both skills are high in their respective dependency
+  chains (many prerequisites = more abstract = more transferable)
+- **Confidence cap:** 0.55 maximum — cross-domain transfer never reaches "confident"
+
+### How to use transfer in assessment
+
+1. Run `analyze_cross_domain_transfer` with the learner, source domain, and target domain
+2. Review the transfer candidates — skills in the target domain where the learner
+   has partial readiness from their source domain experience
+3. **Start assessment higher:** If strong transfers exist at analysis/synthesis level,
+   don't begin with knowledge-level questions — jump to the transfer zone
+4. **Validate or correct:** Treat transfers as priors, not facts. The first assessment
+   question should confirm or refute the transfer hypothesis
+5. **Communicate to the educator:** "Based on Maria's ecology work, I expect she'll
+   pick up data pattern recognition faster. Let me verify."
+
+### Example: Ecology → Python Data Analysis
+
+```
+Learner: Maya Whitehawk
+Source: outdoor-ecology (16 assessed skills, up to evaluation level)
+Target: python-data-analysis (25 skills, no prior assessment)
+
+Transfer analysis:
+- "assess-habitat-health" (analysis) → "exploratory-data-analysis" (analysis)
+  Transfer: ~0.31 — shared analytical framework, both require multi-factor evaluation
+
+- "explain-food-web" (analysis) → "identify-data-quality-issues" (analysis)
+  Transfer: ~0.28 — shared analysis operation, both high-order
+
+- "compare-ecosystems" (evaluation) → "critique-visualization" (evaluation)
+  Transfer: ~0.22 — same Bloom's level, both evaluation operations
+
+- "lead-nature-walk" (synthesis) → "design-data-pipeline" (synthesis)
+  Transfer: ~0.25 — both synthesis-level composition tasks
+
+- "identify-common-trees" (knowledge) → "open-terminal" (knowledge)
+  Transfer: 0.00 — domain-specific knowledge, no transfer
+
+Recommendation: Start assessment at application level. Maya's analytical
+frameworks transfer. Test domain-specific skills (pandas, terminal) from scratch
+but expect faster progress on data analysis reasoning.
+```
+
+### Labeled in learner profiles
+
+Cross-domain inferences are clearly labeled so educators and the assessment agent
+know these are estimates, not confirmed skills:
+
+```
+## Cross-Domain Transfer (from outdoor-ecology)
+
+- identify-data-quality-issues: 0.28 transfer confidence (cross-domain from explain-food-web)
+- exploratory-data-analysis: 0.31 transfer confidence (cross-domain from assess-habitat-health)
+```
+
 ## Reference files
 
 - `references/inference-patterns.md` — Worked examples of inference chains

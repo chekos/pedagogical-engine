@@ -22,6 +22,7 @@ import { addTeachingNoteTool } from "./add-teaching-note.js";
 import { loadEducatorProfileTool } from "./load-educator-profile.js";
 import { updateEducatorProfileTool } from "./update-educator-profile.js";
 import { analyzeEducatorContextTool } from "./analyze-educator-context.js";
+import { analyzeCrossDomainTransferTool } from "./analyze-cross-domain-transfer.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -50,5 +51,6 @@ export const pedagogyServer = createSdkMcpServer({
     loadEducatorProfileTool,
     updateEducatorProfileTool,
     analyzeEducatorContextTool,
+    analyzeCrossDomainTransferTool,
   ],
 });
