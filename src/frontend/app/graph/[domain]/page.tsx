@@ -243,6 +243,25 @@ export default function GraphPage({
                 </svg>
                 Dashboard
               </a>
+              <a
+                href="/domains"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium text-gray-600 border border-white/[0.06] hover:text-gray-400 transition-all"
+              >
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
+                Domains
+              </a>
             </div>
           </div>
         </div>
