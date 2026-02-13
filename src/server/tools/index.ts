@@ -13,6 +13,7 @@ import { composeCurriculumTool } from "./compose-curriculum.js";
 import { advanceCurriculumTool } from "./advance-curriculum.js";
 import { simulateLessonTool } from "./simulate-lesson.js";
 import { analyzeTensionsTool } from "./analyze-tensions.js";
+import { analyzeAssessmentIntegrityTool } from "./analyze-assessment-integrity.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -32,5 +33,6 @@ export const pedagogyServer = createSdkMcpServer({
     advanceCurriculumTool,
     simulateLessonTool,
     analyzeTensionsTool,
+    analyzeAssessmentIntegrityTool,
   ],
 });

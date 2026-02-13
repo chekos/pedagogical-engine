@@ -517,6 +517,123 @@ app.get("/api/assess/status/:groupName/:domain", async (req, res) => {
   });
 });
 
+// ─── Assessment integrity report (educator-facing) ───────────────
+app.get("/api/assess/integrity/:groupName/:domain", async (req, res) => {
+  const { groupName, domain } = req.params;
+
+  if (!validateSlug(groupName) || !validateSlug(domain)) {
+    res.status(400).json({ error: "Invalid groupName or domain" });
+    return;
+  }
+
+  // Read group file
+  const groupPath = path.join(DATA_DIR, "groups", `${groupName}.md`);
+  let groupContent: string;
+  try {
+    groupContent = await fs.readFile(groupPath, "utf-8");
+  } catch {
+    res.status(404).json({ error: `Group '${groupName}' not found` });
+    return;
+  }
+
+  const members = parseGroupMembers(groupContent);
+  const learnersDir = path.join(DATA_DIR, "learners");
+
+  // Parse integrity data from each learner profile
+  const integrityReports = await Promise.all(members.map(async (member) => {
+    const learnerPath = path.join(learnersDir, `${member.id}.md`);
+    try {
+      const content = await fs.readFile(learnerPath, "utf-8");
+
+      // Extract integrity section
+      let integrityLevel: string | null = null;
+      let integrityModifier: number | null = null;
+      let integrityNotes = "";
+      let flaggedSkills: string[] = [];
+
+      if (content.includes("## Assessment Integrity Notes")) {
+        const section = content.split("## Assessment Integrity Notes")[1]?.split(/\n## (?!Assessment)/)[0] ?? "";
+        integrityNotes = section.trim();
+
+        // Parse integrity level
+        const levelMatch = section.match(/\*\*Integrity level:\*\*\s*(\w+)/);
+        if (levelMatch) integrityLevel = levelMatch[1];
+
+        // Parse modifier
+        const modMatch = section.match(/modifier:\s*([\d.]+)/);
+        if (modMatch) integrityModifier = parseFloat(modMatch[1]);
+
+        // Parse per-skill flags
+        const skillLines = section.match(/^- .+: modifier [\d.]+.*$/gm);
+        if (skillLines) {
+          flaggedSkills = skillLines.map(line => {
+            const m = line.match(/^- (.+?): modifier/);
+            return m ? m[1] : "";
+          }).filter(Boolean);
+        }
+      }
+
+      // Check if integrity-adjusted confidence values exist
+      const hasIntegrityAdjusted = content.includes("integrity-adjusted");
+
+      // Count assessed skills
+      let assessedCount = 0;
+      if (content.includes("## Assessed Skills")) {
+        const assessedSection = content.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
+        assessedCount = (assessedSection.match(/^- /gm) ?? []).length;
+      }
+
+      const lastMatch = content.match(/\| \*\*Last assessed\*\* \| (.+) \|/);
+
+      return {
+        id: member.id,
+        name: member.name,
+        integrityLevel: integrityLevel ?? (assessedCount > 0 ? "not_analyzed" : "not_assessed"),
+        integrityModifier,
+        integrityNotes,
+        flaggedSkills,
+        hasIntegrityAdjusted,
+        assessedSkillCount: assessedCount,
+        lastAssessed: lastMatch ? lastMatch[1] : null,
+      };
+    } catch {
+      return {
+        id: member.id,
+        name: member.name,
+        integrityLevel: "not_assessed" as const,
+        integrityModifier: null,
+        integrityNotes: "",
+        flaggedSkills: [],
+        hasIntegrityAdjusted: false,
+        assessedSkillCount: 0,
+        lastAssessed: null,
+      };
+    }
+  }));
+
+  // Compute group-level summary
+  const assessed = integrityReports.filter(r => r.integrityLevel !== "not_assessed");
+  const highIntegrity = assessed.filter(r => r.integrityLevel === "high").length;
+  const moderateIntegrity = assessed.filter(r => r.integrityLevel === "moderate").length;
+  const lowIntegrity = assessed.filter(r => r.integrityLevel === "low").length;
+  const notAnalyzed = assessed.filter(r => r.integrityLevel === "not_analyzed").length;
+
+  res.json({
+    group: groupName,
+    domain,
+    summary: {
+      total: members.length,
+      assessed: assessed.length,
+      notAssessed: members.length - assessed.length,
+      highIntegrity,
+      moderateIntegrity,
+      lowIntegrity,
+      notAnalyzed,
+    },
+    learners: integrityReports,
+  });
+});
+
 // ─── Assessment endpoint (HTTP POST for student assessments) ─────
 app.post("/api/assess", async (req, res) => {
   const { code, learnerName, message } = req.body;

@@ -438,6 +438,49 @@ export async function fetchSimulation(
   return data.simulation;
 }
 
+// ─── Assessment Integrity Report ─────────────────────────────
+
+export interface IntegrityLearnerReport {
+  id: string;
+  name: string;
+  integrityLevel: "high" | "moderate" | "low" | "not_analyzed" | "not_assessed";
+  integrityModifier: number | null;
+  integrityNotes: string;
+  flaggedSkills: string[];
+  hasIntegrityAdjusted: boolean;
+  assessedSkillCount: number;
+  lastAssessed: string | null;
+}
+
+export interface IntegrityReport {
+  group: string;
+  domain: string;
+  summary: {
+    total: number;
+    assessed: number;
+    notAssessed: number;
+    highIntegrity: number;
+    moderateIntegrity: number;
+    lowIntegrity: number;
+    notAnalyzed: number;
+  };
+  learners: IntegrityLearnerReport[];
+}
+
+export async function fetchIntegrityReport(
+  groupName: string,
+  domain: string
+): Promise<IntegrityReport> {
+  const res = await fetch(
+    `${BACKEND_URL}/api/assess/integrity/${encodeURIComponent(groupName)}/${encodeURIComponent(domain)}`
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Request failed" }));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 // ─── Health Check ──────────────────────────────────────────────
 
 export async function checkBackendStatus(): Promise<{
