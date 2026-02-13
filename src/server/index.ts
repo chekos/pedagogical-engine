@@ -1399,6 +1399,85 @@ app.get("/api/wisdom/:domain/skills", async (req, res) => {
   }
 });
 
+// ─── Meta-pedagogical reasoning endpoints ─────────────────────────
+
+/** Get reasoning traces for a lesson plan */
+app.get("/api/reasoning/:lessonId", async (req, res) => {
+  const { lessonId } = req.params;
+  if (lessonId.includes("/") || lessonId.includes("\\") || lessonId.includes("..")) {
+    res.status(400).json({ error: "Invalid lesson ID" });
+    return;
+  }
+
+  const tracesPath = path.join(DATA_DIR, "reasoning-traces", `${lessonId}.json`);
+  try {
+    const raw = await fs.readFile(tracesPath, "utf-8");
+    const data = JSON.parse(raw);
+    res.json(data);
+  } catch {
+    res.status(404).json({ error: `No reasoning traces found for lesson '${lessonId}'` });
+  }
+});
+
+/** List all lessons that have reasoning traces */
+app.get("/api/reasoning", async (_req, res) => {
+  const tracesDir = path.join(DATA_DIR, "reasoning-traces");
+  try {
+    const files = await fs.readdir(tracesDir);
+    const jsonFiles = files.filter((f) => f.endsWith(".json"));
+
+    const lessons = await Promise.all(
+      jsonFiles.map(async (file) => {
+        const raw = await fs.readFile(path.join(tracesDir, file), "utf-8");
+        const data = JSON.parse(raw);
+        return {
+          lessonId: data.lessonId,
+          domain: data.domain,
+          groupName: data.groupName,
+          traceCount: data.traceCount,
+          createdAt: data.createdAt,
+          decisionTypes: data.traces.reduce(
+            (acc: Record<string, number>, t: { decisionType: string }) => {
+              acc[t.decisionType] = (acc[t.decisionType] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          ),
+        };
+      })
+    );
+
+    res.json({ lessons, count: lessons.length });
+  } catch {
+    res.json({ lessons: [], count: 0 });
+  }
+});
+
+/** Get a specific reasoning trace by lesson ID and trace ID */
+app.get("/api/reasoning/:lessonId/:traceId", async (req, res) => {
+  const { lessonId, traceId } = req.params;
+  if (lessonId.includes("/") || lessonId.includes("\\") || lessonId.includes("..")) {
+    res.status(400).json({ error: "Invalid lesson ID" });
+    return;
+  }
+
+  const tracesPath = path.join(DATA_DIR, "reasoning-traces", `${lessonId}.json`);
+  try {
+    const raw = await fs.readFile(tracesPath, "utf-8");
+    const data = JSON.parse(raw);
+    const trace = (data.traces || []).find(
+      (t: { id: string }) => t.id === traceId
+    );
+    if (!trace) {
+      res.status(404).json({ error: `Trace '${traceId}' not found in lesson '${lessonId}'` });
+      return;
+    }
+    res.json({ trace, lessonId: data.lessonId, domain: data.domain });
+  } catch {
+    res.status(404).json({ error: `No reasoning traces found for lesson '${lessonId}'` });
+  }
+});
+
 // ─── Cross-domain transfer endpoints ──────────────────────────────
 
 /** Analyze cross-domain transfer for a learner */

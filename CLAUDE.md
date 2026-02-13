@@ -17,12 +17,12 @@ an experienced teacher, not a content generator.
 - Custom tools in the pedagogy MCP server access data in data/
 - All persistent data lives in data/ as JSON and Markdown files
 
-## What's built (as of Session 10 — Feb 13, 2026)
+## What's built (as of Session 11 — Feb 13, 2026)
 
 ### Backend (src/server/)
 - Express + WebSocket server on port 3000
 - Agent SDK integration with Opus 4.6 for educator conversations, Sonnet for assessments
-- 15 custom MCP tools via `createSdkMcpServer`:
+- 18 custom MCP tools via `createSdkMcpServer`:
   - `load_roster` — load or create groups and learner profiles
   - `query_skill_graph` — BFS/DFS traversal, dependency inference, Bloom's level filtering
   - `generate_assessment_link` — create assessment sessions with shareable codes
@@ -38,6 +38,9 @@ an experienced teacher, not a content generator.
   - `update_educator_profile` — create or update an educator's profile from interview signals, preferences, or debrief patterns
   - `analyze_educator_context` — generate lesson-specific customization recommendations based on educator profile + domain + skills
   - `analyze_cross_domain_transfer` — analyze skill transfer across domain boundaries using Bloom's alignment, cognitive operation matching, and dependency chain analysis
+  - `explain_pedagogical_reasoning` — retrieve and compose evidence-based explanations for any decision in a lesson plan, grounded in skill graph, learner profiles, Bloom's levels, and constraints
+  - `store_reasoning_traces` — store structured reasoning traces alongside lesson plans during composition, capturing what was decided, why, what alternatives were considered, and what would change the decision
+  - `analyze_meta_pedagogical_patterns` — detect when an educator's questions reveal a pattern (e.g., keeps asking about timing) and surface the underlying pedagogical principle to teach
 - Session management with WebSocket connection mapping
 - Graceful shutdown, periodic session cleanup
 
@@ -85,7 +88,39 @@ an experienced teacher, not a content generator.
   - Side-by-side domain comparison with Bloom's-grouped skill lists
   - Transfer bridges visualization showing source→target skill mappings with confidence
   - Color-coded by transfer type (cognitive_operation, metacognitive, structural)
+- Meta-pedagogical reasoning page (/meta) — explore the "why" behind every decision
+  - Lesson plan selector with trace count
+  - Decision type filter cards (ordering, timing, pairing, activity choice, content depth, contingency)
+  - Expandable trace cards showing decision, reasoning, evidence tags, alternatives considered, and what would change
+  - Evidence breakdown by type: skill graph, learner profiles, Bloom's taxonomy, constraints, teaching wisdom, educator profile
+  - Pedagogical principles reference grid
 - Custom theme with light/dark mode via CSS variables
+
+### Meta-pedagogical layer (Moonshot 4)
+- Decision tracing: every major decision in a lesson plan is tagged with its reasoning chain
+  - Which primitives drove the decision (skill graph, learner profiles, Bloom's taxonomy, constraints, teaching wisdom, educator profile)
+  - What alternatives were considered and why they were rejected
+  - What would need to change for the decision to go differently
+- Reasoning traces stored as structured JSON in `data/reasoning-traces/{lesson-id}.json`
+- On-demand explanation: when an educator asks "why?" about any part of a plan, the engine retrieves stored traces and composes natural, evidence-grounded explanations
+  - References specific learner profiles by name
+  - Cites dependency chains in the skill graph
+  - Names Bloom's taxonomy levels and group vs. activity comparisons
+  - Mentions alternatives considered and why they were rejected
+- Pedagogical teaching moments: when an educator's questions reveal a pattern (keeps asking about the same type of decision), the engine recognizes the pattern and offers to teach the underlying principle
+  - 6 built-in pedagogical principles: Bloom's & activity ordering, evidence-based timing, skill-complementary pairing, content depth by expertise, contingency design, session energy management
+  - Question pattern tracking per educator
+  - Natural, non-condescending framing: "You've been asking about timing decisions. There's a framework I use for this. Want me to walk you through it?"
+- MCP tools:
+  - `explain_pedagogical_reasoning` — retrieve stored reasoning traces and construct evidence-based explanations
+  - `store_reasoning_traces` — store reasoning traces during/after lesson composition
+  - `analyze_meta_pedagogical_patterns` — detect question patterns and surface teaching moments
+- API endpoints:
+  - GET /api/reasoning — list lessons with reasoning traces
+  - GET /api/reasoning/:lessonId — get all reasoning traces for a lesson
+  - GET /api/reasoning/:lessonId/:traceId — get a specific reasoning trace
+- Demo data: 8 reasoning traces for the basic-plotting-with-matplotlib lesson plan, covering all 6 decision types
+- Compose-lesson SKILL.md updated with reasoning trace generation methodology
 
 ### Cross-domain transfer layer (Moonshot 3)
 - Cross-domain inference: when a learner has assessed skills in one domain, predict partial readiness in another
@@ -169,6 +204,8 @@ an experienced teacher, not a content generator.
 - Teaching wisdom: data/domains/{domain}/teaching-notes.json (JSON — structured notes and patterns)
 - Teaching notes (human-readable): data/domains/{domain}/teaching-notes.md (Markdown — appended by debriefs)
 - Educator profiles: data/educators/{id}.json (JSON — teaching style, strengths, timing patterns)
+- Reasoning traces: data/reasoning-traces/{lesson-id}.json (JSON — decision traces with evidence chains)
+- Meta-pedagogical question history: data/meta-pedagogical/{educator-id}-questions.json (JSON — question patterns for teaching moments)
 
 ## Behavioral rules
 - Always read the relevant skill before performing a task
@@ -178,6 +215,9 @@ an experienced teacher, not a content generator.
 - Query teaching wisdom before composing lesson plans — cite adjustments to the educator
 - Load educator profile before composing lesson plans — customize activity types, content depth, timing, and contingency style to the educator
 - When a learner has profiles in multiple domains, analyze cross-domain transfer before assessment — use transfer predictions to start at a higher level
+- After composing a lesson plan, generate and store reasoning traces for every major decision — traces capture evidence, alternatives, and conditions for changing the decision
+- When an educator asks "why" about a plan decision, use explain_pedagogical_reasoning to retrieve traces and compose specific, evidence-grounded explanations
+- When an educator's questions show a pattern, use analyze_meta_pedagogical_patterns to detect it and offer to teach the underlying pedagogical principle
 - Never hardcode skill definitions — always read from data/domains/
 
 ## Dev setup

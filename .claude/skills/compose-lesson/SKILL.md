@@ -295,6 +295,69 @@ For every major activity, ask:
 - What if students breeze through this? (Extend up)
 - What if tech fails? (Analog fallback)
 
+## Meta-pedagogical reasoning traces
+
+When composing a lesson plan, generate reasoning traces alongside each major
+decision. These traces capture the "why" behind the "what" — they're what
+powers the engine's ability to explain itself when educators ask.
+
+### When to generate traces
+
+Generate a reasoning trace for every decision involving:
+
+1. **Ordering** — why activities appear in a particular sequence
+2. **Timing** — why a section gets N minutes instead of M
+3. **Pairing** — why specific learners are paired (or left solo)
+4. **Activity choice** — why a discussion instead of a lecture, why hands-on
+   before theory
+5. **Content depth** — why the plan has full talking points vs. brief bullets
+6. **Contingency design** — why specific backup plans were chosen
+
+### Trace structure
+
+Each trace must include:
+
+- **What was decided** — one sentence describing the decision
+- **Why** — the pedagogical reasoning, grounded in specific evidence
+- **Evidence** — which primitives drove the decision:
+  - Skill graph references (dependency chains, skill IDs)
+  - Learner profile references (by name, with their specific data)
+  - Bloom's taxonomy levels (group average vs. activity target)
+  - Constraints that shaped the decision
+  - Teaching wisdom notes that influenced it
+  - Educator profile factors that customized it
+- **Alternatives considered** — what other option(s) were considered and why
+  they were rejected (this is critical — it shows the reasoning is genuine)
+- **What would change** — what would need to be different for the decision
+  to go the other way (this helps educators evaluate whether to override)
+
+### How to store traces
+
+After composing the lesson plan, call `store_reasoning_traces` with the full
+set of traces. This stores them alongside the lesson plan for later retrieval.
+
+### How traces are used
+
+When an educator asks "why" about any part of a plan:
+1. The agent calls `explain_pedagogical_reasoning` with the lesson ID and
+   question
+2. The tool retrieves stored traces and relevant evidence
+3. The agent composes a natural, conversational explanation
+4. If the educator keeps asking about the same type of decision, the agent
+   calls `analyze_meta_pedagogical_patterns` to detect the pattern and
+   offer to teach the underlying pedagogical principle
+
+### Tone of explanations
+
+Natural, specific, grounded. Like explaining to a colleague:
+- "I put the hands-on exercise first because 80% of your group is already at
+  application level on the prerequisites — they learn more from doing first."
+- "If your group were mostly at knowledge level, I'd flip it — they'd need
+  the framework before they could make sense of the activity."
+
+Never defensive. Always defer: "I've shared my reasoning. You know your
+students better than I do. What would you like to do?"
+
 ## Reference files
 
 - `templates/lesson-plan-template.md` — Full output format with all sections
