@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { BACKEND_URL } from "@/lib/constants";
 import { LoadingSpinner, ErrorBanner } from "@/components/ui/loading";
+import { NavBar } from "@/components/ui/nav-bar";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -171,28 +172,7 @@ export default function TransferPage() {
 
   return (
     <div className="min-h-screen bg-[#06060a]">
-      {/* Header */}
-      <header className="border-b border-white/[0.04] bg-[#08080e]/90 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-3.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <a href="/" className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors group">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <span className="text-xs hidden sm:inline">Back</span>
-              </a>
-              <div className="w-px h-5 bg-white/[0.06]" />
-              <div>
-                <h1 className="text-sm font-semibold text-white tracking-tight">Cross-Domain Transfer</h1>
-                <p className="text-[10px] text-gray-600 mt-0.5">
-                  Analyze how skills transfer across domain boundaries
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <NavBar />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Setup Panel */}

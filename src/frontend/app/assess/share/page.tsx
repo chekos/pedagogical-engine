@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import QRCodeDisplay from "@/components/assessment/qr-code";
 import { BACKEND_URL, FRONTEND_URL } from "@/lib/constants";
 import { ErrorBanner } from "@/components/ui/loading";
+import { NavBar } from "@/components/ui/nav-bar";
+import { Footer } from "@/components/ui/footer";
 
 interface AssessmentLink {
   code: string;
@@ -111,39 +113,8 @@ export default function ShareAssessmentPage() {
     `Hi ${name}! Quick favor — complete this 5-min skill check before our session: ${url} (code: ${code}). Not a test, just helps me plan better!`;
 
   return (
-    <div className="min-h-screen bg-surface-0">
-      {/* Header */}
-      <header className="border-b border-border-subtle px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <a
-            href="/"
-            aria-label="Back to home"
-            className="text-text-tertiary hover:text-text-secondary transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-          </a>
-          <div>
-            <h1 className="text-lg font-semibold text-text-primary">
-              Share Assessment Links
-            </h1>
-            <p className="text-sm text-text-secondary">
-              Generate QR codes and shareable links for your students
-            </p>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-surface-0 flex flex-col">
+      <NavBar />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         {/* Config */}
@@ -494,6 +465,7 @@ export default function ShareAssessmentPage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

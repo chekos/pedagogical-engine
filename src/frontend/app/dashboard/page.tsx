@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import ExportButton from "@/components/export-button";
 import { getSkillGraphData, getGroupDashboardData, getLearnerIds } from "@/lib/demo-data";
 import { LoadingSpinner } from "@/components/ui/loading";
+import { NavBar } from "@/components/ui/nav-bar";
 
 // Dynamic import for ReactFlow (requires client-side only)
 const SkillDependencyGraph = dynamic(
@@ -64,24 +65,17 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#06060a]">
-      {/* Header */}
-      <header className="border-b border-white/[0.04] bg-[#08080e]/90 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-3.5">
+      <NavBar />
+
+      {/* Page controls */}
+      <div className="border-b border-white/[0.04] bg-[#08080e]/90 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <a href="/" className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors group">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <span className="text-xs hidden sm:inline group-hover:text-white transition-colors">Back</span>
-              </a>
-              <div className="w-px h-5 bg-white/[0.06]" />
-              <div>
-                <h1 className="text-sm font-semibold text-white tracking-tight">Skill Analytics</h1>
-                <p className="text-[10px] text-gray-600 mt-0.5">
-                  Tuesday Cohort &middot; Python Data Analysis &middot; 25 skills &middot; 5 learners
-                </p>
-              </div>
+            <div>
+              <h1 className="text-sm font-semibold text-white tracking-tight">Skill Analytics</h1>
+              <p className="text-[10px] text-gray-600 mt-0.5">
+                Tuesday Cohort &middot; Python Data Analysis &middot; 25 skills &middot; 5 learners
+              </p>
             </div>
 
             {/* Export buttons */}
@@ -139,7 +133,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="max-w-7xl mx-auto px-6 py-5">
         {viewMode === "graph" && (

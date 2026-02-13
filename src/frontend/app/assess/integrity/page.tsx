@@ -3,6 +3,8 @@
 import { useState, useCallback } from "react";
 import { fetchIntegrityReport, type IntegrityReport, type IntegrityLearnerReport } from "@/lib/api";
 import { ErrorBanner } from "@/components/ui/loading";
+import { NavBar } from "@/components/ui/nav-bar";
+import { Footer } from "@/components/ui/footer";
 
 function IntegrityBadge({ level }: { level: string }) {
   const config: Record<string, { bg: string; text: string; label: string }> = {
@@ -186,37 +188,8 @@ export default function IntegrityReportPage() {
   }, [groupName, domain]);
 
   return (
-    <div className="min-h-screen bg-surface-0">
-      {/* Header */}
-      <header className="border-b border-border-subtle">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400/20 to-purple-400/20 flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-violet-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-text-primary">
-                Assessment Integrity Report
-              </h1>
-              <p className="text-sm text-text-secondary">
-                How confident should you be in your students&apos; assessment results?
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-surface-0 flex flex-col">
+      <NavBar />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         {/* Info callout */}
@@ -415,6 +388,7 @@ export default function IntegrityReportPage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

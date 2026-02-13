@@ -8,6 +8,7 @@ import MessageBubble from "./message-bubble";
 import ToolResult from "./tool-result";
 import ProgressIndicator from "./progress-indicator";
 import VoiceMicButton from "./voice-mic-button";
+import Link from "next/link";
 
 interface ChatMessage {
   id: string;
@@ -273,11 +274,22 @@ export default function ChatInterface() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
-        <div>
-          <h1 className="text-lg font-semibold text-text-primary">Teaching Workspace</h1>
-          <p className="text-xs text-text-tertiary mt-0.5">
-            Describe your teaching context and I&apos;ll help you plan
-          </p>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </Link>
+          <div className="w-px h-5 bg-border-subtle" />
+          <div>
+            <h1 className="text-lg font-semibold text-text-primary">Teaching Workspace</h1>
+            <p className="text-xs text-text-tertiary mt-0.5">
+              Describe your teaching context and I&apos;ll help you plan
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${connLabel.color}`} />

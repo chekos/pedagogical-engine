@@ -8,6 +8,7 @@ import {
   getLearnerIds,
   getCascadeDemoData,
 } from "@/lib/demo-data";
+import { NavBar } from "@/components/ui/nav-bar";
 
 const LiveDependencyGraph = dynamic(
   () => import("@/components/visualizations/live-dependency-graph"),
@@ -89,40 +90,21 @@ export default function GraphPage({
 
   return (
     <div className="min-h-screen h-screen flex flex-col bg-[#06060a]">
-      {/* Header */}
-      <header className="border-b border-white/[0.04] bg-[#08080e]/90 backdrop-blur-xl sticky top-0 z-50">
+      <NavBar />
+
+      {/* Page controls */}
+      <div className="border-b border-white/[0.04] bg-[#08080e]/90 backdrop-blur-xl">
         <div className="max-w-[1600px] mx-auto px-6 py-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            {/* Left: Nav + title */}
-            <div className="flex items-center gap-4">
-              <a
-                href="/"
-                className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors group"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                  />
-                </svg>
-              </a>
-              <div className="w-px h-5 bg-white/[0.06]" />
-              <div>
-                <h1 className="text-sm font-semibold text-white tracking-tight">
-                  Skill Dependency Graph
-                </h1>
-                <p className="text-[10px] text-gray-600 mt-0.5 capitalize">
-                  {domainLabel} &middot; {graphData.skills.length} skills &middot;{" "}
-                  {graphData.edges.length} dependencies
-                </p>
-              </div>
+            {/* Left: Title */}
+            <div>
+              <h1 className="text-sm font-semibold text-white tracking-tight">
+                Skill Dependency Graph
+              </h1>
+              <p className="text-[10px] text-gray-600 mt-0.5 capitalize">
+                {domainLabel} &middot; {graphData.skills.length} skills &middot;{" "}
+                {graphData.edges.length} dependencies
+              </p>
             </div>
 
             {/* Center: Learner selector */}
@@ -222,50 +204,10 @@ export default function GraphPage({
                 </svg>
                 Cascade Demo
               </button>
-
-              {/* Link to dashboard */}
-              <a
-                href="/dashboard"
-                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium text-gray-600 border border-white/[0.06] hover:text-gray-400 transition-all"
-              >
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                  />
-                </svg>
-                Dashboard
-              </a>
-              <a
-                href="/domains"
-                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium text-gray-600 border border-white/[0.06] hover:text-gray-400 transition-all"
-              >
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                  />
-                </svg>
-                Domains
-              </a>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Learner stats bar */}
       {learnerInfo && graphData.learnerName && (
