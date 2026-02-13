@@ -11,6 +11,7 @@ const FRONTEND_URL =
 interface AssessmentLink {
   code: string;
   url: string;
+  embedUrl: string;
   group: string;
   domain: string;
   created: string;
@@ -21,6 +22,7 @@ interface LearnerLink {
   learnerName: string;
   code: string;
   url: string;
+  embedUrl: string;
 }
 
 export default function ShareAssessmentPage() {
@@ -355,6 +357,36 @@ export default function ShareAssessmentPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Embed code */}
+                <div className="pt-2 border-t border-border-subtle">
+                  <p className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">
+                    Embed Widget
+                  </p>
+                  <div className="flex items-start gap-2">
+                    <pre className="flex-1 text-[11px] font-mono text-text-secondary bg-surface-0 border border-border-subtle rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap">{`<iframe src="${groupLink.embedUrl}" width="400" height="600" style="border:none;border-radius:12px" title="Skill Assessment"></iframe>`}</pre>
+                    <button
+                      onClick={() =>
+                        copyToClipboard(
+                          `<iframe src="${groupLink.embedUrl}" width="400" height="600" style="border:none;border-radius:12px" title="Skill Assessment"></iframe>`,
+                          "group-embed"
+                        )
+                      }
+                      className="flex-shrink-0 text-xs text-accent hover:text-accent-muted transition-colors mt-1"
+                    >
+                      {copiedId === "group-embed" ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                  <a
+                    href="/assess/embed-demo"
+                    className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-muted mt-2 transition-colors"
+                  >
+                    View embed demo
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -372,7 +404,7 @@ export default function ShareAssessmentPage() {
                   const all = batchLinks
                     .map(
                       (l) =>
-                        `${l.learnerName}\nCode: ${l.code}\nLink: ${l.url}\n`
+                        `${l.learnerName}\nCode: ${l.code}\nLink: ${l.url}\nEmbed: ${l.embedUrl}\n`
                     )
                     .join("\n");
                   copyToClipboard(all, "batch-all");
@@ -444,6 +476,19 @@ export default function ShareAssessmentPage() {
                       {copiedId === `text-${link.learnerId}`
                         ? "Copied!"
                         : "Text"}
+                    </button>
+                    <button
+                      onClick={() =>
+                        copyToClipboard(
+                          `<iframe src="${link.embedUrl}" width="400" height="600" style="border:none;border-radius:12px" title="Skill Assessment"></iframe>`,
+                          `embed-${link.learnerId}`
+                        )
+                      }
+                      className="text-xs text-text-secondary hover:text-text-primary"
+                    >
+                      {copiedId === `embed-${link.learnerId}`
+                        ? "Copied!"
+                        : "Embed"}
                     </button>
                   </div>
                 </div>
