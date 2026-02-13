@@ -81,6 +81,57 @@ app.get("/api/status", (_req, res) => {
   });
 });
 
+// ─── AI-generated group names ───────────────────────────────────
+app.get("/api/generate-group-name", async (_req, res) => {
+  try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      // Fallback: generate a simple random name without AI
+      const adjectives = ["morning", "autumn", "coastal", "meadow", "summit", "river", "cedar", "lunar", "coral", "ember"];
+      const nouns = ["cohort", "circle", "squad", "crew", "bunch", "pack", "team", "band", "guild", "flock"];
+      const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const noun = nouns[Math.floor(Math.random() * nouns.length)];
+      res.json({ name: `${adj}-${noun}` });
+      return;
+    }
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 30,
+        messages: [
+          {
+            role: "user",
+            content:
+              "Generate a single creative two-word cohort name for a class of students, like 'tuesday-cohort' or 'morning-sparrows' or 'autumn-coders'. Use lowercase with a hyphen. Just the name, nothing else.",
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Anthropic API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const name = (data.content?.[0]?.text || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "");
+    res.json({ name: name || "morning-cohort" });
+  } catch (err) {
+    // Fallback on any error
+    const fallbacks = ["sunrise-learners", "maple-cohort", "tidal-crew", "ember-circle", "pine-squad"];
+    res.json({ name: fallbacks[Math.floor(Math.random() * fallbacks.length)] });
+  }
+});
+
 // ─── Domain discovery (plugin architecture) ─────────────────────
 app.get("/api/domains", async (_req, res) => {
   const domainsDir = path.join(DATA_DIR, "domains");

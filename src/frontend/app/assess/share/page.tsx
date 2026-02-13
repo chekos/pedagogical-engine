@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import QRCodeDisplay from "@/components/assessment/qr-code";
 import { BACKEND_URL, FRONTEND_URL } from "@/lib/constants";
 import { ErrorBanner } from "@/components/ui/loading";
@@ -29,6 +29,18 @@ export default function ShareAssessmentPage() {
   const [domain, setDomain] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nameLoading, setNameLoading] = useState(true);
+
+  // Auto-generate a creative cohort name on mount
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/api/generate-group-name`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.name) setGroupName(data.name);
+      })
+      .catch(() => {})
+      .finally(() => setNameLoading(false));
+  }, []);
 
   // Single group link
   const [groupLink, setGroupLink] = useState<AssessmentLink | null>(null);
@@ -130,14 +142,34 @@ export default function ShareAssessmentPage() {
               <p className="text-xs text-text-tertiary mb-1.5">
                 A short identifier for your class or cohort. Use lowercase and hyphens.
               </p>
-              <input
-                id="group-name"
-                type="text"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                placeholder="e.g. tuesday-cohort"
-                className="w-full rounded-xl border border-border bg-surface-0 px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50"
-              />
+              <div className="relative">
+                <input
+                  id="group-name"
+                  type="text"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  placeholder={nameLoading ? "Generating..." : "e.g. tuesday-cohort"}
+                  className="w-full rounded-xl border border-border bg-surface-0 px-4 py-2.5 pr-9 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNameLoading(true);
+                    fetch(`${BACKEND_URL}/api/generate-group-name`)
+                      .then((res) => res.json())
+                      .then((data) => { if (data.name) setGroupName(data.name); })
+                      .catch(() => {})
+                      .finally(() => setNameLoading(false));
+                  }}
+                  disabled={nameLoading}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-accent transition-colors disabled:animate-spin"
+                  title="Generate a new name"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div>
               <label htmlFor="domain-name" className="block text-sm font-medium text-text-secondary mb-1">
