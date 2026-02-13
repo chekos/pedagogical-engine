@@ -1,40 +1,6 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
-import fs from "fs/promises";
-import path from "path";
-
-const DATA_DIR = process.env.DATA_DIR || "./data";
-
-interface Skill {
-  id: string;
-  label: string;
-  bloom_level: string;
-  assessable: boolean;
-  dependencies: string[];
-}
-
-interface Edge {
-  source: string;
-  target: string;
-  confidence: number;
-  type: string;
-}
-
-interface SkillGraph {
-  skills: Skill[];
-  edges: Edge[];
-}
-
-async function loadGraph(domain: string): Promise<SkillGraph> {
-  const domainDir = path.join(DATA_DIR, "domains", domain);
-  const [skillsRaw, depsRaw] = await Promise.all([
-    fs.readFile(path.join(domainDir, "skills.json"), "utf-8"),
-    fs.readFile(path.join(domainDir, "dependencies.json"), "utf-8"),
-  ]);
-  const skillsData = JSON.parse(skillsRaw);
-  const depsData = JSON.parse(depsRaw);
-  return { skills: skillsData.skills, edges: depsData.edges };
-}
+import { loadGraph, type Skill, type SkillGraph } from "./shared.js";
 
 /** BFS to find all prerequisites of a skill (traverse edges backwards) */
 function findPrerequisites(
