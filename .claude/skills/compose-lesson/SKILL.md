@@ -129,7 +129,35 @@ the director writing stage notes.
 - **Pacing calibration:** Faster groups need extension activities. Slower groups
   need more scaffolding. Build both into the plan.
 - **Pairing recommendations:** If the roster data supports it, recommend specific
-  pairings based on complementary skills.
+  pairings based on complementary skills AND affective compatibility (see below).
+
+### Weave in the affective dimension
+
+If affective data is available (from `## Affective Profile` in learner profiles
+or `## Affective Context` in the group file), use it to shape the plan:
+
+- **Pairing decisions** account for social dynamics, not just skill complementarity.
+  Don't pair learners the educator flagged as conflicting. Don't pair a
+  low-confidence learner with a high-dominance learner — the low-confidence
+  learner will disengage. Reference affective data in pairing rationale:
+  "I paired Sofia with Nkechi because their skills complement each other and
+  they have good rapport."
+- **Activity stakes** calibrated to group confidence. A group with low confidence
+  gets low-stakes warm-ups before challenging content. Start with a guaranteed
+  win. A group with high motivation gets pushed further, faster.
+- **Stage direction includes affective notes.** "This is where Marcus might get
+  frustrated — check in with him quietly, not publicly." "Alex freezes when
+  put on the spot — use private check-ins instead of calling on him."
+- **Warm-up design** informed by past experiences. If learners have had bad
+  experiences with the subject, the warm-up explicitly addresses it: "You
+  might have tried this before and found it frustrating. Today we're
+  starting from a different angle."
+- **Contingency notes** include affective contingencies: "If Alex shuts down,
+  have him re-run something that already worked to rebuild confidence."
+
+Affective data is always soft — it influences decisions but doesn't override
+skill-based reasoning. A low-confidence competent learner still gets advanced
+activities, but framed differently than for a high-confidence competent learner.
 
 ### Timing beats
 

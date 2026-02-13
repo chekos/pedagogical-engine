@@ -265,6 +265,8 @@ Leave this visible for the entire session. Point to it constantly.
 
 This phase has two jobs: (1) set context and energy, (2) shore up the select-filter-data prerequisite that 4/5 students are shaky on. Do not skip the warm-up — groupby will not stick if students cannot filter.
 
+**Affective note:** This group's confidence is below their actual skill level — they know more than they think. The opening should build confidence, not add pressure. Start with a guaranteed win (loading data they've done before) before introducing new material. Marcus and Alex need extra attentiveness — Marcus had a bad experience with a previous Python tutorial and almost quit; Alex finds the novelty of coding emotionally taxing and almost didn't return after session 1.
+
 ---
 
 **[0:00 - 0:03] Welcome and Hook (3 min)**
@@ -272,6 +274,8 @@ This phase has two jobs: (1) set context and energy, (2) shore up the select-fil
 Educator: As students settle in, have the whiteboard question visible: "How many ____ per ____?"
 
 Say: "Good evening. Last session, you learned to load data and look at it. Tonight, you learn to *ask questions* of it. Specifically, you will learn to answer any question that sounds like 'how many X per Y' or 'what is the average X per Y.' By the end of tonight, you will be able to answer questions like: Which coffee shop location makes the most money? Which drink has the highest customer rating? One line of code. That is what we are building toward."
+
+**Tone note:** Keep this warm and low-stakes. Avoid language like "test" or "challenge" in the opening — this group responds better to curiosity framing ("tonight we're going to figure out...") than performance framing ("tonight you'll need to demonstrate..."). Alex and Marcus in particular need to feel safe before they can engage.
 
 Do NOT open any code yet. This is a 30-second pitch, then move.
 
@@ -358,7 +362,7 @@ high_rated = df[df["rating"] > 4.0][["store", "rating"]]
 print(high_rated)
 ```
 
-Watch for: Alex will likely struggle here. That is expected. Walk to Alex and Priya. Quietly say: "Alex, Priya is going to work with you on this. Start with the guided worksheet I gave you — it walks through these same ideas step by step." This is the Track B handoff. Do it calmly, without drawing attention.
+Watch for: Alex will likely struggle here. That is expected. **Affective note:** Alex freezes when put on the spot publicly and compares himself unfavorably to Priya. Do NOT call attention to his difficulty in front of the group. Walk to Alex and Priya quietly. Say: "Alex, Priya is going to work with you on this. Start with the guided worksheet I gave you — it walks through these same ideas step by step." This is the Track B handoff. Do it calmly, without drawing attention. If Alex looks frustrated or shuts down, acknowledge it privately: "This stuff is genuinely tricky. You're doing the right thing by working through it step by step."
 
 Time check: By 0:15, you must be transitioning. If the warm-up is dragging, show the answers on screen, say "copy these down if you need them," and move.
 
@@ -442,9 +446,9 @@ If nobody gets it, read the whiteboard pattern aloud: "Group by drink_type, look
 Say: "For the next 20 minutes, we are going to practice. Most of you will work through groupby exercises. Alex, you and Priya are going to keep building your filtering skills with the guided worksheet — and there is a bonus groupby problem at the end if you get there. Everyone is learning the same concepts; you are just taking different paths."
 
 Assign pairs:
-- **Alex + Priya:** Track B. Priya sits next to Alex. Priya helps Alex through the `filter_practice.py` worksheet. Priya uses downtime to work on the stretch challenges from Track A.
-- **Nkechi + Sofia:** Track A partners. They sit together. Nkechi brings statistical intuition; Sofia brings visualization instincts. They will complement each other.
-- **Marcus:** Track A, works solo. His screen magnification and accessibility setup make shoulder-to-shoulder pairing physically awkward. He gets the R-to-Python cheat sheet comments and a slightly different version of the exercises that prints all output as text (no visual-only charts). Check on him every 5-7 minutes.
+- **Alex + Priya:** Track B. Priya sits next to Alex. Priya helps Alex through the `filter_practice.py` worksheet. Priya uses downtime to work on the stretch challenges from Track A. **Pairing rationale:** Priya is patient with Alex and has good mentor energy. This works because Priya's high confidence won't intimidate Alex the way Nkechi's faster pace would — educator flagged that Alex + Nkechi should be avoided as Nkechi's pace would overwhelm Alex.
+- **Nkechi + Sofia:** Track A partners. They sit together. Nkechi brings statistical intuition; Sofia brings visualization instincts. They will complement each other. **Pairing rationale:** Similar skill level, complementary strengths, and good rapport. Sofia's social warmth balances Nkechi's independent working style.
+- **Marcus:** Track A, works solo. His screen magnification and accessibility setup make shoulder-to-shoulder pairing physically awkward, and he prefers working independently. **Affective note:** Marcus is self-conscious about his screen magnification — don't hover or watch his screen unless he asks for help. He gets the R-to-Python cheat sheet comments and a slightly different version of the exercises that prints all output as text (no visual-only charts). Check on him every 5-7 minutes, but approach with a question ("How's it going, Marcus?") rather than looking at his screen first.
 
 Time check: By 0:25, the track split must be done and students must be moving to their positions. If you are behind, shorten the motivation problem — show only one manual filter instead of three.
 
@@ -521,7 +525,7 @@ Sofia note: She will want to plot things. Tell her: "Hold that thought — we ar
 
 Priya note: She should be with Alex during this block. If Alex is progressing well and Priya has downtime, she works on Exercises 4-5 independently.
 
-Walk the room in this order every 5 minutes: Marcus (check accessibility), Alex+Priya (check Track B progress), Sofia+Nkechi (check they are not stuck).
+Walk the room in this order every 5 minutes: Marcus (check accessibility — approach verbally first, don't look at his screen uninvited), Alex+Priya (check Track B progress — watch Alex's body language for signs of shutting down), Sofia+Nkechi (check they are not stuck — Sofia may need encouragement to try things without asking first; her "I'm not a programmer" identity can make her hesitate).
 
 Watch for:
 - Forgetting quotes around string column names: `df.groupby(store)` instead of `df.groupby("store")`
@@ -554,7 +558,9 @@ Then: "What does `.mean()` give you that `.sum()` does not?" Take 1-2 answers.
 
 This is energy management. You are at the 45-minute mark — attention is dipping. The physical movement and verbal questions reset the room.
 
-Priya redirect: If Priya has been mentoring Alex the whole time, publicly acknowledge it: "Priya has been doing great work helping Alex. Thanks, Priya." Then for the next block, let Priya work on her own stretch challenges. Alex can work independently or float to you for help.
+**Affective note (comprehension check):** Ask Sofia or Nkechi for the answers — they are at the right confidence level where getting it right will feel rewarding. Avoid cold-calling Alex (he freezes when put on the spot) or Marcus (who may be self-conscious about speaking up in front of the group if he is unsure). Priya will answer if nobody else does, but give others the space first.
+
+Priya redirect: If Priya has been mentoring Alex the whole time, publicly acknowledge it: "Priya has been doing great work helping Alex. Thanks, Priya." Then for the next block, let Priya work on her own stretch challenges. Alex can work independently or float to you for help. **Affective note:** Frame this transition carefully for Alex — don't make it sound like Priya is being taken away because Alex is too slow. Say something like: "Alex, you've got a solid handle on this now. I'm going to let Priya tackle some stretch problems while you keep going. Flag me if you get stuck."
 
 Time check: By 0:45, you are back in seats and ready for Exercise Block 2.
 
@@ -762,7 +768,7 @@ Time check: By 1:10, start wrapping up the capstone regardless of where students
 
 Educator: "Let us hear some answers."
 
-Q1 (1 min): "Which store has the highest total revenue?" Ask Marcus or Sofia. Confirm the answer (Downtown).
+Q1 (1 min): "Which store has the highest total revenue?" Ask Marcus or Sofia. **Affective note:** Marcus is a great pick here — his 15 years of Excel experience means he'll have the right answer, and getting a public win builds his Python confidence. Confirm the answer (Downtown).
 
 Q2 (1 min): "Which drink has the highest average rating?" Ask Nkechi. Confirm (Cold Brew).
 
@@ -772,9 +778,9 @@ Take 2-3 answers. Students will probably all say Suburbs. Ask: "Did anyone argue
 
 Key teaching moment: "Notice what you just did. You did not guess. You did not use your gut. You wrote three lines of code, looked at the numbers, and made a data-driven recommendation. That is data analysis."
 
-Alex check-in (2 min): "Alex, did you get to try a groupby?" If yes, ask him what question it answered. Celebrate it. If not, say: "Alex, you spent tonight mastering filtering, which is the foundation groupby is built on. Next session, you will be ready."
+Alex check-in (2 min): "Alex, did you get to try a groupby?" If yes, ask him what question it answered. Celebrate it — genuinely. If not, say: "Alex, you spent tonight mastering filtering, which is the foundation groupby is built on. Next session, you will be ready."
 
-This is important — Alex must not feel like he failed. He worked on prerequisites, which is exactly the right pedagogical move.
+**Affective note:** This moment is critical for Alex's continued attendance. He almost didn't come back after session 1. He needs to leave tonight feeling like he made progress, not like he was left behind. Be specific about what he accomplished: "You can now filter data and select columns — that's real. Last session you couldn't do that." Avoid comparing his progress to anyone else's. His motivation is strong but fragile — one bad evening could tip the balance.
 
 ---
 
@@ -964,6 +970,12 @@ Have them type it 3 times with different column/value pairs. Repetition builds m
 
 If students do not see why groupby is better than manual filtering, try the Excel analogy: "Imagine you have a spreadsheet. You want the total revenue for each of 50 stores. Would you create 50 separate filtered views and add them up by hand? Or would you use a pivot table? GroupBy is the pivot table."
 
+### If Marcus gets frustrated with the coding environment
+
+**Affective context:** Marcus had a bad experience with a previous online Python tutorial that didn't accommodate his screen reader. He almost quit the course after session 1. His confidence in Python specifically is low, even though his data analysis skills (from 15 years of Excel) are strong. If he hits a Python-specific barrier, it may trigger that past frustration.
+
+Signs to watch for: going quiet, minimizing his screen, or saying something like "maybe I should just use Excel." If this happens, validate his frustration: "That's a legitimate annoyance. Let's fix it." Then solve the technical issue immediately. Remind him that his data instincts are ahead of the class — it's only the syntax that's new.
+
 ### If Marcus cannot read the groupby output
 
 The default pandas output may be too small or low-contrast. Add this to the top of his script:
@@ -981,9 +993,11 @@ Do not correct her harshly. Say: "That is the right R code. In Python, the equiv
 
 ### If Alex gets frustrated or shuts down
 
+**Affective context:** Alex's motivation is strong but fragile. He almost didn't return after session 1 — not because of a bad experience, but because the novelty of coding is emotionally taxing. He freezes when put on the spot publicly and compares himself to Priya. A shutdown is most likely during Exercise Block 1 if he hits consecutive errors.
+
 Priya should recognize this. If it happens: "Alex, take a 2-minute break. Get some water. When you come back, start from the exercise you completed successfully — re-run it. Seeing it work again rebuilds confidence."
 
-If Priya is unavailable, the educator should spend 2-3 minutes with Alex. Do one exercise together, with Alex typing and the educator narrating: "Type df, open bracket, open bracket, quote, store, quote, close bracket, close bracket. Now run it. What do you see?"
+If Priya is unavailable, the educator should spend 2-3 minutes with Alex. Do one exercise together, with Alex typing and the educator narrating: "Type df, open bracket, open bracket, quote, store, quote, close bracket, close bracket. Now run it. What do you see?" Use private, quiet check-ins — never call attention to his difficulty in front of others.
 
 ### If Priya is bored
 
@@ -1161,6 +1175,22 @@ df[["store","revenue"]]        =  Hide all columns except store & revenue
 - **Highest risk:** Marcus freezes during Exercise Block 1 because his filter skills are not automated enough. Mitigation: The Excel analogy grounds the concept; the cheat sheet gives him copy-paste patterns; you check on him every 5-7 minutes.
 - **Second risk:** Nkechi writes R syntax and gets errors. Mitigation: R-to-Python bridge on the cheat sheet. Proactive verbal bridges during demos.
 - **Third risk:** Alex feels left behind on Track B. Mitigation: Frame Track B as "building the foundation." Check on him. Celebrate any progress. The bonus groupby problem gives him a taste of the main topic.
+
+---
+
+## Affective Summary
+
+This lesson plan incorporates affective data from the group profile and individual learner assessments. Key affective considerations woven throughout:
+
+| Learner | Confidence | Key Affective Factor | How It Shapes This Plan |
+|---|---|---|---|
+| Priya | High | Natural leader, thrives on challenge | Peer mentor role; stretch challenges prevent boredom |
+| Marcus | Moderate-low (Python) | Bad past experience with inaccessible tutorial; self-conscious about screen magnification | Approach verbally before looking at screen; Excel analogies validate his expertise; public wins build Python confidence |
+| Sofia | Moderate | "I'm not a programmer" self-identity; social motivation | Paired with Nkechi (good rapport); visualization exercises play to strengths; collaborative setting keeps engagement high |
+| Alex | Low | Emotionally taxing novelty; freezes when put on spot; almost didn't return | Track B provides guaranteed wins; private check-ins only; closing moment designed to validate progress |
+| Nkechi | Mixed (high stats, low Python) | Externally motivated (lab requirement); prefers own pace | R bridges respect existing expertise; paired with Sofia (not forced to slow down for Alex); reference materials available |
+
+**Group tone:** Confidence-building. This group knows more than they think they do. Start with guaranteed wins, frame mistakes as learning, and be especially attentive to Marcus and Alex during exercises.
 
 ---
 

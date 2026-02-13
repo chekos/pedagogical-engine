@@ -30,6 +30,14 @@
 - use-jupyter: 0.60 confidence (inferred)
 - select-filter-data: 0.68 confidence (inferred)
 
+## Affective Profile
+
+- **Confidence:** moderate — confident with data concepts from Tableau but uncertain about "real coding." Sometimes prefixes answers with "this is probably wrong but..."
+- **Motivation:** extrinsic (career advancement) + social — her manager suggested the course, but she's genuinely enjoying it and the group dynamic keeps her coming back
+- **Social dynamics:** the social glue of the group. Asks questions others are thinking. Pairs well with Nkechi (similar intermediate level, complementary skills). Good rapport with Alex — encouraging without being patronizing
+- **Past experiences:** no negative experiences, but has a "I'm not a programmer" self-identity that limits her confidence. Tableau proficiency hasn't fully translated to coding confidence
+- **Comfort preferences:** thrives in collaborative settings. Prefers pair work over solo. Comfortable speaking up in class
+
 ## Notes
 
 - Marketing analyst who uses Tableau daily — strong data visualization instincts

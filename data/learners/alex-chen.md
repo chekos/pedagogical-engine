@@ -22,6 +22,14 @@
 
 _No skills inferred._
 
+## Affective Profile
+
+- **Confidence:** low — knows he's the least experienced in the group and feels it acutely. Compares himself to Priya and gets discouraged. Educator noted "he apologizes before asking questions"
+- **Motivation:** intrinsic — career changer who genuinely wants to learn. Attends office hours voluntarily. The motivation is strong but fragile — one bad session could break it
+- **Social dynamics:** quiet, tends to withdraw when lost. Works well with Priya as a mentor — she's patient with him. Would NOT pair well with Nkechi (she moves too fast and he'd feel left behind). Sofia is a good secondary pairing — she explains things gently
+- **Past experiences:** no prior coding experience. The newness itself is the emotional challenge — "everyone else seems to get it and I don't." Educator said he almost didn't come back after session 1 but office hours convinced him he could do it
+- **Comfort preferences:** needs low-stakes environments. Freezes when put on the spot publicly. Benefits from having code templates to modify rather than blank-page exercises. Private check-ins work better than public "Alex, how are you doing?"
+
 ## Notes
 
 - Career changer from restaurant management — zero programming background before this course

@@ -89,6 +89,10 @@ export const queryGroupTool = tool(
       id: string;
       name: string;
       skills: SkillEntry[];
+      affective: {
+        confidence: string;
+        socialDynamics: string;
+      } | null;
     }> = [];
 
     try {
@@ -102,10 +106,30 @@ export const queryGroupTool = tool(
         if (!content.includes(`| **Group** | ${groupName} |`)) continue;
 
         const nameMatch = content.match(/# Learner Profile: (.+)/);
+
+        // Parse affective data if present
+        let affective: { confidence: string; socialDynamics: string } | null =
+          null;
+        if (content.includes("## Affective Profile")) {
+          const section =
+            content.split("## Affective Profile")[1]?.split(/\n## /)[0] ?? "";
+          const confMatch = section.match(
+            /\*\*Confidence:\*\*\s*(.+?)(?=\n|$)/
+          );
+          const socialMatch = section.match(
+            /\*\*Social dynamics:\*\*\s*(.+?)(?=\n-\s*\*\*|$)/s
+          );
+          affective = {
+            confidence: confMatch ? confMatch[1].trim() : "",
+            socialDynamics: socialMatch ? socialMatch[1].trim() : "",
+          };
+        }
+
         learners.push({
           id: file.replace(".md", ""),
           name: nameMatch ? nameMatch[1] : file.replace(".md", ""),
           skills: parseLearnerSkills(content),
+          affective,
         });
       }
     } catch {
@@ -198,17 +222,52 @@ export const queryGroupTool = tool(
         avgConfidence: v.avgConfidence,
       }));
 
-    // Suggest pairings: pair learners with complementary skills
+    // Suggest pairings: pair learners with complementary skills + affective compatibility
     const pairingSuggestions: Array<{
       learner1: string;
       learner2: string;
       rationale: string;
+      affectiveNotes?: string;
     }> = [];
+
+    // Check for affective pairing flags (avoid pairs, solo preferences)
+    const avoidPairs = new Set<string>();
+    const soloPreference = new Set<string>();
+
+    for (const l of learners) {
+      if (!l.affective) continue;
+      const social = l.affective.socialDynamics.toLowerCase();
+
+      // Detect solo preference
+      if (
+        social.includes("solo") ||
+        social.includes("independent") ||
+        social.includes("prefers individual")
+      ) {
+        soloPreference.add(l.name);
+      }
+
+      // Detect avoid-pair mentions (e.g., "would NOT pair well with Nkechi")
+      const avoidMatch = l.affective.socialDynamics.match(
+        /(?:NOT|not|avoid|would not) pair.*?with (\w+)/i
+      );
+      if (avoidMatch) {
+        // Normalize: use sorted pair key
+        const pair = [l.name, avoidMatch[1]].sort().join("||");
+        avoidPairs.add(pair);
+      }
+    }
 
     for (let i = 0; i < learners.length; i++) {
       for (let j = i + 1; j < learners.length; j++) {
         const l1 = learners[i];
         const l2 = learners[j];
+
+        // Check affective compatibility
+        const pairKey = [l1.name, l2.name].sort().join("||");
+        const isAvoided = avoidPairs.has(pairKey);
+        const l1Solo = soloPreference.has(l1.name);
+        const l2Solo = soloPreference.has(l2.name);
 
         // Find skills one has but the other doesn't
         const l1Skills = new Set(
@@ -233,14 +292,53 @@ export const queryGroupTool = tool(
               `${l2.name} can help with: ${l2CanTeach.slice(0, 3).join(", ")}`
             );
           }
+
+          // Build affective notes
+          const affNotes: string[] = [];
+          if (isAvoided) {
+            affNotes.push("AVOID: social dynamics flag — educator reported these learners should not be paired");
+          }
+          if (l1Solo) {
+            affNotes.push(`${l1.name} prefers working solo`);
+          }
+          if (l2Solo) {
+            affNotes.push(`${l2.name} prefers working solo`);
+          }
+
+          // Check confidence mismatch (high-dominance + low-confidence)
+          if (l1.affective && l2.affective) {
+            const l1Conf = l1.affective.confidence.toLowerCase();
+            const l2Conf = l2.affective.confidence.toLowerCase();
+            if (
+              (l1Conf.includes("high") && l2Conf.includes("low")) ||
+              (l2Conf.includes("high") && l1Conf.includes("low"))
+            ) {
+              const highConf = l1Conf.includes("high") ? l1.name : l2.name;
+              const lowConf = l1Conf.includes("low") ? l1.name : l2.name;
+              affNotes.push(
+                `Confidence gap: ${highConf} is high-confidence, ${lowConf} is low-confidence — monitor that ${lowConf} stays engaged`
+              );
+            }
+          }
+
           pairingSuggestions.push({
             learner1: l1.name,
             learner2: l2.name,
             rationale: parts.join("; "),
+            ...(affNotes.length > 0
+              ? { affectiveNotes: affNotes.join(". ") }
+              : {}),
           });
         }
       }
     }
+
+    // Sort pairings: non-avoided first, then by skill complementarity count
+    pairingSuggestions.sort((a, b) => {
+      const aAvoided = a.affectiveNotes?.includes("AVOID") ? 1 : 0;
+      const bAvoided = b.affectiveNotes?.includes("AVOID") ? 1 : 0;
+      return aAvoided - bAvoided;
+    });
 
     return {
       content: [
@@ -257,10 +355,11 @@ export const queryGroupTool = tool(
                   (s) => s.source === "assessed"
                 ).length,
                 totalSkillCount: l.skills.length,
+                affective: l.affective,
               })),
               commonGaps: commonGaps.slice(0, 10),
               groupStrengths: groupStrengths.slice(0, 10),
-              pairingSuggestions: pairingSuggestions.slice(0, 5),
+              pairingSuggestions: pairingSuggestions.slice(0, 8),
               skillDistribution,
             },
             null,

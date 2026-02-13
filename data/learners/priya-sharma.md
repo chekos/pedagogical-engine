@@ -35,6 +35,14 @@
 - pandas-merge-join: 0.72 confidence (inferred)
 - reshape-data: 0.64 confidence (inferred)
 
+## Affective Profile
+
+- **Confidence:** high — confident in her technical abilities, sometimes impatient with slower pace
+- **Motivation:** intrinsic — genuinely excited about data science as a career pivot
+- **Social dynamics:** natural leader, good peer mentor — pairs well with anyone. Can occasionally come across as intimidating to less confident learners without meaning to
+- **Past experiences:** positive — successful software career gives her a "I can learn anything" mindset
+- **Comfort preferences:** prefers challenge over comfort; gets disengaged when pace is too slow
+
 ## Notes
 
 - Software engineer transitioning from Java to data science

@@ -28,6 +28,14 @@
 
 - use-jupyter: 0.56 confidence (inferred)
 
+## Affective Profile
+
+- **Confidence:** moderate-low in Python specifically — high in data analysis concepts from Excel. Frustration when accessibility barriers slow him down erodes confidence
+- **Motivation:** intrinsic — wants to add Python to his professional toolkit. Excited about the possibilities but sometimes discouraged by the learning curve
+- **Social dynamics:** quiet but engaged. Does not volunteer answers but contributes thoughtfully when asked. Works well independently; paired work is physically awkward due to screen magnification setup
+- **Past experiences:** had a frustrating experience in a previous online Python tutorial that did not accommodate screen readers. Educator noted "he almost quit the course after session 1 but came back because the in-person format was better"
+- **Comfort preferences:** prefers individual work with periodic check-ins. Uncomfortable with timed exercises or public coding — the pressure of being watched while his screen is magnified makes him self-conscious
+
 ## Notes
 
 - Accessibility needs: visual impairment — uses screen magnification and high-contrast mode

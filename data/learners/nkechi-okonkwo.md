@@ -29,6 +29,14 @@
 - handle-missing-data: 0.41 confidence (inferred)
 - select-filter-data: 0.41 confidence (inferred)
 
+## Affective Profile
+
+- **Confidence:** mixed — very confident in statistical reasoning (PhD-level), frustrated and underconfident about Python syntax. "I know what I want to do, I just can't say it in Python"
+- **Motivation:** extrinsic (professional) — her lab is switching from R to Python and she needs to keep up. Would rather be using R but accepts the reality
+- **Social dynamics:** independent worker, occasionally impatient with basic-level explanations. Good rapport with Sofia (similar intermediate level). Tends to help others with the *conceptual* side even when her *syntax* is wrong
+- **Past experiences:** R expertise is both an asset and a source of frustration — she keeps reaching for R patterns that don't exist in Python. No negative experiences, but occasional "why can't Python just do it like R?" frustration
+- **Comfort preferences:** prefers working at her own pace with reference materials. Cheat sheets and equivalence tables are her preferred learning tools. Does not enjoy group exercises where she has to write Python on the spot
+
 ## Notes
 
 - PhD student in biology — extensive R experience but new to Python

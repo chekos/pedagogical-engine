@@ -53,6 +53,25 @@ Read `templates/interview-checklist.md` for the full checklist with probe questi
 - "Does everyone have reliable internet access?"
 - "Are there any paid tools or subscriptions involved?"
 
+**Exploring the affective dimension:** Ask about emotional and social context when it
+would materially affect the plan. These are not a separate "assessment" — weave them
+naturally into the conversation when the educator seems receptive. Don't ask all of
+them every time — use judgment based on what the educator has already shared.
+
+- "Are there any students who are particularly anxious or unconfident about this subject?"
+- "Has anyone in the group had a negative experience with this topic before?"
+- "Are there any interpersonal dynamics I should know about — students who work well
+  together, or students who should probably not be paired?"
+- "What's the general motivation level? Are they here because they want to be, or
+  because they have to be?"
+- "Anyone who's particularly quiet or tends to disengage? Anyone who tends to dominate
+  group discussions?"
+
+These questions surface affective constraints — confidence levels, motivation types,
+social dynamics, and past experiences — that shape how the engine designs pairings,
+selects activities, calibrates stakes, and writes stage direction. Affective data is
+always soft (influences decisions, never blocks them).
+
 **Closing:** Confirm readiness.
 - "Let me make sure I have this right: [summary]. Anything I'm missing?"
 
@@ -72,7 +91,9 @@ as the last thing you need, not as a blocker.
 - Write interview results to the group file: `data/groups/{group-name}.md`
 - Create or update learner profiles if names/details are provided
 - Build the constraint set for downstream tools
-- Pass the complete context to the lesson-agent or assessment-agent as needed
+- If affective context was shared, write it to the group file under `## Affective Context`
+  and to individual learner profiles under `## Affective Profile`
+- Pass the complete context (including affective data) to the lesson-agent or assessment-agent as needed
 
 ## Reference files
 

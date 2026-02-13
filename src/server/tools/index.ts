@@ -14,6 +14,7 @@ import { advanceCurriculumTool } from "./advance-curriculum.js";
 import { simulateLessonTool } from "./simulate-lesson.js";
 import { analyzeTensionsTool } from "./analyze-tensions.js";
 import { analyzeAssessmentIntegrityTool } from "./analyze-assessment-integrity.js";
+import { analyzeAffectiveContextTool } from "./analyze-affective-context.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -34,5 +35,6 @@ export const pedagogyServer = createSdkMcpServer({
     simulateLessonTool,
     analyzeTensionsTool,
     analyzeAssessmentIntegrityTool,
+    analyzeAffectiveContextTool,
   ],
 });
