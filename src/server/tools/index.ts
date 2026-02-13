@@ -23,6 +23,8 @@ import { loadEducatorProfileTool } from "./load-educator-profile.js";
 import { updateEducatorProfileTool } from "./update-educator-profile.js";
 import { analyzeEducatorContextTool } from "./analyze-educator-context.js";
 import { analyzeCrossDomainTransferTool } from "./analyze-cross-domain-transfer.js";
+import { explainReasoningTool, storeReasoningTracesTool } from "./explain-reasoning.js";
+import { analyzeMetaPedagogicalPatternsTool } from "./analyze-meta-pedagogical-patterns.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -52,5 +54,8 @@ export const pedagogyServer = createSdkMcpServer({
     updateEducatorProfileTool,
     analyzeEducatorContextTool,
     analyzeCrossDomainTransferTool,
+    explainReasoningTool,
+    storeReasoningTracesTool,
+    analyzeMetaPedagogicalPatternsTool,
   ],
 });

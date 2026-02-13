@@ -1,0 +1,201 @@
+{
+  "lessonId": "2026-02-12-basic-plotting-with-matplotlib",
+  "domain": "python-data-analysis",
+  "groupName": "tuesday-cohort",
+  "createdAt": "2026-02-12T14:30:00Z",
+  "traceCount": 8,
+  "traces": [
+    {
+      "id": "trace-001",
+      "sectionId": "phase-2",
+      "decisionType": "ordering",
+      "decision": "Live coding demos placed BEFORE the hands-on exercise, not after",
+      "reasoning": "While 80% of the group has some plotting experience (application level or higher on prerequisites), Alex Chen has zero assessed plotting skills and is missing both direct prerequisites. An inductive approach (exercise-first) would leave Alex completely lost. By front-loading the demos, Alex sees the pattern 4 times before having to reproduce it. Priya and Sofia (who are already at application level) stay engaged because the demos introduce NEW syntax (matplotlib) even though the concepts are familiar.",
+      "evidence": {
+        "skillGraph": ["basic-plotting", "import-pandas", "install-packages"],
+        "learnerProfiles": ["Alex Chen (no plotting skills)", "Priya Sharma (0.75 application)", "Sofia Ramirez (0.70 application)"],
+        "bloomsLevels": ["application"],
+        "constraints": ["30-minute session — no time for an exploratory phase"],
+        "teachingWisdom": ["Warm-up exercises using the same dataset dramatically improve outcomes for mixed-level groups"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Start with hands-on exercise, then debrief with theory (inductive approach)",
+          "whyRejected": "Alex would be completely stuck with no reference point. In a 30-minute session, there's no time to recover from a false start. With 4 out of 5 learners at application level, the group could handle this, but Alex's missing prerequisites make it too risky."
+        },
+        {
+          "option": "Start with theory lecture, then demos, then exercise (full deductive)",
+          "whyRejected": "A theory lecture about chart types would bore Priya and Sofia (who already know Tableau/matplotlib). The energy would die before the exercise. Live coding IS the theory delivery — it's just embedded in demonstration rather than abstraction."
+        }
+      ],
+      "wouldChangeIf": "If Alex had completed the prerequisites (import-pandas, install-packages), an inductive exercise-first approach would be stronger for this group. The group's average Bloom's level supports it — it's only Alex's gap that tips the balance."
+    },
+    {
+      "id": "trace-002",
+      "sectionId": "phase-3",
+      "decisionType": "timing",
+      "decision": "12 minutes allocated to the hands-on exercise (40% of total session time)",
+      "reasoning": "Application-level skills require approximately 15 minutes per the Bloom's baseline, but the group's average readiness on prerequisites is moderate (most have prior experience), so the adjustment factor brings it to ~12 minutes. Teaching wisdom from 18 previous sessions indicates that plotting exercises typically take 10-15 minutes for mixed groups. The 12-minute allocation is the sweet spot — long enough for Alex to get 2 charts working (with Priya's help), short enough to keep Priya/Sofia engaged (they'll finish in 5-7 minutes and move to extensions).",
+      "evidence": {
+        "skillGraph": ["basic-plotting (application level)"],
+        "learnerProfiles": ["Alex Chen (needs 12+ min with help)", "Priya Sharma (will finish in 5-7 min)", "Marcus Johnson (solid, 8-10 min)"],
+        "bloomsLevels": ["application — 15 min baseline"],
+        "teachingWisdom": ["Plotting exercises typically take 10-15 min for mixed groups", "Hands-on sections run 5-8 min over for beginner groups"],
+        "constraints": ["30-minute total session — exercise gets the lion's share"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "8 minutes for the exercise",
+          "whyRejected": "Alex wouldn't get past chart 1. Even with Priya's help, 8 minutes doesn't leave time for the debugging/error-fixing cycles that beginners inevitably hit. Teaching wisdom says beginners need at least 10 minutes for basic plotting."
+        },
+        {
+          "option": "18 minutes for the exercise",
+          "whyRejected": "Would require cutting the demo phase to 7 minutes (only 2 chart types demoed) or eliminating the wrap-up. The wrap-up is the anchor — it's where 'the one thing' solidifies. Cutting it is a false economy."
+        }
+      ],
+      "wouldChangeIf": "If the session were 45 minutes instead of 30, I'd extend to 18 minutes and add a second round ('now try charting different columns'). If Alex had the prerequisites, 10 minutes would be sufficient."
+    },
+    {
+      "id": "trace-003",
+      "sectionId": "pairings",
+      "decisionType": "pairing",
+      "decision": "Alex paired with Priya; Nkechi, Marcus, and Sofia work solo",
+      "reasoning": "Alex needs scaffolding from a peer — the Bloom's gap between Alex (no skills) and Priya (application level) is exactly 1 level in terms of effective competence, because Priya's 0.75 confidence means she's secure but not so far ahead that she'd lose patience. Priya gets the synthesis-level challenge of explaining, which exercises skills she doesn't normally use. Nkechi works solo because she needs to build Python muscle memory — pairing would let her delegate the typing. Marcus works solo because of his accessibility setup (screen magnification, high-contrast) which is optimized for his workflow. Sofia is at a level where independent practice builds confidence.",
+      "evidence": {
+        "skillGraph": ["basic-plotting dependency chain"],
+        "learnerProfiles": ["Alex Chen (beginner, career changer)", "Priya Sharma (0.75, advanced, patient)", "Nkechi Okonkwo (R expert, needs Python syntax practice)", "Marcus Johnson (accessibility needs, prefers own setup)"],
+        "bloomsLevels": ["Alex: knowledge/below → Priya: application = ~1 level gap"],
+        "constraints": ["Marcus has accessibility accommodations — don't disrupt his setup"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Pair Alex with Sofia instead of Priya",
+          "whyRejected": "Sofia is at 0.70 confidence — close to Priya's 0.75 — but Sofia's strength is visualization concepts (Tableau), not Python syntax. She'd be less effective at explaining matplotlib code patterns. Priya's higher confidence means she can explain AND troubleshoot syntax errors."
+        },
+        {
+          "option": "Pair Nkechi with Alex (both have gaps)",
+          "whyRejected": "Nkechi's gap is different from Alex's — she knows the concepts but not the Python syntax. Pairing two learners who both need to learn the syntax creates a 'two confused people' dynamic. One partner needs to be solidly confident."
+        },
+        {
+          "option": "All students work solo",
+          "whyRejected": "Alex would likely give up within 3 minutes. With no assessed plotting skills AND missing prerequisites, solo work without scaffolding is a recipe for frustration and shutdown."
+        }
+      ],
+      "wouldChangeIf": "If Marcus expressed interest in working with a partner, I'd pair him with Nkechi (complementary skills — his Python is solid, her concepts are strong). If Alex had completed prerequisites, solo work with a reference sheet would be appropriate."
+    },
+    {
+      "id": "trace-004",
+      "sectionId": "phase-1",
+      "decisionType": "activity_choice",
+      "decision": "3-minute 'What story does this data tell?' hook instead of jumping straight to demos",
+      "reasoning": "The hook serves three purposes: (1) It activates prior knowledge for Sofia and Nkechi, who already understand data visualization conceptually. (2) It gives the educator 3 minutes to walk to Alex's station and help with notebook setup while the group discusses. (3) It creates ownership — when students suggest 'sales over time' as a question, and then the demo shows exactly that, the demo feels like answering their question rather than lecturing at them. Teaching wisdom from previous sessions shows that warm-up exercises using the same dataset dramatically improve outcomes.",
+      "evidence": {
+        "skillGraph": ["basic-plotting (target skill)"],
+        "learnerProfiles": ["Sofia Ramirez (Tableau expert, will drive discussion)", "Nkechi Okonkwo (R expert, understands concepts)", "Alex Chen (needs setup time)"],
+        "bloomsLevels": ["The hook targets analysis level — choosing chart types for data questions"],
+        "teachingWisdom": ["Warm-up exercises using the same dataset dramatically improve outcomes", "Engagement drops when sessions start with lecture"],
+        "constraints": ["30 minutes — only 3 min for the hook, can't afford more"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Skip the hook and start with live coding immediately",
+          "whyRejected": "Misses the setup window for Alex. Also, students who don't understand WHY they're learning something disengage faster. The hook provides the 'why' — these charts answer YOUR data questions."
+        },
+        {
+          "option": "5-minute hook with a pre/post activity",
+          "whyRejected": "In a 30-minute session, 5 minutes is 17% of the session. The marginal benefit of 2 extra minutes of discussion doesn't justify the time cost. Keep it tight."
+        }
+      ],
+      "wouldChangeIf": "If this were a 60-minute session, I'd extend to a 5-minute hook with a 'guess the chart type' matching activity. If the group were all beginners (no prior visualization experience), I'd replace the open question with a simpler 'which chart type would you use for X?' multiple choice."
+    },
+    {
+      "id": "trace-005",
+      "sectionId": "phase-2",
+      "decisionType": "content_depth",
+      "decision": "Full talking points with code commentary for each demo, including R-to-Python bridges for Nkechi and accessibility callouts for Marcus",
+      "reasoning": "The lesson plan is prepared for 'Educator' (no specific profile loaded), so I've defaulted to intermediate-depth content scaffolding: full talking points, suggested verbal asides, and personalized callouts for specific learners. The personalized bridges (R → Python for Nkechi, accessibility rationale for Marcus) serve double duty — they help those learners AND teach the educator how to differentiate instruction for different backgrounds.",
+      "evidence": {
+        "learnerProfiles": ["Nkechi Okonkwo (R expert — needs syntax bridges)", "Marcus Johnson (accessibility needs — needs high-contrast, large font)"],
+        "constraints": ["No educator profile loaded — defaulting to intermediate depth"],
+        "educatorProfile": ["No profile available — using full talking points as default"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Brief bullet points (expert-level plan)",
+          "whyRejected": "Without knowing the educator's expertise level, brief bullets risk leaving a novice educator without enough guidance. Intermediate depth (full talking points) is the safe default."
+        },
+        {
+          "option": "Generic plan without learner-specific callouts",
+          "whyRejected": "The whole point of the engine is that it knows the group. A generic plan ignores Nkechi's R background (an asset to bridge from) and Marcus's accessibility needs (a requirement to accommodate). The per-learner callouts are what make this plan better than a template."
+        }
+      ],
+      "wouldChangeIf": "If an educator profile showed expert-level confidence in python-data-analysis, I'd strip this to timing cues and structural notes only. If it showed novice-level confidence, I'd add anticipated student questions with prepared answers."
+    },
+    {
+      "id": "trace-006",
+      "sectionId": "contingencies",
+      "decisionType": "contingency",
+      "decision": "Contingencies structured as specific alternatives with step-by-step instructions",
+      "reasoning": "Without an educator profile, I'm using structured/specific contingencies as the default. Each contingency includes exact code, exact instructions, and exact time savings. This is the structuralist approach — it gives the educator a concrete backup plan they can execute without improvising. If the educator has high improvisation skills, they can adapt these on the fly; if they don't, they have a script.",
+      "evidence": {
+        "constraints": ["No educator profile — defaulting to structured contingencies"],
+        "teachingWisdom": ["Students struggle with groupby operations — common confusion point"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Open-ended contingencies ('pivot to a discussion about why this is hard')",
+          "whyRejected": "Without knowing the educator's improvisation comfort level, open-ended contingencies are risky. A structuralist educator given 'just discuss it' will freeze. Better to provide specific alternatives that any educator can execute."
+        }
+      ],
+      "wouldChangeIf": "If the educator profile showed high improvisation and facilitation strengths (like Marcus Rodriguez's profile), I'd switch to open-ended contingencies: 'Pivot to a discussion about what makes this confusing. Let students share their mental models.' Improvisers thrive with direction, not scripts."
+    },
+    {
+      "id": "trace-007",
+      "sectionId": "prerequisites",
+      "decisionType": "ordering",
+      "decision": "Pre-loaded starter notebook with imports done, rather than having students set up from scratch",
+      "reasoning": "Alex's missing prerequisites (import-pandas, install-packages) mean that if setup is part of the lesson, Alex would spend the entire 30 minutes just trying to import pandas. The starter notebook sidesteps this by pre-loading the DataFrame, so Alex can focus on plotting — which IS the learning objective. Nkechi's weak import-pandas score (0.55) is also mitigated. This is a 'floor removal' strategy: remove barriers that aren't part of the learning objective so learners can reach the actual content.",
+      "evidence": {
+        "skillGraph": ["import-pandas (prerequisite, not target)", "install-packages (prerequisite, not target)", "basic-plotting (target skill)"],
+        "learnerProfiles": ["Alex Chen (missing both prerequisites)", "Nkechi Okonkwo (weak import-pandas at 0.55)"],
+        "bloomsLevels": ["import-pandas is knowledge-level — not the target"],
+        "constraints": ["30 minutes — zero time for setup troubleshooting"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Start with a 5-minute setup exercise where students import pandas themselves",
+          "whyRejected": "5 minutes = 17% of the session. Alex and Nkechi would consume ALL of it (and likely more). The other 3 students would sit idle. import-pandas isn't the learning objective — basic-plotting is. Don't sacrifice the goal for the prerequisites."
+        },
+        {
+          "option": "Require students to complete setup BEFORE the session (as homework)",
+          "whyRejected": "Alex is a career changer who may not have the support to troubleshoot Python installation issues at home. If Alex shows up with a broken environment, the entire session is derailed for that learner. The starter notebook is a safety net."
+        }
+      ],
+      "wouldChangeIf": "If the learning objective included 'importing libraries' (i.e., import-pandas was a target skill, not just a prerequisite), then a setup exercise would be pedagogically valuable. It's only because import-pandas is a means to an end that we skip it."
+    },
+    {
+      "id": "trace-008",
+      "sectionId": "phase-4",
+      "decisionType": "activity_choice",
+      "decision": "3-minute wrap-up with universal pattern reinforcement instead of a quiz or discussion",
+      "reasoning": "The 'one thing' for this lesson is the 5-line pattern (plt.plot, title, xlabel, ylabel, show). The wrap-up exists to anchor this pattern in memory. A quiz would create anxiety (Alex just struggled through the exercise). A discussion would diffuse focus. Writing the universal pattern on the whiteboard and saying it aloud — while students see it with fresh eyes from having just USED it — creates the strongest memory encoding. The show-of-hands check ('who got 1 chart? who got 4?') celebrates progress without ranking.",
+      "evidence": {
+        "learnerProfiles": ["Alex Chen (low confidence — needs celebration, not testing)", "Priya Sharma (will have all 4 — public recognition motivates her)"],
+        "bloomsLevels": ["application level — pattern recognition is the target"],
+        "teachingWisdom": ["Pattern reinforcement after hands-on work produces strongest retention"],
+        "constraints": ["3 minutes only — must be punchy and memorable"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Quick quiz: 'What function makes a histogram?'",
+          "whyRejected": "Creates anxiety for Alex and Nkechi, who just spent 12 minutes struggling. The wrap-up should feel like a win, not a test. Also, recall-based quizzes don't test application — they test memorization, which is a lower Bloom's level than the lesson objective."
+        },
+        {
+          "option": "Group discussion: 'When would you use each chart type?'",
+          "whyRejected": "This is an analysis-level activity in a session targeting application level. It's a great activity for the NEXT session, but in the last 3 minutes, it would feel rushed and incomplete. Save it."
+        }
+      ],
+      "wouldChangeIf": "In a 45-minute session, I'd add a 5-minute 'gallery walk' where students share their best chart on screen and the group picks a favorite. Social validation reinforces learning and builds community."
+    }
+  ]
+}
