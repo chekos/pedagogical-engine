@@ -44,6 +44,12 @@ export default function Home() {
           >
             Domains
           </Link>
+          <Link
+            href="/disagree"
+            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Disagree
+          </Link>
         </div>
       </nav>
 
@@ -73,6 +79,7 @@ export default function Home() {
               "Adaptive assessment",
               "Dependency inference",
               "Stage-directed lesson plans",
+              "Pedagogical pushback",
             ].map((feature) => (
               <span
                 key={feature}
