@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { SessionManager } from "./sessions/manager.js";
 import { createEducatorQuery, createAssessmentQuery } from "./agent.js";
+import { exportRouter } from "./exports/router.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -27,6 +28,9 @@ app.use((req, res, next) => {
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws/chat" });
 const sessionManager = new SessionManager();
+
+// ─── Export routes (PDF generation) ──────────────────────────────
+app.use("/api/export", exportRouter);
 
 // ─── Health check ────────────────────────────────────────────────
 app.get("/api/status", (_req, res) => {
@@ -307,6 +311,7 @@ server.listen(PORT, () => {
 ║  WebSocket: ws://localhost:${PORT}/ws/chat                 ║
 ║  Health:    http://localhost:${PORT}/api/status             ║
 ║  Assess:    POST http://localhost:${PORT}/api/assess        ║
+║  Exports:   GET http://localhost:${PORT}/api/export/...     ║
 ╚══════════════════════════════════════════════════════════╝
   `);
 });

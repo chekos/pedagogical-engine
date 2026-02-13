@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "latest",
+    "@react-pdf/renderer": "^4.3.2",
+    "@types/react": "^19.2.14",
     "express": "^4",
+    "nanoid": "^5",
     "ws": "^8",
-    "zod": "^4",
-    "nanoid": "^5"
+    "zod": "^4"
   },
   "devDependencies": {
     "@types/express": "^4",
