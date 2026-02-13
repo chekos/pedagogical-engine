@@ -1399,6 +1399,280 @@ app.get("/api/wisdom/:domain/skills", async (req, res) => {
   }
 });
 
+// ─── Cross-domain transfer endpoints ──────────────────────────────
+
+/** Analyze cross-domain transfer for a learner */
+app.get("/api/transfer/:learnerId", async (req, res) => {
+  const { learnerId } = req.params;
+  const sourceDomain = req.query.source as string;
+  const targetDomain = req.query.target as string;
+
+  if (!learnerId || !validateSlug(learnerId)) {
+    res.status(400).json({ error: "Invalid learner ID" });
+    return;
+  }
+  if (!sourceDomain || !validateSlug(sourceDomain)) {
+    res.status(400).json({ error: "source query param required (e.g. ?source=outdoor-ecology)" });
+    return;
+  }
+  if (!targetDomain || !validateSlug(targetDomain)) {
+    res.status(400).json({ error: "target query param required (e.g. &target=python-data-analysis)" });
+    return;
+  }
+
+  try {
+    // Load learner profile
+    const learnerPath = path.join(DATA_DIR, "learners", `${learnerId}.md`);
+    const learnerContent = await fs.readFile(learnerPath, "utf-8");
+
+    // Load both domain graphs
+    const [sourceSkillsRaw, sourceDepsRaw, targetSkillsRaw, targetDepsRaw] =
+      await Promise.all([
+        fs.readFile(path.join(DATA_DIR, "domains", sourceDomain, "skills.json"), "utf-8"),
+        fs.readFile(path.join(DATA_DIR, "domains", sourceDomain, "dependencies.json"), "utf-8"),
+        fs.readFile(path.join(DATA_DIR, "domains", targetDomain, "skills.json"), "utf-8"),
+        fs.readFile(path.join(DATA_DIR, "domains", targetDomain, "dependencies.json"), "utf-8"),
+      ]);
+
+    const sourceGraph = {
+      skills: JSON.parse(sourceSkillsRaw).skills,
+      edges: JSON.parse(sourceDepsRaw).edges,
+    };
+    const targetGraph = {
+      skills: JSON.parse(targetSkillsRaw).skills,
+      edges: JSON.parse(targetDepsRaw).edges,
+    };
+
+    // Parse learner skills from profile markdown
+    interface LearnerSkillEntry {
+      skillId: string;
+      confidence: number;
+      bloomLevel: string;
+      source: "assessed" | "inferred";
+    }
+    const learnerSkills: LearnerSkillEntry[] = [];
+
+    const assessedMatch = learnerContent.match(
+      /## Assessed Skills\n\n([\s\S]*?)(?=\n## |\n$)/
+    );
+    if (assessedMatch) {
+      const lines = assessedMatch[1].split("\n").filter((l: string) => l.startsWith("- "));
+      for (const line of lines) {
+        const match = line.match(
+          /- ([^:]+): ([\d.]+) confidence.*?(?:demonstrated at (\w+) level)?/
+        );
+        if (match) {
+          learnerSkills.push({
+            skillId: match[1].trim(),
+            confidence: parseFloat(match[2]),
+            bloomLevel: match[3] || "unknown",
+            source: "assessed",
+          });
+        }
+      }
+    }
+
+    // Fill bloom levels from graph
+    const sourceSkillMap = new Map(
+      sourceGraph.skills.map((s: { id: string; bloom_level: string }) => [s.id, s])
+    );
+    for (const ls of learnerSkills) {
+      if (ls.bloomLevel === "unknown") {
+        const gs = sourceSkillMap.get(ls.skillId) as { bloom_level: string } | undefined;
+        if (gs) ls.bloomLevel = gs.bloom_level;
+      }
+    }
+
+    // Filter to source domain skills
+    const sourceSkillIds = new Set(
+      sourceGraph.skills.map((s: { id: string }) => s.id)
+    );
+    const sourceSkills = learnerSkills.filter((s: LearnerSkillEntry) =>
+      sourceSkillIds.has(s.skillId)
+    );
+
+    if (sourceSkills.length === 0) {
+      res.status(404).json({
+        error: `Learner '${learnerId}' has no assessed skills in '${sourceDomain}'`,
+      });
+      return;
+    }
+
+    // Bloom's order for transfer calculation
+    const bloomOrder: Record<string, number> = {
+      knowledge: 0, comprehension: 1, application: 2,
+      analysis: 3, synthesis: 4, evaluation: 5,
+    };
+
+    // Transfer analysis — inline implementation for API endpoint
+    const BASE_RATE = 0.35;
+    interface TransferResult {
+      sourceSkill: { id: string; label: string; bloom_level: string; domain: string };
+      targetSkill: { id: string; label: string; bloom_level: string; domain: string };
+      transferConfidence: number;
+      reasons: string[];
+      transferType: string;
+    }
+    const candidates: TransferResult[] = [];
+
+    const cogOps = [
+      "analyze", "evaluate", "design", "compare", "interpret",
+      "identify", "explain", "construct", "critique", "plan",
+    ];
+
+    // Compute skill generality (number of transitive prereqs / total)
+    function skillGenerality(skillId: string, graph: { skills: { id: string; bloom_level: string }[]; edges: { source: string; target: string }[] }): number {
+      const visited = new Set<string>();
+      const queue = [skillId];
+      visited.add(skillId);
+      while (queue.length > 0) {
+        const cur = queue.shift()!;
+        for (const e of graph.edges) {
+          if (e.target === cur && !visited.has(e.source)) {
+            visited.add(e.source);
+            queue.push(e.source);
+          }
+        }
+      }
+      const prereqCount = visited.size - 1;
+      const depthScore = Math.min(prereqCount / Math.max(graph.skills.length * 0.5, 1), 1.0);
+      const skill = graph.skills.find((s: { id: string }) => s.id === skillId);
+      const bScore = (bloomOrder[skill?.bloom_level ?? "knowledge"] ?? 0) / 5;
+      return 0.4 * depthScore + 0.6 * bScore;
+    }
+
+    for (const ls of sourceSkills) {
+      if (ls.confidence < 0.5 || ls.source !== "assessed") continue;
+      const srcSkill = sourceGraph.skills.find((s: { id: string }) => s.id === ls.skillId);
+      if (!srcSkill) continue;
+      const srcGen = skillGenerality(srcSkill.id, sourceGraph);
+      if (srcGen < 0.2) continue;
+
+      for (const tgt of targetGraph.skills) {
+        const bloomDist = Math.abs(
+          (bloomOrder[srcSkill.bloom_level] ?? 0) - (bloomOrder[tgt.bloom_level] ?? 0)
+        );
+        let bloomMult = 0;
+        if (bloomDist === 0) bloomMult = 1.0;
+        else if (bloomDist === 1) bloomMult = 0.6;
+        else if (bloomDist === 2) bloomMult = 0.3;
+        if (bloomMult === 0) continue;
+
+        const srcWords = srcSkill.label.toLowerCase().split(/\s+/);
+        const tgtWords = tgt.label.toLowerCase().split(/\s+/);
+        const sharedOps = cogOps.filter(
+          (op) => srcWords.some((w: string) => w.startsWith(op)) && tgtWords.some((w: string) => w.startsWith(op))
+        );
+
+        const tgtGen = skillGenerality(tgt.id, targetGraph);
+        let conf = BASE_RATE * bloomMult * ls.confidence * (0.5 + 0.5 * srcGen);
+        const reasons: string[] = [];
+        let transferType = "structural";
+
+        if (sharedOps.length > 0) {
+          conf *= 1.3;
+          transferType = "cognitive_operation";
+          reasons.push(`Shared cognitive operation: ${sharedOps.join(", ")}`);
+        }
+        if (srcGen > 0.6 && tgtGen > 0.6) {
+          conf *= 1.2;
+          if (sharedOps.length === 0) transferType = "metacognitive";
+          reasons.push("Both are high-order skills");
+        }
+        reasons.push(bloomDist === 0 ? `Same Bloom's level: ${srcSkill.bloom_level}` : `Adjacent Bloom's: ${srcSkill.bloom_level} -> ${tgt.bloom_level}`);
+
+        conf = Math.min(Math.round(conf * 100) / 100, 0.55);
+        if (conf >= 0.10) {
+          candidates.push({
+            sourceSkill: { id: srcSkill.id, label: srcSkill.label, bloom_level: srcSkill.bloom_level, domain: sourceDomain },
+            targetSkill: { id: tgt.id, label: tgt.label, bloom_level: tgt.bloom_level, domain: targetDomain },
+            transferConfidence: conf,
+            reasons,
+            transferType,
+          });
+        }
+      }
+    }
+
+    // Keep best per target
+    candidates.sort((a, b) => b.transferConfidence - a.transferConfidence);
+    const bestPerTarget = new Map<string, TransferResult>();
+    for (const c of candidates) {
+      if (!bestPerTarget.has(c.targetSkill.id) || c.transferConfidence > bestPerTarget.get(c.targetSkill.id)!.transferConfidence) {
+        bestPerTarget.set(c.targetSkill.id, c);
+      }
+    }
+    const finalCandidates = Array.from(bestPerTarget.values()).sort(
+      (a, b) => b.transferConfidence - a.transferConfidence
+    );
+
+    // Readiness
+    const avgConf = finalCandidates.length > 0
+      ? finalCandidates.reduce((s, c) => s + c.transferConfidence, 0) / finalCandidates.length
+      : 0;
+    const strongCount = finalCandidates.filter((c) => c.transferConfidence >= 0.3).length;
+    const readinessScore = Math.round((avgConf * 0.6 + Math.min(strongCount / 5, 1) * 0.4) * 100) / 100;
+    let readinessLevel: string;
+    if (readinessScore >= 0.4) readinessLevel = "high";
+    else if (readinessScore >= 0.25) readinessLevel = "moderate";
+    else if (readinessScore >= 0.1) readinessLevel = "low";
+    else readinessLevel = "none";
+
+    // Extract learner name
+    const nameMatch = learnerContent.match(/\| \*\*Name\*\* \| ([^|]+)/);
+    const learnerName = nameMatch?.[1]?.trim() ?? learnerId;
+
+    res.json({
+      learner: { id: learnerId, name: learnerName },
+      sourceDomain,
+      targetDomain,
+      sourceGraph: {
+        skills: sourceGraph.skills.map((s: { id: string; label: string; bloom_level: string }) => ({ id: s.id, label: s.label, bloom_level: s.bloom_level })),
+        edges: sourceGraph.edges,
+      },
+      targetGraph: {
+        skills: targetGraph.skills.map((s: { id: string; label: string; bloom_level: string }) => ({ id: s.id, label: s.label, bloom_level: s.bloom_level })),
+        edges: targetGraph.edges,
+      },
+      learnerSourceSkills: sourceSkills,
+      transferCandidates: finalCandidates,
+      overallReadiness: { level: readinessLevel, score: readinessScore },
+    });
+  } catch (e) {
+    console.error("[transfer]", e);
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+/** List available learners for transfer analysis */
+app.get("/api/transfer-learners", async (_req, res) => {
+  try {
+    const learnersDir = path.join(DATA_DIR, "learners");
+    const files = await fs.readdir(learnersDir);
+    const mdFiles = files.filter((f) => f.endsWith(".md"));
+
+    const learners = await Promise.all(
+      mdFiles.map(async (file) => {
+        const content = await fs.readFile(path.join(learnersDir, file), "utf-8");
+        const idMatch = content.match(/\| \*\*ID\*\* \| ([^ |]+)/);
+        const nameMatch = content.match(/\| \*\*Name\*\* \| ([^|]+)/);
+        const domainMatch = content.match(/\| \*\*Domain\*\* \| ([^|]+)/);
+        const skillCount = (content.match(/^- [^:]+: [\d.]+ confidence/gm) || []).length;
+        return {
+          id: idMatch?.[1]?.trim() ?? file.replace(".md", ""),
+          name: nameMatch?.[1]?.trim() ?? file.replace(".md", ""),
+          domain: domainMatch?.[1]?.trim() ?? "unknown",
+          skillCount,
+        };
+      })
+    );
+
+    res.json({ learners: learners.filter((l) => l.skillCount > 0) });
+  } catch {
+    res.json({ learners: [] });
+  }
+});
+
 // ─── WebSocket handler for educator chat ─────────────────────────
 wss.on("connection", (ws: WebSocket) => {
   const sessionId = randomUUID();

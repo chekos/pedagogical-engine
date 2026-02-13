@@ -57,6 +57,12 @@ export default function Home() {
             Profiles
           </Link>
           <Link
+            href="/transfer"
+            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Transfer
+          </Link>
+          <Link
             href="/disagree"
             className="text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
@@ -94,6 +100,7 @@ export default function Home() {
               "Pedagogical pushback",
               "Accumulated teaching wisdom",
               "Educator profiling",
+              "Cross-domain transfer",
             ].map((feature) => (
               <span
                 key={feature}

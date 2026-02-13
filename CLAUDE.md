@@ -17,12 +17,12 @@ an experienced teacher, not a content generator.
 - Custom tools in the pedagogy MCP server access data in data/
 - All persistent data lives in data/ as JSON and Markdown files
 
-## What's built (as of Session 9 — Feb 13, 2026)
+## What's built (as of Session 10 — Feb 13, 2026)
 
 ### Backend (src/server/)
 - Express + WebSocket server on port 3000
 - Agent SDK integration with Opus 4.6 for educator conversations, Sonnet for assessments
-- 14 custom MCP tools via `createSdkMcpServer`:
+- 15 custom MCP tools via `createSdkMcpServer`:
   - `load_roster` — load or create groups and learner profiles
   - `query_skill_graph` — BFS/DFS traversal, dependency inference, Bloom's level filtering
   - `generate_assessment_link` — create assessment sessions with shareable codes
@@ -37,6 +37,7 @@ an experienced teacher, not a content generator.
   - `load_educator_profile` — load an educator's teaching profile (style, strengths, timing patterns) or list all profiles
   - `update_educator_profile` — create or update an educator's profile from interview signals, preferences, or debrief patterns
   - `analyze_educator_context` — generate lesson-specific customization recommendations based on educator profile + domain + skills
+  - `analyze_cross_domain_transfer` — analyze skill transfer across domain boundaries using Bloom's alignment, cognitive operation matching, and dependency chain analysis
 - Session management with WebSocket connection mapping
 - Graceful shutdown, periodic session cleanup
 
@@ -78,7 +79,31 @@ an experienced teacher, not a content generator.
   - Timing patterns (learned adjustments from debriefs)
   - Growth nudges and preferences
   - Side-by-side comparison view showing how the same lesson would differ for two educators
+- Cross-domain transfer page (/transfer) — analyze skill transfer across domains
+  - Learner selector, source/target domain pickers
+  - Readiness banner with score and level (high/moderate/low/none)
+  - Side-by-side domain comparison with Bloom's-grouped skill lists
+  - Transfer bridges visualization showing source→target skill mappings with confidence
+  - Color-coded by transfer type (cognitive_operation, metacognitive, structural)
 - Custom theme with light/dark mode via CSS variables
+
+### Cross-domain transfer layer (Moonshot 3)
+- Cross-domain inference: when a learner has assessed skills in one domain, predict partial readiness in another
+  - Uses Bloom's taxonomy alignment — same level transfers better than different levels
+  - Cognitive operation similarity — "analyze X" in one domain maps to "analyze Y" in another
+  - Dependency chain position — higher-order skills (many prereqs) transfer more than foundational skills
+  - Confidence decay — base rate 0.35, significantly lower than within-domain inference (0.85+)
+  - Confidence cap at 0.55 — cross-domain transfer never claims high confidence
+- Transfer types: cognitive_operation (shared verbs), metacognitive (both high-order), structural (Bloom's match)
+- Assessment optimization: use transfer predictions to start assessment at a higher level, saving time
+- Clearly labeled in output: transfers are hypotheses, not conclusions
+- Demo: Maya Whitehawk (outdoor-ecology, 16 skills up to evaluation) → python-data-analysis
+  - Her analysis/synthesis/evaluation ecology skills predict partial readiness for data analysis reasoning
+  - Domain-specific skills (terminal, pandas) don't transfer — only cognitive frameworks do
+- MCP tool: `analyze_cross_domain_transfer` — full analysis with confidence model
+- API endpoints:
+  - GET /api/transfer/:learnerId?source=X&target=Y — run transfer analysis
+  - GET /api/transfer-learners — list learners with assessed skills
 
 ### Educator profiling layer (Moonshot 9)
 - Educator profiles: structured teaching style data at `data/educators/{id}.json`
@@ -152,6 +177,7 @@ an experienced teacher, not a content generator.
 - Write learner profile updates after every assessment interaction
 - Query teaching wisdom before composing lesson plans — cite adjustments to the educator
 - Load educator profile before composing lesson plans — customize activity types, content depth, timing, and contingency style to the educator
+- When a learner has profiles in multiple domains, analyze cross-domain transfer before assessment — use transfer predictions to start at a higher level
 - Never hardcode skill definitions — always read from data/domains/
 
 ## Dev setup

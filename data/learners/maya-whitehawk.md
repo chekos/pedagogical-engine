@@ -6,32 +6,46 @@
 | **Name** | Maya Whitehawk |
 | **Group** | saturday-nature-explorers |
 | **Domain** | outdoor-ecology |
-| **Created** | 2026-02-10T10:00:00.000Z |
-| **Last assessed** | 2026-02-11T14:00:00.000Z |
+| **Created** | 2026-02-08T10:00:00.000Z |
+| **Last assessed** | 2026-02-12T15:00:00.000Z |
 
 ## Assessed Skills
 
-- identify-common-trees: 0.90 confidence — demonstrated at knowledge level (grew up on a farm, knows trees by common names)
-- identify-common-wildflowers: 0.85 confidence — demonstrated at knowledge level
-- identify-animal-signs: 0.80 confidence — demonstrated at knowledge level (recognizes deer, raccoon, rabbit tracks)
-- use-field-guide: 0.75 confidence — demonstrated at application level
-- keep-field-journal: 0.70 confidence — demonstrated at application level (keeps nature diary already)
-- sketch-natural-specimens: 0.65 confidence — demonstrated at application level (artistic, enjoys drawing)
-- observe-bird-behavior: 0.70 confidence — demonstrated at comprehension level (backyard birder)
-- describe-microhabitats: 0.60 confidence — demonstrated at comprehension level
-- read-topographic-map: 0.50 confidence — demonstrated at knowledge level (knows what contour lines are but cannot read elevation)
+- identify-common-trees: 0.95 confidence — demonstrated at knowledge level
+- identify-common-wildflowers: 0.90 confidence — demonstrated at knowledge level
+- identify-animal-signs: 0.90 confidence — demonstrated at knowledge level
+- use-field-guide: 0.85 confidence — demonstrated at application level
+- keep-field-journal: 0.90 confidence — demonstrated at application level
+- sketch-natural-specimens: 0.80 confidence — demonstrated at application level
+- observe-bird-behavior: 0.85 confidence — demonstrated at comprehension level
+- describe-microhabitats: 0.85 confidence — demonstrated at comprehension level
+- read-topographic-map: 0.75 confidence — demonstrated at comprehension level
+- measure-water-quality: 0.85 confidence — demonstrated at application level
+- identify-aquatic-invertebrates: 0.75 confidence — demonstrated at application level
+- explain-food-web: 0.80 confidence — demonstrated at analysis level
+- assess-habitat-health: 0.75 confidence — demonstrated at analysis level
+- interpret-seasonal-changes: 0.70 confidence — demonstrated at analysis level
+- compare-ecosystems: 0.65 confidence — demonstrated at evaluation level
+- lead-nature-walk: 0.80 confidence — demonstrated at synthesis level
 
 ## Inferred Skills
 
-- track-animal-movement: 0.68 confidence (inferred from identify-animal-signs)
-- explain-food-web: 0.58 confidence (inferred from tree/wildflower/animal knowledge)
+- track-animal-movement: 0.86 confidence (inferred)
+- use-compass: 0.68 confidence (inferred)
+
+## Affective Profile
+
+- **Confidence:** high — deeply connected to natural environments, thrives outdoors
+- **Motivation:** intrinsic — lifelong naturalist now pursuing environmental data science
+- **Social dynamics:** collaborative leader, excellent at mentoring younger students in field settings
+- **Past experiences:** positive — grew up on a reservation with strong connection to land and ecology
+- **Comfort preferences:** prefers hands-on learning; patient with complex analysis; new to computers
 
 ## Notes
 
-- 14 years old, homeschooled, grew up on a small farm outside town
-- Most experienced naturalist in the group — strong plant and animal knowledge from daily outdoor life
-- Artistic and observant — her sketches are detailed and accurate
-- Shy in group settings — prefers working with one partner rather than presenting to the whole group
-- Wants to become a wildlife biologist
-- Could be paired with less experienced learners for field identification activities
-- Weakness: navigation and map skills — has always relied on familiar trails
+- Environmental science graduate now transitioning into data science for conservation work
+- Exceptional field skills — 15+ years of practical ecology experience
+- Strong analytical thinking developed through ecology: can analyze habitat health, compare ecosystems, interpret seasonal patterns
+- Now wants to learn Python to analyze ecological datasets programmatically
+- Perfect candidate for cross-domain transfer: her analysis/synthesis/evaluation skills from ecology should give her a head start in data analysis
+- Has never used a terminal or written code before — domain-specific Python skills won't transfer, but her scientific thinking will
