@@ -165,6 +165,159 @@ export class ChatClient {
   }
 }
 
+// ─── Live Companion WebSocket Client ────────────────────────────
+
+export interface LiveClientOptions {
+  lessonId: string;
+  onMessage: (msg: ServerMessage) => void;
+  onStatusChange: (status: ConnectionStatus) => void;
+}
+
+export class LiveClient {
+  private ws: WebSocket | null = null;
+  private options: LiveClientOptions;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private intentionalClose = false;
+
+  constructor(options: LiveClientOptions) {
+    this.options = options;
+  }
+
+  connect(): void {
+    this.intentionalClose = false;
+    this.options.onStatusChange("connecting");
+
+    let socket: WebSocket;
+    try {
+      socket = new WebSocket(
+        `${WS_URL}/ws/live?lessonId=${encodeURIComponent(this.options.lessonId)}`
+      );
+    } catch {
+      this.options.onStatusChange("error");
+      this.scheduleReconnect();
+      return;
+    }
+
+    this.ws = socket;
+
+    socket.onopen = () => {
+      this.reconnectAttempts = 0;
+      this.options.onStatusChange("connected");
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data) as ServerMessage;
+        this.options.onMessage(msg);
+      } catch {
+        // Ignore malformed messages
+      }
+    };
+
+    socket.onclose = () => {
+      if (this.ws === socket) {
+        this.ws = null;
+        if (!this.intentionalClose) {
+          this.options.onStatusChange("disconnected");
+          this.scheduleReconnect();
+        }
+      }
+    };
+
+    socket.onerror = () => {
+      if (this.ws === socket) {
+        this.options.onStatusChange("error");
+      }
+    };
+  }
+
+  send(message: string, sectionContext?: string): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: "message", message, sectionContext }));
+    }
+  }
+
+  disconnect(): void {
+    this.intentionalClose = true;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.ws?.close();
+    this.ws = null;
+    this.options.onStatusChange("disconnected");
+  }
+
+  get isConnected(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN;
+  }
+
+  private scheduleReconnect(): void {
+    if (this.intentionalClose) return;
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) return;
+
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
+    this.reconnectAttempts++;
+
+    this.reconnectTimer = setTimeout(() => {
+      this.connect();
+    }, delay);
+  }
+}
+
+// ─── Lesson HTTP Client ───────────────────────────────────────
+
+export interface LessonMeta {
+  title: string;
+  group: string;
+  date: string;
+  domain: string;
+  duration: number;
+  topic: string;
+  oneThing: string;
+}
+
+export interface LessonSection {
+  id: string;
+  phase: string;
+  title: string;
+  startMin: number;
+  endMin: number;
+  durationMin: number;
+  content: string;
+  activities: string[];
+}
+
+export interface ParsedLesson {
+  meta: LessonMeta;
+  sections: LessonSection[];
+  objectives: string[];
+  fullMarkdown: string;
+}
+
+export async function fetchLesson(id: string): Promise<ParsedLesson> {
+  const res = await fetch(`${BACKEND_URL}/api/lessons/${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error(`Lesson '${id}' not found`);
+  const data = await res.json();
+  return data.lesson;
+}
+
+export async function submitSectionFeedback(
+  lessonId: string,
+  sectionId: string,
+  feedback: "went-well" | "struggled" | "skipped",
+  elapsedMin?: number,
+  notes?: string
+): Promise<void> {
+  await fetch(`${BACKEND_URL}/api/lessons/${encodeURIComponent(lessonId)}/feedback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sectionId, feedback, elapsedMin, notes }),
+  });
+}
+
 // ─── Assessment HTTP Client ────────────────────────────────────
 
 export interface AssessmentResponse {
