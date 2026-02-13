@@ -41,8 +41,8 @@
   "timing_patterns": {
     "lecture": { "adjustment_min": 0, "notes": "On-time with lectures" },
     "discussion": { "adjustment_min": -3, "notes": "Tends to cut discussions short" },
-    "hands_on": { "adjustment_min": +2, "notes": "Slightly runs over on hands-on exercises" },
-    "transitions": { "adjustment_min": +1, "notes": "Takes a bit longer on transitions between activities" }
+    "hands_on": { "adjustment_min": 2, "notes": "Slightly runs over on hands-on exercises" },
+    "transitions": { "adjustment_min": 1, "notes": "Takes a bit longer on transitions between activities" }
   },
   "growth_nudges": [
     "Try opening with a hands-on warm-up instead of a lecture introduction — your explanations are strongest when students have context from trying something first",

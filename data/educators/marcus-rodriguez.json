@@ -40,8 +40,8 @@
   },
   "timing_patterns": {
     "lecture": { "adjustment_min": -2, "notes": "Keeps lectures very short, often shorter than planned" },
-    "discussion": { "adjustment_min": +3, "notes": "Discussions run long because he's good at them and enjoys them" },
-    "hands_on": { "adjustment_min": +5, "notes": "Consistently runs 5 min over on hands-on exercises — needs pre-shortened allocations" },
+    "discussion": { "adjustment_min": 3, "notes": "Discussions run long because he's good at them and enjoys them" },
+    "hands_on": { "adjustment_min": 5, "notes": "Consistently runs 5 min over on hands-on exercises — needs pre-shortened allocations" },
     "transitions": { "adjustment_min": 0, "notes": "Quick, energetic transitions" }
   },
   "growth_nudges": [

@@ -41,8 +41,26 @@ app.use((req, res, next) => {
 });
 
 const server = createServer(app);
-const wss = new WebSocketServer({ server, path: "/ws/chat" });
-const wssLive = new WebSocketServer({ server, path: "/ws/live" });
+const wss = new WebSocketServer({ noServer: true, perMessageDeflate: false });
+const wssLive = new WebSocketServer({ noServer: true, perMessageDeflate: false });
+
+// Handle WebSocket upgrades manually to prevent Express from
+// also responding on the same socket (which corrupts the WS stream).
+server.on("upgrade", (request, socket, head) => {
+  const pathname = new URL(request.url!, `http://localhost:${PORT}`).pathname;
+
+  if (pathname === "/ws/chat") {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
+  } else if (pathname === "/ws/live") {
+    wssLive.handleUpgrade(request, socket, head, (ws) => {
+      wssLive.emit("connection", ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
 const sessionManager = new SessionManager();
 
 // ─── Export routes (PDF generation) ──────────────────────────────
