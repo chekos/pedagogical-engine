@@ -1,0 +1,24 @@
+{
+  "name": "Culinary Fundamentals",
+  "slug": "culinary-fundamentals",
+  "version": "1.0.0",
+  "description": "Skills for home cooking education — from kitchen safety and tool identification to meal planning and recipe creation",
+  "author": "Pedagogical Engine Team",
+  "license": "MIT",
+  "tags": ["cooking", "home-economics", "food-safety", "kitchen-skills", "family-education"],
+  "audience": {
+    "level": "beginner-to-intermediate",
+    "ages": "8+",
+    "setting": "home or community kitchen with standard residential equipment"
+  },
+  "stats": {
+    "skills": 19,
+    "dependencies": 36,
+    "bloomLevels": 6
+  },
+  "icon": "fire",
+  "color": "#f97316",
+  "featured": true,
+  "createdAt": "2026-02-10T00:00:00.000Z",
+  "updatedAt": "2026-02-12T00:00:00.000Z"
+}

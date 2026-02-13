@@ -74,6 +74,151 @@ app.get("/api/status", (_req, res) => {
   });
 });
 
+// ─── Domain discovery (plugin architecture) ─────────────────────
+app.get("/api/domains", async (_req, res) => {
+  const domainsDir = path.join(DATA_DIR, "domains");
+  try {
+    const entries = await fs.readdir(domainsDir, { withFileTypes: true });
+    const domainDirs = entries.filter((e) => e.isDirectory());
+
+    const domains = await Promise.all(
+      domainDirs.map(async (dir) => {
+        const domainPath = path.join(domainsDir, dir.name);
+
+        // Read manifest.json (optional — graceful fallback)
+        let manifest: Record<string, unknown> = {};
+        try {
+          const raw = await fs.readFile(path.join(domainPath, "manifest.json"), "utf-8");
+          manifest = JSON.parse(raw);
+        } catch {
+          // No manifest — build minimal metadata from skills.json
+        }
+
+        // Read skills.json for stats
+        let skillCount = 0;
+        let edgeCount = 0;
+        let description = (manifest.description as string) || "";
+        const bloomCounts: Record<string, number> = {};
+        try {
+          const skillsRaw = await fs.readFile(path.join(domainPath, "skills.json"), "utf-8");
+          const skillsData = JSON.parse(skillsRaw);
+          const skills = skillsData.skills || [];
+          skillCount = skills.length;
+          if (!description) description = skillsData.description || "";
+          for (const s of skills) {
+            const bl = s.bloom_level || "unknown";
+            bloomCounts[bl] = (bloomCounts[bl] || 0) + 1;
+          }
+        } catch {
+          // No skills.json — skip
+        }
+
+        try {
+          const depsRaw = await fs.readFile(path.join(domainPath, "dependencies.json"), "utf-8");
+          const depsData = JSON.parse(depsRaw);
+          edgeCount = (depsData.edges || []).length;
+        } catch {
+          // No dependencies.json
+        }
+
+        // Check which plugin files exist
+        const hasManifest = Object.keys(manifest).length > 0;
+        const hasSkillMd = await fs.access(path.join(domainPath, "SKILL.md")).then(() => true).catch(() => false);
+        const hasSampleLearners = await fs.readdir(path.join(domainPath, "sample-learners")).then((f) => f.length > 0).catch(() => false);
+
+        return {
+          slug: dir.name,
+          name: (manifest.name as string) || dir.name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          description,
+          version: (manifest.version as string) || "1.0.0",
+          author: (manifest.author as string) || "Unknown",
+          tags: (manifest.tags as string[]) || [],
+          audience: manifest.audience || null,
+          icon: (manifest.icon as string) || "book",
+          color: (manifest.color as string) || "#6366f1",
+          featured: (manifest.featured as boolean) || false,
+          stats: {
+            skills: skillCount,
+            dependencies: edgeCount,
+            bloomLevels: Object.keys(bloomCounts).length,
+            bloomDistribution: bloomCounts,
+          },
+          pluginCompleteness: {
+            manifest: hasManifest,
+            skills: skillCount > 0,
+            dependencies: edgeCount > 0,
+            teachingMethodology: hasSkillMd,
+            sampleLearners: hasSampleLearners,
+          },
+        };
+      })
+    );
+
+    // Sort: featured first, then by skill count
+    domains.sort((a, b) => {
+      if (a.featured !== b.featured) return a.featured ? -1 : 1;
+      return b.stats.skills - a.stats.skills;
+    });
+
+    res.json({ domains, count: domains.length });
+  } catch (err) {
+    console.error("[domains] Error scanning domains:", err instanceof Error ? err.message : err);
+    res.status(500).json({ error: "Failed to scan domains directory" });
+  }
+});
+
+// ─── Single domain detail ────────────────────────────────────────
+app.get("/api/domains/:slug", async (req, res) => {
+  const { slug } = req.params;
+  if (!validateSlug(slug)) {
+    res.status(400).json({ error: "Invalid domain slug" });
+    return;
+  }
+
+  const domainPath = path.join(DATA_DIR, "domains", slug);
+  try {
+    await fs.access(domainPath);
+  } catch {
+    res.status(404).json({ error: `Domain '${slug}' not found` });
+    return;
+  }
+
+  try {
+    // Read all plugin files
+    const [manifestRaw, skillsRaw, depsRaw, skillMd] = await Promise.all([
+      fs.readFile(path.join(domainPath, "manifest.json"), "utf-8").catch(() => "{}"),
+      fs.readFile(path.join(domainPath, "skills.json"), "utf-8").catch(() => '{"skills":[]}'),
+      fs.readFile(path.join(domainPath, "dependencies.json"), "utf-8").catch(() => '{"edges":[]}'),
+      fs.readFile(path.join(domainPath, "SKILL.md"), "utf-8").catch(() => null),
+    ]);
+
+    const manifest = JSON.parse(manifestRaw);
+    const skillsData = JSON.parse(skillsRaw);
+    const depsData = JSON.parse(depsRaw);
+
+    // Read sample learners
+    let sampleLearners: string[] = [];
+    try {
+      const files = await fs.readdir(path.join(domainPath, "sample-learners"));
+      sampleLearners = files.filter((f) => f.endsWith(".md"));
+    } catch {
+      // No sample learners directory
+    }
+
+    res.json({
+      slug,
+      manifest,
+      skills: skillsData.skills || [],
+      edges: depsData.edges || [],
+      teachingMethodology: skillMd,
+      sampleLearners,
+    });
+  } catch (err) {
+    console.error(`[domains] Error loading domain ${slug}:`, err instanceof Error ? err.message : err);
+    res.status(500).json({ error: "Failed to load domain" });
+  }
+});
+
 // ─── Assessment validation endpoint ───────────────────────────────
 app.get("/api/assess/:code", async (req, res) => {
   const { code } = req.params;

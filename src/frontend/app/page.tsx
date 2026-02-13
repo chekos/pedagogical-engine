@@ -38,6 +38,12 @@ export default function Home() {
           >
             Dashboard
           </Link>
+          <Link
+            href="/domains"
+            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Domains
+          </Link>
         </div>
       </nav>
 
