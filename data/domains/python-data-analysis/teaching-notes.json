@@ -1,0 +1,453 @@
+{
+  "domain": "python-data-analysis",
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-13T10:30:00.000Z",
+  "sessionCount": 23,
+  "notes": [
+    {
+      "id": "tn-001",
+      "skillId": "pandas-groupby",
+      "type": "timing",
+      "observation": "The groupby exercises consistently run 5-8 minutes over planned time for groups below application level. Allocate 20 minutes instead of 15.",
+      "confidence": 0.92,
+      "sessionCount": 18,
+      "confirmedIn": ["session-003", "session-005", "session-007", "session-009", "session-011", "session-012", "session-014", "session-015", "session-016", "session-017", "session-018", "session-019", "session-020", "session-021", "session-022", "session-023", "tuesday-cohort-2026-02-12"],
+      "context": {
+        "groupLevel": "beginner-to-intermediate",
+        "minGroupSize": 3,
+        "maxGroupSize": 30
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-20T14:00:00.000Z",
+      "updatedAt": "2026-02-13T10:30:00.000Z"
+    },
+    {
+      "id": "tn-002",
+      "skillId": "pandas-groupby",
+      "type": "success_pattern",
+      "observation": "The 'what's the average price PER category?' bridge question is highly effective as a hook for introducing groupby. Use it as the standard transition from filtering to grouping.",
+      "confidence": 0.95,
+      "sessionCount": 14,
+      "confirmedIn": ["session-005", "session-007", "session-009", "session-011", "session-014", "session-015", "session-018", "session-019", "session-020", "session-021", "session-022", "session-023", "tuesday-cohort-2026-02-12"],
+      "context": {
+        "groupLevel": "any",
+        "setting": "any"
+      },
+      "source": "educator_direct",
+      "createdAt": "2026-01-18T10:00:00.000Z",
+      "updatedAt": "2026-02-13T10:30:00.000Z"
+    },
+    {
+      "id": "tn-003",
+      "skillId": "pandas-groupby",
+      "type": "confusion_point",
+      "observation": "Students consistently confuse DataFrame vs. Series return types from groupby operations. The distinction between .groupby().mean() (DataFrame) and .groupby()['col'].mean() (Series) trips up beginners every time.",
+      "confidence": 0.88,
+      "sessionCount": 16,
+      "confirmedIn": ["session-002", "session-004", "session-006", "session-008", "session-010", "session-012", "session-013", "session-015", "session-016", "session-017", "session-019", "session-020", "session-021", "session-022", "session-023", "tuesday-cohort-2026-02-12"],
+      "context": {
+        "groupLevel": "beginner",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-15T09:00:00.000Z",
+      "updatedAt": "2026-02-13T10:30:00.000Z"
+    },
+    {
+      "id": "tn-004",
+      "skillId": "pandas-groupby",
+      "type": "activity_recommendation",
+      "observation": "Add a deliberate 'NaN in groupby columns' exercise to surface data quality issues early. Students who encounter this organically are better prepared for real-world data. Allocate 5 minutes between basic groupby and advanced exercises.",
+      "confidence": 0.78,
+      "sessionCount": 8,
+      "confirmedIn": ["session-012", "session-015", "session-018", "session-019", "session-020", "session-022", "session-023", "tuesday-cohort-2026-02-12"],
+      "context": {
+        "groupLevel": "intermediate",
+        "setting": "any"
+      },
+      "source": "educator_direct",
+      "createdAt": "2026-01-28T11:00:00.000Z",
+      "updatedAt": "2026-02-13T10:30:00.000Z"
+    },
+    {
+      "id": "tn-005",
+      "skillId": "pandas-groupby",
+      "type": "success_pattern",
+      "observation": "The 'sticky notes' metaphor works brilliantly for explaining groupby: 'Imagine putting a colored sticky note on each row based on its category, then doing math for each color.' Learners retain this mental model across sessions.",
+      "confidence": 0.82,
+      "sessionCount": 6,
+      "confirmedIn": ["session-019", "session-020", "session-021", "session-022", "session-023", "tuesday-cohort-2026-02-12"],
+      "context": {
+        "groupLevel": "beginner",
+        "setting": "any"
+      },
+      "source": "educator_direct",
+      "createdAt": "2026-02-05T14:00:00.000Z",
+      "updatedAt": "2026-02-13T10:30:00.000Z"
+    },
+    {
+      "id": "tn-006",
+      "skillId": "select-filter-data",
+      "type": "success_pattern",
+      "observation": "Starting with a 10-minute select/filter warm-up before groupby builds essential confidence, especially for beginners. The warm-up should use the same dataset as the main exercise so students feel continuity.",
+      "confidence": 0.90,
+      "sessionCount": 12,
+      "confirmedIn": ["session-008", "session-009", "session-011", "session-013", "session-015", "session-016", "session-018", "session-019", "session-020", "session-022", "session-023", "tuesday-cohort-2026-02-12"],
+      "context": {
+        "groupLevel": "beginner-to-intermediate",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-22T16:00:00.000Z",
+      "updatedAt": "2026-02-13T10:30:00.000Z"
+    },
+    {
+      "id": "tn-007",
+      "skillId": "basic-plotting",
+      "type": "confusion_point",
+      "observation": "Introducing matplotlib alongside groupby in the same session is too much cognitive load. The plt.bar() vs df.plot.bar() distinction causes widespread confusion. Either use only the DataFrame.plot API (simpler) or move visualization to a separate session.",
+      "confidence": 0.93,
+      "sessionCount": 15,
+      "confirmedIn": ["session-004", "session-006", "session-008", "session-010", "session-011", "session-013", "session-014", "session-016", "session-017", "session-019", "session-020", "session-021", "session-022", "session-023", "tuesday-cohort-2026-02-12"],
+      "context": {
+        "groupLevel": "beginner-to-intermediate",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-17T10:00:00.000Z",
+      "updatedAt": "2026-02-13T10:30:00.000Z"
+    },
+    {
+      "id": "tn-008",
+      "skillId": "basic-plotting",
+      "type": "accessibility",
+      "observation": "Screen reader compatibility with matplotlib chart output is a significant barrier. Use alt-text descriptions, text-based summaries alongside charts, and prefer the pandas .to_string() method for accessible data presentation as a complement to visual plots.",
+      "confidence": 0.85,
+      "sessionCount": 5,
+      "confirmedIn": ["session-012", "session-017", "session-020", "session-023", "tuesday-cohort-2026-02-12"],
+      "context": {
+        "groupLevel": "any",
+        "requiresAccessibility": true
+      },
+      "source": "educator_direct",
+      "createdAt": "2026-01-30T09:00:00.000Z",
+      "updatedAt": "2026-02-13T10:30:00.000Z"
+    },
+    {
+      "id": "tn-009",
+      "skillId": "import-pandas",
+      "type": "timing",
+      "observation": "The CSV loading section goes faster when students have the dataset pre-downloaded. If the dataset must be downloaded during class, add 3-5 minutes for download issues and path confusion.",
+      "confidence": 0.87,
+      "sessionCount": 11,
+      "confirmedIn": ["session-003", "session-005", "session-007", "session-010", "session-012", "session-014", "session-016", "session-018", "session-020", "session-022", "tuesday-cohort-2026-02-12"],
+      "context": {
+        "groupLevel": "beginner",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-19T15:00:00.000Z",
+      "updatedAt": "2026-02-10T14:00:00.000Z"
+    },
+    {
+      "id": "tn-010",
+      "skillId": "handle-missing-data",
+      "type": "confusion_point",
+      "observation": "Students confuse NaN (numeric missing) with empty strings and None. Spend 5 minutes explicitly showing the three different 'missing' types before teaching dropna/fillna. Without this, the exercises produce silent bugs.",
+      "confidence": 0.84,
+      "sessionCount": 9,
+      "confirmedIn": ["session-006", "session-008", "session-011", "session-014", "session-016", "session-019", "session-020", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "beginner-to-intermediate",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-21T11:00:00.000Z",
+      "updatedAt": "2026-02-08T16:00:00.000Z"
+    },
+    {
+      "id": "tn-011",
+      "skillId": "inspect-dataframe",
+      "type": "success_pattern",
+      "observation": "Teaching .info() before .describe() works better than the reverse. Students need to see dtypes and null counts before statistical summaries make sense. The 'doctor's checkup' analogy (info = vitals, describe = lab results) resonates well.",
+      "confidence": 0.80,
+      "sessionCount": 10,
+      "confirmedIn": ["session-005", "session-008", "session-010", "session-012", "session-015", "session-017", "session-019", "session-021", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "beginner",
+        "setting": "any"
+      },
+      "source": "educator_direct",
+      "createdAt": "2026-01-20T10:00:00.000Z",
+      "updatedAt": "2026-02-06T12:00:00.000Z"
+    },
+    {
+      "id": "tn-012",
+      "skillId": "use-jupyter",
+      "type": "timing",
+      "observation": "First-time Jupyter users need 10-15 minutes for setup and orientation, not the 5 minutes typically allocated. Budget extra time for 'Shift+Enter vs Enter' confusion, kernel restarts, and cell ordering issues.",
+      "confidence": 0.91,
+      "sessionCount": 13,
+      "confirmedIn": ["session-002", "session-004", "session-006", "session-008", "session-010", "session-012", "session-013", "session-015", "session-017", "session-019", "session-021", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "beginner",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-16T09:00:00.000Z",
+      "updatedAt": "2026-02-06T12:00:00.000Z"
+    },
+    {
+      "id": "tn-013",
+      "skillId": "pandas-merge-join",
+      "type": "timing",
+      "observation": "In 7 of 10 sessions, the joins exercise ran over by 5+ minutes. Consider allocating 20 minutes instead of 15 for groups below application level. The concept of keys is the bottleneck — not the merge syntax.",
+      "confidence": 0.89,
+      "sessionCount": 10,
+      "confirmedIn": ["session-007", "session-009", "session-011", "session-014", "session-016", "session-018", "session-020", "session-021", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "beginner-to-intermediate",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-23T14:00:00.000Z",
+      "updatedAt": "2026-02-07T10:00:00.000Z"
+    },
+    {
+      "id": "tn-014",
+      "skillId": "pandas-merge-join",
+      "type": "confusion_point",
+      "observation": "Students consistently confuse normalization with optimization when working with joins. Address this distinction explicitly before any merge exercise: 'Normalization is about reducing redundancy. Optimization is about speed.'",
+      "confidence": 0.83,
+      "sessionCount": 8,
+      "confirmedIn": ["session-009", "session-012", "session-015", "session-017", "session-019", "session-020", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "intermediate",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-25T11:00:00.000Z",
+      "updatedAt": "2026-02-07T10:00:00.000Z"
+    },
+    {
+      "id": "tn-015",
+      "skillId": "python-control-flow",
+      "type": "success_pattern",
+      "observation": "Using a real dataset to motivate control flow (e.g., 'if price > 10, label it expensive') works much better than abstract examples. Students remember the pattern when it solves a data problem they care about.",
+      "confidence": 0.86,
+      "sessionCount": 11,
+      "confirmedIn": ["session-004", "session-006", "session-009", "session-011", "session-013", "session-016", "session-018", "session-019", "session-021", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "beginner",
+        "setting": "any"
+      },
+      "source": "educator_direct",
+      "createdAt": "2026-01-18T16:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    },
+    {
+      "id": "tn-016",
+      "skillId": "exploratory-data-analysis",
+      "type": "group_composition",
+      "observation": "Groups with wide skill variance benefit from jigsaw activities where each person explores one aspect of the data and then shares. Homogeneous groups benefit from shared challenges where everyone works the same problem.",
+      "confidence": 0.81,
+      "sessionCount": 7,
+      "confirmedIn": ["session-010", "session-013", "session-016", "session-018", "session-020", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "intermediate-to-advanced",
+        "minGroupSize": 4
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-27T10:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    },
+    {
+      "id": "tn-017",
+      "skillId": "interpret-distributions",
+      "type": "success_pattern",
+      "observation": "Groups that do a 5-minute pair discussion before the hands-on histogram exercise perform better on subsequent assessments. The discussion surfaces misconceptions that get corrected during the hands-on.",
+      "confidence": 0.79,
+      "sessionCount": 6,
+      "confirmedIn": ["session-013", "session-016", "session-019", "session-021", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "intermediate",
+        "setting": "classroom"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-30T14:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    },
+    {
+      "id": "tn-018",
+      "skillId": "identify-data-quality-issues",
+      "type": "failure_pattern",
+      "observation": "Lecture-style presentations on data quality have negative engagement in 60% of debriefs. Replace with interactive 'find the bugs in this dataset' exercises — students learn more by discovering issues than being told about them.",
+      "confidence": 0.87,
+      "sessionCount": 10,
+      "confirmedIn": ["session-005", "session-008", "session-011", "session-013", "session-015", "session-017", "session-019", "session-020", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "any",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-22T09:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    },
+    {
+      "id": "tn-019",
+      "skillId": "write-reusable-analysis-functions",
+      "type": "timing",
+      "observation": "Synthesis-level activities take 30-40% longer than planned when students haven't reached application level on the prerequisite skills. Check prerequisite mastery before starting — if more than 30% of the group is below application, add a 10-minute review.",
+      "confidence": 0.83,
+      "sessionCount": 7,
+      "confirmedIn": ["session-009", "session-012", "session-015", "session-018", "session-020", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "intermediate-to-advanced",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-26T11:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    },
+    {
+      "id": "tn-020",
+      "skillId": "explain-analysis-choices",
+      "type": "success_pattern",
+      "observation": "Peer explanation exercises ('explain your analysis choice to your partner') develop evaluation-level thinking faster than written justifications. Students articulate reasoning more naturally in conversation.",
+      "confidence": 0.76,
+      "sessionCount": 5,
+      "confirmedIn": ["session-014", "session-018", "session-020", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "advanced",
+        "minGroupSize": 2,
+        "setting": "classroom"
+      },
+      "source": "educator_direct",
+      "createdAt": "2026-02-01T10:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    },
+    {
+      "id": "tn-021",
+      "skillId": "reshape-data",
+      "type": "confusion_point",
+      "observation": "Students consistently struggle with when to use pivot vs melt. The 'spreadsheet columns to database rows' framing helps: 'If your columns ARE data (like months), you need to melt. If your rows should become columns, you need to pivot.'",
+      "confidence": 0.80,
+      "sessionCount": 7,
+      "confirmedIn": ["session-010", "session-013", "session-016", "session-019", "session-021", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "intermediate",
+        "setting": "any"
+      },
+      "source": "educator_direct",
+      "createdAt": "2026-01-28T15:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    },
+    {
+      "id": "tn-022",
+      "skillId": "design-data-pipeline",
+      "type": "group_composition",
+      "observation": "Pipeline design exercises work best with 3-person teams where each person owns a stage (ingestion, cleaning, analysis). Pairs tend to have one person dominate. Groups of 4+ lose coordination.",
+      "confidence": 0.77,
+      "sessionCount": 5,
+      "confirmedIn": ["session-015", "session-018", "session-020", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "advanced",
+        "minGroupSize": 3,
+        "maxGroupSize": 3,
+        "setting": "workshop"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-02-02T11:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    },
+    {
+      "id": "tn-023",
+      "skillId": "run-python-script",
+      "type": "timing",
+      "observation": "Environment setup (Python installation, PATH issues, virtual environments) accounts for 15-20 minutes in beginner sessions — more than the actual 'run a script' exercise. Pre-session setup guides reduce this to 5 minutes.",
+      "confidence": 0.90,
+      "sessionCount": 12,
+      "confirmedIn": ["session-001", "session-003", "session-005", "session-007", "session-009", "session-011", "session-014", "session-016", "session-018", "session-020", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "beginner",
+        "setting": "any"
+      },
+      "source": "pattern_detection",
+      "createdAt": "2026-01-14T10:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    },
+    {
+      "id": "tn-024",
+      "skillId": "build-analysis-narrative",
+      "type": "success_pattern",
+      "observation": "Providing a 'narrative template' with section prompts (What did you find? Why does it matter? What would you investigate next?) produces dramatically better student narratives than open-ended 'write up your analysis' instructions.",
+      "confidence": 0.82,
+      "sessionCount": 6,
+      "confirmedIn": ["session-014", "session-017", "session-019", "session-021", "session-022", "session-023"],
+      "context": {
+        "groupLevel": "intermediate-to-advanced",
+        "setting": "any"
+      },
+      "source": "educator_direct",
+      "createdAt": "2026-02-01T14:00:00.000Z",
+      "updatedAt": "2026-02-04T12:00:00.000Z"
+    }
+  ],
+  "patterns": [
+    {
+      "id": "pat-001",
+      "type": "timing",
+      "title": "Exercises consistently run long for mixed-level groups",
+      "description": "When a group spans more than one Bloom's level on prerequisite skills, hands-on exercises take 20-35% longer than allocated. The gap comes from support needed by weaker students and mentor time from stronger ones.",
+      "affectedSkills": ["pandas-groupby", "pandas-merge-join", "basic-plotting", "write-reusable-analysis-functions"],
+      "confidence": 0.91,
+      "sessionCount": 18,
+      "recommendation": "For mixed-level groups, add 25% buffer time to exercises OR split into parallel tracks with differentiated activities.",
+      "createdAt": "2026-01-20T14:00:00.000Z"
+    },
+    {
+      "id": "pat-002",
+      "type": "engagement",
+      "title": "Lecture sections in mid-session consistently lose engagement",
+      "description": "In 60% of sessions, mid-session lecture blocks (10+ minutes of instructor talking) receive low or mixed engagement ratings. This is independent of topic. Interactive demonstrations and live coding maintain engagement through the same material.",
+      "affectedSkills": ["identify-data-quality-issues", "interpret-distributions", "explain-analysis-choices"],
+      "confidence": 0.87,
+      "sessionCount": 14,
+      "recommendation": "Replace mid-session lectures with interactive demonstrations, live coding, or 'find the issue' exercises. Keep any pure lecture to the first 15 minutes.",
+      "createdAt": "2026-01-22T09:00:00.000Z"
+    },
+    {
+      "id": "pat-003",
+      "type": "success",
+      "title": "Warm-up exercises dramatically improve main activity outcomes",
+      "description": "Sessions that start with a 5-10 minute warm-up exercise using the same dataset as the main lesson have 40% higher engagement scores and 25% better capstone completion rates compared to sessions that jump directly to new material.",
+      "affectedSkills": ["select-filter-data", "pandas-groupby", "inspect-dataframe"],
+      "confidence": 0.90,
+      "sessionCount": 12,
+      "recommendation": "Always include a warm-up exercise that uses the session's dataset and reviews prerequisite skills. Budget 10 minutes.",
+      "createdAt": "2026-01-22T16:00:00.000Z"
+    },
+    {
+      "id": "pat-004",
+      "type": "confusion",
+      "title": "API surface area overwhelms beginners when multiple libraries introduced",
+      "description": "Sessions that introduce multiple library APIs (e.g., pandas + matplotlib, or pandas + seaborn) in the same session see significantly higher confusion and lower completion rates. The cognitive load of learning two APIs simultaneously causes students to conflate methods.",
+      "affectedSkills": ["basic-plotting", "pandas-groupby", "pandas-merge-join"],
+      "confidence": 0.93,
+      "sessionCount": 15,
+      "recommendation": "Limit each session to ONE new library API. If visualization must accompany data manipulation, use only the DataFrame.plot() convenience method — never introduce matplotlib directly alongside pandas.",
+      "createdAt": "2026-01-17T10:00:00.000Z"
+    },
+    {
+      "id": "pat-005",
+      "type": "group_composition",
+      "title": "Optimal pair programming gap is exactly 1 Bloom's level",
+      "description": "Pair programming works well when the skill gap between partners is 1 Bloom's level. Falls apart when gap is 2+ levels — the stronger student does all the work. Equal-level pairs benefit from shared challenges, not pair programming.",
+      "affectedSkills": ["pandas-groupby", "write-reusable-analysis-functions", "exploratory-data-analysis", "design-data-pipeline"],
+      "confidence": 0.85,
+      "sessionCount": 9,
+      "recommendation": "When pairing, match learners who are exactly 1 Bloom's level apart on the relevant skill. For equal-level pairs, use shared challenges instead of pair programming.",
+      "createdAt": "2026-01-27T10:00:00.000Z"
+    }
+  ]
+}

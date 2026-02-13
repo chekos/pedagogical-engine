@@ -16,6 +16,9 @@ import { analyzeTensionsTool } from "./analyze-tensions.js";
 import { analyzeAssessmentIntegrityTool } from "./analyze-assessment-integrity.js";
 import { analyzeAffectiveContextTool } from "./analyze-affective-context.js";
 import { processDebriefTool } from "./process-debrief.js";
+import { queryTeachingWisdomTool } from "./query-teaching-wisdom.js";
+import { analyzeTeachingPatternsTool } from "./analyze-teaching-patterns.js";
+import { addTeachingNoteTool } from "./add-teaching-note.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -38,5 +41,8 @@ export const pedagogyServer = createSdkMcpServer({
     analyzeAssessmentIntegrityTool,
     analyzeAffectiveContextTool,
     processDebriefTool,
+    queryTeachingWisdomTool,
+    analyzeTeachingPatternsTool,
+    addTeachingNoteTool,
   ],
 });

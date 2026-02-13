@@ -1239,6 +1239,75 @@ app.get("/api/debrief-ready/:lessonId", async (req, res) => {
   });
 });
 
+// ─── Teaching wisdom endpoints ────────────────────────────────────
+
+/** Get teaching wisdom for a domain — notes, patterns, stats */
+app.get("/api/wisdom/:domain", async (req, res) => {
+  const { domain } = req.params;
+  if (!validateSlug(domain)) {
+    res.status(400).json({ error: "Invalid domain slug" });
+    return;
+  }
+
+  const notesPath = path.join(DATA_DIR, "domains", domain, "teaching-notes.json");
+  try {
+    const raw = await fs.readFile(notesPath, "utf-8");
+    const data = JSON.parse(raw);
+    res.json(data);
+  } catch {
+    res.status(404).json({
+      error: `No teaching wisdom found for domain '${domain}'`,
+      domain,
+      notes: [],
+      patterns: [],
+      sessionCount: 0,
+    });
+  }
+});
+
+/** Get teaching wisdom for specific skills */
+app.get("/api/wisdom/:domain/skills", async (req, res) => {
+  const { domain } = req.params;
+  const skillIdsParam = req.query.ids as string | undefined;
+  const noteType = req.query.type as string | undefined;
+
+  if (!validateSlug(domain)) {
+    res.status(400).json({ error: "Invalid domain slug" });
+    return;
+  }
+
+  const notesPath = path.join(DATA_DIR, "domains", domain, "teaching-notes.json");
+  try {
+    const raw = await fs.readFile(notesPath, "utf-8");
+    const data = JSON.parse(raw);
+
+    let notes = data.notes || [];
+    let patterns = data.patterns || [];
+
+    if (skillIdsParam) {
+      const skillIds = skillIdsParam.split(",").map((s: string) => s.trim());
+      notes = notes.filter((n: { skillId: string }) => skillIds.includes(n.skillId));
+      patterns = patterns.filter((p: { affectedSkills: string[] }) =>
+        p.affectedSkills.some((s: string) => skillIds.includes(s))
+      );
+    }
+
+    if (noteType) {
+      notes = notes.filter((n: { type: string }) => n.type === noteType);
+    }
+
+    res.json({
+      domain,
+      sessionCount: data.sessionCount,
+      lastUpdated: data.lastUpdated,
+      notes,
+      patterns,
+    });
+  } catch {
+    res.json({ domain, sessionCount: 0, notes: [], patterns: [] });
+  }
+});
+
 // ─── WebSocket handler for educator chat ─────────────────────────
 wss.on("connection", (ws: WebSocket) => {
   const sessionId = randomUUID();
