@@ -22,8 +22,8 @@ exportRouter.get("/lessons", async (_req, res) => {
     const lessons = await listLessonPlans();
     res.json({ lessons });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    res.status(500).json({ error: message });
+    console.error("[export] Lesson list error:", err instanceof Error ? err.message : err);
+    res.status(500).json({ error: "Failed to list lesson plans" });
   }
 });
 
@@ -43,11 +43,11 @@ exportRouter.get("/lesson/:id", async (req, res) => {
     res.send(Buffer.from(buffer));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    if (message.includes("not found")) {
+    if (message.includes("not found") || message.includes("Invalid")) {
       res.status(404).json({ error: message });
     } else {
       console.error("[export] Lesson PDF error:", message);
-      res.status(500).json({ error: message });
+      res.status(500).json({ error: "Failed to generate lesson PDF" });
     }
   }
 });
@@ -68,11 +68,11 @@ exportRouter.get("/lesson/:id/prerequisites", async (req, res) => {
     res.send(Buffer.from(buffer));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    if (message.includes("not found")) {
+    if (message.includes("not found") || message.includes("Invalid")) {
       res.status(404).json({ error: message });
     } else {
       console.error("[export] Prerequisites PDF error:", message);
-      res.status(500).json({ error: message });
+      res.status(500).json({ error: "Failed to generate prerequisites PDF" });
     }
   }
 });
@@ -94,11 +94,11 @@ exportRouter.get("/learner/:id", async (req, res) => {
     res.send(Buffer.from(buffer));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    if (message.includes("ENOENT") || message.includes("not found")) {
+    if (message.includes("ENOENT") || message.includes("not found") || message.includes("Invalid")) {
       res.status(404).json({ error: `Learner '${req.params.id}' not found` });
     } else {
       console.error("[export] Learner PDF error:", message);
-      res.status(500).json({ error: message });
+      res.status(500).json({ error: "Failed to generate learner PDF" });
     }
   }
 });
@@ -121,11 +121,11 @@ exportRouter.get("/group/:id", async (req, res) => {
     res.send(Buffer.from(buffer));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    if (message.includes("ENOENT") || message.includes("not found")) {
+    if (message.includes("ENOENT") || message.includes("not found") || message.includes("Invalid")) {
       res.status(404).json({ error: `Group '${req.params.id}' not found` });
     } else {
       console.error("[export] Group PDF error:", message);
-      res.status(500).json({ error: message });
+      res.status(500).json({ error: "Failed to generate group PDF" });
     }
   }
 });

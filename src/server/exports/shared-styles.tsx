@@ -40,6 +40,16 @@ export const bloomColors: Record<string, string> = {
   inferred: "#06B6D4",
 };
 
+// ─── Helpers ────────────────────────────────────────────────────
+
+/** Convert a hex color + alpha (0–1) to rgba() string for react-pdf compatibility. */
+export function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // ─── Shared styles ──────────────────────────────────────────────
 export const baseStyles = StyleSheet.create({
   page: {

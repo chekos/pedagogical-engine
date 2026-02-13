@@ -1,6 +1,6 @@
 import React from "react";
 import { Document, Page, View, Text } from "@react-pdf/renderer";
-import { baseStyles, colors, bloomColors } from "./shared-styles.js";
+import { baseStyles, colors, hexToRgba } from "./shared-styles.js";
 import type { GroupData, LearnerData, DomainSkill } from "./data-parsers.js";
 
 interface GroupPDFProps {
@@ -43,7 +43,7 @@ export function GroupReportPDF({ group, learners, domainSkills }: GroupPDFProps)
         (l) => l.skills.find((s) => s.skillId === skill.id)?.confidence ?? 0
       );
       const gapCount = scores.filter((s) => s < 0.5).length;
-      return { skill, gapCount, avgScore: scores.reduce((a, b) => a + b, 0) / scores.length };
+      return { skill, gapCount, avgScore: scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0 };
     })
     .filter((g) => g.gapCount > learners.length / 2)
     .sort((a, b) => b.gapCount - a.gapCount);
@@ -58,7 +58,7 @@ export function GroupReportPDF({ group, learners, domainSkills }: GroupPDFProps)
       return {
         skill,
         strongCount,
-        avgScore: scores.reduce((a, b) => a + b, 0) / scores.length,
+        avgScore: scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0,
       };
     })
     .filter((g) => g.strongCount >= learners.length * 0.8)
@@ -369,9 +369,9 @@ function SummaryCard({
     <View
       style={{
         flex: 1,
-        backgroundColor: color + "10",
+        backgroundColor: hexToRgba(color, 0.06),
         borderWidth: 1,
-        borderColor: color + "30",
+        borderColor: hexToRgba(color, 0.19),
         borderRadius: 6,
         padding: 10,
         alignItems: "center",

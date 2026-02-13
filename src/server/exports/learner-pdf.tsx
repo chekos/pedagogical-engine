@@ -1,6 +1,6 @@
 import React from "react";
 import { Document, Page, View, Text } from "@react-pdf/renderer";
-import { baseStyles, colors, bloomColors } from "./shared-styles.js";
+import { baseStyles, colors, bloomColors, hexToRgba } from "./shared-styles.js";
 import type { LearnerData, DomainSkill } from "./data-parsers.js";
 
 interface LearnerPDFProps {
@@ -174,7 +174,7 @@ export function LearnerReportPDF({ learner, domainSkills }: LearnerPDFProps) {
               <View
                 key={level}
                 style={{
-                  backgroundColor: bloomDist[level] ? bloomColors[level] + "18" : colors.gray100,
+                  backgroundColor: bloomDist[level] ? hexToRgba(bloomColors[level], 0.09) : colors.gray100,
                   borderWidth: 1,
                   borderColor: bloomDist[level] ? bloomColors[level] : colors.gray200,
                   borderRadius: 6,
@@ -313,9 +313,9 @@ function SummaryCard({
     <View
       style={{
         flex: 1,
-        backgroundColor: color + "10",
+        backgroundColor: hexToRgba(color, 0.06),
         borderWidth: 1,
-        borderColor: color + "30",
+        borderColor: hexToRgba(color, 0.19),
         borderRadius: 6,
         padding: 10,
         alignItems: "center",

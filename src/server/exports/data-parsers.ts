@@ -3,6 +3,15 @@ import path from "path";
 
 const DATA_DIR = process.env.DATA_DIR || "./data";
 
+// ─── Safety ─────────────────────────────────────────────────────
+
+/** Validate that an ID only contains safe characters (no path traversal). */
+function validateId(id: string, label: string): void {
+  if (!/^[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)*$/.test(id)) {
+    throw new Error(`Invalid ${label} ID: '${id}'`);
+  }
+}
+
 // ─── Types ──────────────────────────────────────────────────────
 
 export interface LessonPlanData {
@@ -62,6 +71,7 @@ export interface DomainSkill {
 // ─── Parsers ────────────────────────────────────────────────────
 
 export async function loadLessonPlan(lessonId: string): Promise<LessonPlanData> {
+  validateId(lessonId, "lesson");
   const lessonsDir = path.join(DATA_DIR, "lessons");
   const files = await fs.readdir(lessonsDir);
   const file = files.find((f) => f.replace(".md", "") === lessonId);
@@ -82,8 +92,6 @@ export async function listLessonPlans(): Promise<string[]> {
 }
 
 function parseLessonPlanContent(id: string, raw: string): LessonPlanData {
-  const lines = raw.split("\n");
-
   // Title
   const titleMatch = raw.match(/^# (.+)/m);
   const title = titleMatch ? titleMatch[1].replace(/^Lesson Plan:\s*/i, "") : id;
@@ -205,6 +213,7 @@ function extractTableField(raw: string, field: string): string | undefined {
 }
 
 export async function loadLearnerProfile(learnerId: string): Promise<LearnerData> {
+  validateId(learnerId, "learner");
   const filePath = path.join(DATA_DIR, "learners", `${learnerId}.md`);
   const raw = await fs.readFile(filePath, "utf-8");
   return parseLearnerContent(learnerId, raw);
@@ -224,12 +233,13 @@ function parseLearnerContent(id: string, raw: string): LearnerData {
   // Parse assessed skills
   const assessedSection = raw.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
   for (const line of assessedSection.split("\n")) {
-    const m = line.match(/^- (.+?):\s*([\d.]+)\s*confidence.*?(?:at\s+(\w+)\s+level)?/i);
+    const m = line.match(/^- (.+?):\s*([\d.]+)\s*confidence/i);
     if (m) {
+      const bloomMatch = line.match(/at\s+(\w+)\s+level/i);
       skills.push({
         skillId: m[1].trim(),
         confidence: parseFloat(m[2]),
-        bloomLevel: m[3] ?? "unknown",
+        bloomLevel: bloomMatch ? bloomMatch[1] : "unknown",
         source: "assessed",
       });
     }
@@ -261,6 +271,7 @@ function parseLearnerContent(id: string, raw: string): LearnerData {
 }
 
 export async function loadGroupData(groupSlug: string): Promise<GroupData> {
+  validateId(groupSlug, "group");
   const filePath = path.join(DATA_DIR, "groups", `${groupSlug}.md`);
   const raw = await fs.readFile(filePath, "utf-8");
   return parseGroupContent(groupSlug, raw);
@@ -303,6 +314,7 @@ function parseGroupContent(slug: string, raw: string): GroupData {
 }
 
 export async function loadDomainSkills(domain: string): Promise<DomainSkill[]> {
+  validateId(domain, "domain");
   const filePath = path.join(DATA_DIR, "domains", domain, "skills.json");
   const raw = await fs.readFile(filePath, "utf-8");
   const data = JSON.parse(raw);
