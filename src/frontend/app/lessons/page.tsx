@@ -100,6 +100,15 @@ export default function LessonsPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  <Link
+                    href={`/teach/live/${lessonId}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-500 text-xs font-medium border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3z" />
+                    </svg>
+                    Go Live
+                  </Link>
                   <ExportButton
                     href={`/api/export/lesson/${lessonId}`}
                     label="Lesson PDF"
