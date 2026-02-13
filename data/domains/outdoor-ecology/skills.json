@@ -1,0 +1,147 @@
+{
+  "domain": "outdoor-ecology",
+  "version": "1.0.0",
+  "description": "Skills for outdoor ecology education — from species identification to habitat restoration planning. Designed for park naturalists, environmental educators, and outdoor learning programs.",
+  "skills": [
+    {
+      "id": "use-field-guide",
+      "label": "Can use a field guide to look up species by visual features",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "identify-local-trees",
+      "label": "Can identify at least 5 local tree species by leaf shape, bark, and silhouette",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": ["use-field-guide"]
+    },
+    {
+      "id": "identify-local-birds",
+      "label": "Can identify at least 5 local bird species by sight and call",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": ["use-field-guide"]
+    },
+    {
+      "id": "identify-animal-tracks",
+      "label": "Can identify common animal tracks and signs (scat, browse marks, burrows)",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": ["use-field-guide"]
+    },
+    {
+      "id": "use-compass-map",
+      "label": "Can use a compass and topographic map to navigate a trail",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "read-weather-signs",
+      "label": "Can read natural weather indicators (cloud types, wind shifts, barometric changes)",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "keep-field-journal",
+      "label": "Can maintain a structured field journal with dated observations, sketches, and measurements",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["use-field-guide"]
+    },
+    {
+      "id": "describe-habitat-types",
+      "label": "Can describe major habitat types (forest, wetland, grassland, riparian) and their key features",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["identify-local-trees"]
+    },
+    {
+      "id": "use-water-test-kit",
+      "label": "Can use a water quality testing kit to measure pH, dissolved oxygen, and turbidity",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "identify-water-pollutants",
+      "label": "Can identify common water pollutants and their sources from test results",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["use-water-test-kit"]
+    },
+    {
+      "id": "conduct-species-survey",
+      "label": "Can conduct a systematic species survey using transect or quadrat methods",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["identify-local-trees", "identify-local-birds", "keep-field-journal"]
+    },
+    {
+      "id": "measure-biodiversity",
+      "label": "Can calculate species richness and diversity indices from survey data",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": ["conduct-species-survey"]
+    },
+    {
+      "id": "map-food-web",
+      "label": "Can map a local food web showing producers, consumers, and decomposers",
+      "bloom_level": "analysis",
+      "assessable": true,
+      "dependencies": ["identify-local-trees", "identify-local-birds", "identify-animal-tracks"]
+    },
+    {
+      "id": "assess-water-quality",
+      "label": "Can assess overall water quality by combining chemical tests with biological indicators (macroinvertebrates)",
+      "bloom_level": "analysis",
+      "assessable": true,
+      "dependencies": ["identify-water-pollutants", "conduct-species-survey"]
+    },
+    {
+      "id": "analyze-habitat-health",
+      "label": "Can analyze habitat health indicators: canopy cover, understory density, invasive species presence, edge effects",
+      "bloom_level": "analysis",
+      "assessable": true,
+      "dependencies": ["describe-habitat-types", "measure-biodiversity"]
+    },
+    {
+      "id": "explain-succession",
+      "label": "Can explain ecological succession stages and predict how a disturbed area will recover",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": ["describe-habitat-types"]
+    },
+    {
+      "id": "compare-ecosystems",
+      "label": "Can compare two ecosystems and explain differences in biodiversity, productivity, and resilience",
+      "bloom_level": "analysis",
+      "assessable": true,
+      "dependencies": ["analyze-habitat-health", "map-food-web"]
+    },
+    {
+      "id": "evaluate-human-impact",
+      "label": "Can evaluate how human activities (development, pollution, recreation) affect local ecosystems",
+      "bloom_level": "evaluation",
+      "assessable": true,
+      "dependencies": ["compare-ecosystems", "assess-water-quality"]
+    },
+    {
+      "id": "design-monitoring-plan",
+      "label": "Can design a long-term ecological monitoring plan with sampling schedules, indicator species, and data protocols",
+      "bloom_level": "synthesis",
+      "assessable": true,
+      "dependencies": ["measure-biodiversity", "assess-water-quality", "keep-field-journal"]
+    },
+    {
+      "id": "design-restoration-plan",
+      "label": "Can design a habitat restoration plan addressing species selection, timeline, success metrics, and adaptive management",
+      "bloom_level": "evaluation",
+      "assessable": true,
+      "dependencies": ["evaluate-human-impact", "explain-succession", "design-monitoring-plan"]
+    }
+  ]
+}
