@@ -33,6 +33,7 @@ interface TeachingPattern {
 
 interface TeachingNotesData {
   domain: string;
+  version: string;
   sessionCount: number;
   lastUpdated: string;
   notes: TeachingNote[];
