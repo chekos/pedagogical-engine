@@ -321,7 +321,7 @@ export default function IntegrityReportPage() {
                 Individual Reports
               </h2>
               <div className="space-y-3">
-                {report.learners
+                {[...report.learners]
                   .sort((a, b) => {
                     // Sort: low first (needs attention), then moderate, then high, then unassessed
                     const order: Record<string, number> = {
