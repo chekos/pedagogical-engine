@@ -386,7 +386,7 @@ export const storeReasoningTracesTool = tool(
             )
             .optional()
             .describe("Other options that were considered and why they were rejected"),
-          wouldChangIf: z
+          wouldChangeIf: z
             .string()
             .optional()
             .describe(
