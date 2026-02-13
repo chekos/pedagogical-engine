@@ -52,11 +52,9 @@ app.get("/api/status", (_req, res) => {
 // ─── Assessment validation endpoint ───────────────────────────────
 app.get("/api/assess/:code", async (req, res) => {
   const { code } = req.params;
-  const dataDir = process.env.DATA_DIR || "./data";
-  const assessmentPath = `${dataDir}/assessments/${code}.md`;
+  const assessmentPath = path.join(DATA_DIR, "assessments", `${code}.md`);
   try {
-    const fsModule = await import("fs/promises");
-    await fsModule.access(assessmentPath);
+    await fs.access(assessmentPath);
     res.json({ valid: true, code });
   } catch {
     res.status(404).json({ valid: false, error: `Assessment '${code}' not found` });
@@ -143,6 +141,11 @@ app.get("/api/lessons", async (_req, res) => {
 /** Get a specific lesson plan with full parsed data */
 app.get("/api/lessons/:id", async (req, res) => {
   const { id } = req.params;
+  // Sanitize: reject path traversal attempts
+  if (id.includes("/") || id.includes("\\") || id.includes("..")) {
+    res.status(400).json({ error: "Invalid lesson ID" });
+    return;
+  }
   const lessonPath = path.join(DATA_DIR, "lessons", `${id}.md`);
   try {
     const content = await fs.readFile(lessonPath, "utf-8");
@@ -156,6 +159,11 @@ app.get("/api/lessons/:id", async (req, res) => {
 /** Save section feedback from live companion */
 app.post("/api/lessons/:id/feedback", async (req, res) => {
   const { id } = req.params;
+  // Sanitize: reject path traversal attempts
+  if (id.includes("/") || id.includes("\\") || id.includes("..")) {
+    res.status(400).json({ error: "Invalid lesson ID" });
+    return;
+  }
   const { sectionId, feedback, notes, elapsedMin } = req.body;
 
   if (!sectionId || !feedback) {
@@ -181,7 +189,7 @@ app.post("/api/lessons/:id/feedback", async (req, res) => {
   try {
     await fs.appendFile(logPath, entry + "\n");
     res.json({ saved: true });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to save feedback" });
   }
 });
@@ -466,10 +474,12 @@ function shutdown(signal: string) {
   for (const session of sessionManager.list()) {
     sessionManager.remove(session.id);
   }
-  wss.close(() => {
-    server.close(() => {
-      console.log("[shutdown] Server closed.");
-      process.exit(0);
+  wssLive.close(() => {
+    wss.close(() => {
+      server.close(() => {
+        console.log("[shutdown] Server closed.");
+        process.exit(0);
+      });
     });
   });
   // Force exit after 5 seconds if graceful shutdown hangs

@@ -104,35 +104,8 @@ function parseSections(markdown: string): LessonSection[] {
     });
   }
 
-  // Find all timed subsections
+  // Find all timed subsections (format: H:MM where 0:25 = 25min, 1:30 = 90min)
   const sectionRegex =
-    /\*\*\[(\d+):(\d+)\s*-\s*(\d+):(\d+)\]\s*(.+?)\s*\((\d+)\s*min\)\*\*/g;
-  let sectionMatch;
-  const rawSections: {
-    startMin: number;
-    endMin: number;
-    title: string;
-    durationMin: number;
-    contentStart: number;
-  }[] = [];
-
-  while ((sectionMatch = sectionRegex.exec(markdown)) !== null) {
-    const startMin =
-      parseInt(sectionMatch[1]) * 60 + parseInt(sectionMatch[2]);
-    const endMin =
-      parseInt(sectionMatch[3]) * 60 + parseInt(sectionMatch[4]);
-    rawSections.push({
-      startMin: startMin / 60, // back to minutes since format is H:MM
-      endMin: endMin / 60,
-      title: sectionMatch[5].trim(),
-      durationMin: parseInt(sectionMatch[6]),
-      contentStart: sectionMatch.index,
-    });
-  }
-
-  // Hmm, the lesson format uses 0:00 for 0 minutes, 0:25 for 25 minutes, 1:30 for 90 minutes
-  // So the format is actually hours:minutes. Let me re-parse.
-  const sectionRegex2 =
     /\*\*\[(\d+):(\d+)\s*-\s*(\d+):(\d+)\]\s*(.+?)\s*\((\d+)\s*min\)\*\*/g;
   const parsedSections: {
     startMin: number;
@@ -144,7 +117,7 @@ function parseSections(markdown: string): LessonSection[] {
   }[] = [];
 
   let m;
-  while ((m = sectionRegex2.exec(markdown)) !== null) {
+  while ((m = sectionRegex.exec(markdown)) !== null) {
     const startMin = parseInt(m[1]) * 60 + parseInt(m[2]);
     const endMin = parseInt(m[3]) * 60 + parseInt(m[4]);
     parsedSections.push({
