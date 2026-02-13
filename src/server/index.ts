@@ -811,7 +811,7 @@ app.get("/api/simulate/:lessonId", async (req, res) => {
       }
 
       // Normalize group name to slug
-      const groupSlug = effectiveGroup
+      let groupSlug = effectiveGroup
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
@@ -819,6 +819,30 @@ app.get("/api/simulate/:lessonId", async (req, res) => {
       if (!groupSlug) {
         res.status(400).json({ error: "Invalid group name after normalization" });
         return;
+      }
+
+      // If the slugified group doesn't exist as a file, find a group that matches the domain
+      const groupPath = path.join(DATA_DIR, "groups", `${groupSlug}.md`);
+      try {
+        await fs.access(groupPath);
+      } catch {
+        // Group file doesn't exist — scan for a group matching this domain
+        const groupFiles = await fs.readdir(path.join(DATA_DIR, "groups"));
+        let found = false;
+        for (const gf of groupFiles) {
+          if (!gf.endsWith(".md")) continue;
+          const gc = await fs.readFile(path.join(DATA_DIR, "groups", gf), "utf-8");
+          const domainMatch = gc.match(/\| \*\*Domain\*\* \| ([^ |]+)/);
+          if (domainMatch && domainMatch[1].trim() === effectiveDomain) {
+            groupSlug = gf.replace(/\.md$/, "");
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          res.status(404).json({ error: `No group found for domain '${effectiveDomain}'` });
+          return;
+        }
       }
 
       try {

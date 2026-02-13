@@ -35,6 +35,9 @@ interface TransferSummary {
   learner: { id: string; name: string };
   sourceDomain: string;
   targetDomain: string;
+  sourceGraph: { skills: Skill[]; edges: Edge[] };
+  targetGraph: { skills: Skill[]; edges: Edge[] };
+  learnerSourceSkills: LearnerSkill[];
   transferCandidates: TransferCandidate[];
   assessmentRecommendation: {
     startLevel: string;
@@ -476,6 +479,9 @@ export async function runTransferAnalysis(params: {
     learner: { id: learner.id, name: learner.name },
     sourceDomain,
     targetDomain,
+    sourceGraph: { skills: sourceGraph.skills, edges: sourceGraph.edges },
+    targetGraph: { skills: targetGraph.skills, edges: targetGraph.edges },
+    learnerSourceSkills,
     transferCandidates: candidates,
     assessmentRecommendation: assessmentRec,
     overallReadiness: readiness,

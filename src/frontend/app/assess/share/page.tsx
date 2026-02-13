@@ -25,8 +25,8 @@ interface LearnerLink {
 }
 
 export default function ShareAssessmentPage() {
-  const [groupName, setGroupName] = useState("tuesday-cohort");
-  const [domain, setDomain] = useState("python-data-analysis");
+  const [groupName, setGroupName] = useState("");
+  const [domain, setDomain] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,27 +124,35 @@ export default function ShareAssessmentPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="group-name" className="block text-sm font-medium text-text-secondary mb-1.5">
-                Group
+              <label htmlFor="group-name" className="block text-sm font-medium text-text-secondary mb-1">
+                Group name
               </label>
+              <p className="text-xs text-text-tertiary mb-1.5">
+                A short identifier for your class or cohort. Use lowercase and hyphens.
+              </p>
               <input
                 id="group-name"
                 type="text"
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
-                className="w-full rounded-xl border border-border bg-surface-0 px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/50"
+                placeholder="e.g. tuesday-cohort"
+                className="w-full rounded-xl border border-border bg-surface-0 px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50"
               />
             </div>
             <div>
-              <label htmlFor="domain-name" className="block text-sm font-medium text-text-secondary mb-1.5">
-                Domain
+              <label htmlFor="domain-name" className="block text-sm font-medium text-text-secondary mb-1">
+                Skill domain
               </label>
+              <p className="text-xs text-text-tertiary mb-1.5">
+                The subject area students will be assessed on.
+              </p>
               <input
                 id="domain-name"
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                className="w-full rounded-xl border border-border bg-surface-0 px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/50"
+                placeholder="e.g. python-data-analysis"
+                className="w-full rounded-xl border border-border bg-surface-0 px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50"
               />
             </div>
           </div>

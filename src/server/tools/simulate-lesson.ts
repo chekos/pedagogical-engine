@@ -360,7 +360,7 @@ async function runSimulation(
   const members = parseGroupMembers(groupContent);
 
   if (members.length === 0) {
-    throw new Error(`No members found in group '${groupName}'. Check group file format.`);
+    throw new Error(`Group '${groupName}' has no individually profiled members. Simulation requires individual learner profiles (listed as '- Name (\`id\`)' in the group file).`);
   }
 
   // 3. Load learner profiles

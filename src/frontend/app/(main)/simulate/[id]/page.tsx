@@ -552,16 +552,77 @@ export default function SimulateDetailPage({
         )}
 
         {error && (
-          <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-4">
-            <p className="text-sm text-red-400 font-medium">
-              Simulation failed
-            </p>
-            <p className="text-xs text-red-400/70 mt-1">{error}</p>
-            <p className="text-xs text-text-tertiary mt-2">
-              Make sure the backend server is running and the lesson plan,
-              group, and learner profiles exist.
-            </p>
-          </div>
+          error.includes("no individually profiled members") ? (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-6 py-6 max-w-2xl mx-auto">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary mb-1">
+                    Learner profiles needed
+                  </h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    Simulation predicts friction for each student based on their skill profiles.
+                    This group doesn&apos;t have individual profiles yet — here&apos;s how to set them up:
+                  </p>
+                  <ol className="mt-4 space-y-3 text-sm text-text-secondary">
+                    <li className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                      <div>
+                        <strong className="text-text-primary">Generate assessment links</strong>
+                        <p className="text-xs text-text-tertiary mt-0.5">Create shareable links or QR codes for your students.</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                      <div>
+                        <strong className="text-text-primary">Students complete a 5-minute skill check</strong>
+                        <p className="text-xs text-text-tertiary mt-0.5">Adaptive questions map their skills using Bloom&apos;s taxonomy.</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                      <div>
+                        <strong className="text-text-primary">Come back here to simulate</strong>
+                        <p className="text-xs text-text-tertiary mt-0.5">Once profiles exist, the simulation will predict friction points, timing risks, and suggest pivots.</p>
+                      </div>
+                    </li>
+                  </ol>
+                  <div className="mt-5 flex items-center gap-3">
+                    <Link
+                      href="/assess/share"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-muted transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      Create assessment links
+                    </Link>
+                    <Link
+                      href="/teach"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-text-primary text-sm font-medium hover:bg-surface-2 transition-colors"
+                    >
+                      Set up in chat
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-4">
+              <p className="text-sm text-red-400 font-medium">
+                Simulation failed
+              </p>
+              <p className="text-xs text-red-400/70 mt-1">{error}</p>
+              <p className="text-xs text-text-tertiary mt-2">
+                Make sure the backend server is running and the lesson plan,
+                group, and learner profiles exist.
+              </p>
+            </div>
+          )
         )}
 
         {simulation && (

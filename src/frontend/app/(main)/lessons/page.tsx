@@ -68,9 +68,11 @@ export default function LessonsPage() {
                 className="rounded-xl border border-border bg-surface-1 p-5 flex items-center justify-between gap-4"
               >
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-text-primary truncate">
-                    {title || lessonId}
-                  </h3>
+                  <Link href={`/lessons/${lessonId}`} className="group">
+                    <h3 className="text-sm font-semibold text-text-primary truncate group-hover:text-accent transition-colors">
+                      {title || lessonId}
+                    </h3>
+                  </Link>
                   <p className="text-xs text-text-tertiary mt-0.5">
                     {date} &middot; {lessonId}
                   </p>
