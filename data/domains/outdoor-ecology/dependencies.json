@@ -1,0 +1,193 @@
+{
+  "domain": "outdoor-ecology",
+  "version": "1.0.0",
+  "description": "Directed dependency edges between outdoor-ecology skills. Source is the prerequisite; target is the dependent skill.",
+  "edges": [
+    {
+      "source": "identify-common-trees",
+      "target": "use-field-guide",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-common-wildflowers",
+      "target": "use-field-guide",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "read-topographic-map",
+      "target": "use-compass",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-animal-signs",
+      "target": "track-animal-movement",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-animal-signs",
+      "target": "observe-bird-behavior",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "measure-water-quality",
+      "target": "identify-aquatic-invertebrates",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "use-field-guide",
+      "target": "identify-aquatic-invertebrates",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "keep-field-journal",
+      "target": "sketch-natural-specimens",
+      "confidence": 0.75,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-common-trees",
+      "target": "describe-microhabitats",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-animal-signs",
+      "target": "describe-microhabitats",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "keep-field-journal",
+      "target": "describe-microhabitats",
+      "confidence": 0.70,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-common-trees",
+      "target": "explain-food-web",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-common-wildflowers",
+      "target": "explain-food-web",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-animal-signs",
+      "target": "explain-food-web",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "observe-bird-behavior",
+      "target": "explain-food-web",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "describe-microhabitats",
+      "target": "assess-habitat-health",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "measure-water-quality",
+      "target": "assess-habitat-health",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-aquatic-invertebrates",
+      "target": "assess-habitat-health",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "explain-food-web",
+      "target": "assess-habitat-health",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "explain-food-web",
+      "target": "interpret-seasonal-changes",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "observe-bird-behavior",
+      "target": "interpret-seasonal-changes",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "describe-microhabitats",
+      "target": "interpret-seasonal-changes",
+      "confidence": 0.75,
+      "type": "prerequisite"
+    },
+    {
+      "source": "assess-habitat-health",
+      "target": "compare-ecosystems",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "interpret-seasonal-changes",
+      "target": "compare-ecosystems",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "use-compass",
+      "target": "lead-nature-walk",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "explain-food-web",
+      "target": "lead-nature-walk",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "describe-microhabitats",
+      "target": "lead-nature-walk",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "keep-field-journal",
+      "target": "lead-nature-walk",
+      "confidence": 0.70,
+      "type": "recommended"
+    },
+    {
+      "source": "assess-habitat-health",
+      "target": "design-habitat-restoration",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "compare-ecosystems",
+      "target": "design-habitat-restoration",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "lead-nature-walk",
+      "target": "design-habitat-restoration",
+      "confidence": 0.70,
+      "type": "recommended"
+    }
+  ]
+}

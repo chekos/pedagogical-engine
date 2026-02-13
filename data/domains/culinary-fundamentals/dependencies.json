@@ -1,0 +1,223 @@
+{
+  "domain": "culinary-fundamentals",
+  "version": "1.0.0",
+  "description": "Directed dependency edges between culinary-fundamentals skills. Source is the prerequisite; target is the dependent skill.",
+  "edges": [
+    {
+      "source": "identify-kitchen-tools",
+      "target": "measure-ingredients",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-kitchen-tools",
+      "target": "basic-knife-skills",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "kitchen-safety-basics",
+      "target": "basic-knife-skills",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "kitchen-safety-basics",
+      "target": "control-stovetop-heat",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "kitchen-safety-basics",
+      "target": "food-safety-temperatures",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-kitchen-tools",
+      "target": "food-safety-temperatures",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "measure-ingredients",
+      "target": "read-follow-recipe",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-kitchen-tools",
+      "target": "read-follow-recipe",
+      "confidence": 0.75,
+      "type": "prerequisite"
+    },
+    {
+      "source": "basic-knife-skills",
+      "target": "saute-and-stir-fry",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "control-stovetop-heat",
+      "target": "saute-and-stir-fry",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "control-stovetop-heat",
+      "target": "make-basic-sauce",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "measure-ingredients",
+      "target": "make-basic-sauce",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "control-stovetop-heat",
+      "target": "cook-grains-and-pasta",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "measure-ingredients",
+      "target": "cook-grains-and-pasta",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "measure-ingredients",
+      "target": "make-basic-dough",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "read-follow-recipe",
+      "target": "make-basic-dough",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "saute-and-stir-fry",
+      "target": "taste-and-adjust-seasoning",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "make-basic-sauce",
+      "target": "taste-and-adjust-seasoning",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "kitchen-safety-basics",
+      "target": "identify-flavor-profiles",
+      "confidence": 0.70,
+      "type": "prerequisite"
+    },
+    {
+      "source": "read-follow-recipe",
+      "target": "plan-mise-en-place",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "basic-knife-skills",
+      "target": "plan-mise-en-place",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "read-follow-recipe",
+      "target": "scale-recipe",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "measure-ingredients",
+      "target": "scale-recipe",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "taste-and-adjust-seasoning",
+      "target": "evaluate-dish-quality",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-flavor-profiles",
+      "target": "evaluate-dish-quality",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "saute-and-stir-fry",
+      "target": "cook-complete-meal",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "cook-grains-and-pasta",
+      "target": "cook-complete-meal",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "plan-mise-en-place",
+      "target": "cook-complete-meal",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "food-safety-temperatures",
+      "target": "cook-complete-meal",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "identify-flavor-profiles",
+      "target": "adapt-recipe-for-restrictions",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "scale-recipe",
+      "target": "adapt-recipe-for-restrictions",
+      "confidence": 0.75,
+      "type": "prerequisite"
+    },
+    {
+      "source": "read-follow-recipe",
+      "target": "adapt-recipe-for-restrictions",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "cook-complete-meal",
+      "target": "design-weekly-meal-plan",
+      "confidence": 0.90,
+      "type": "prerequisite"
+    },
+    {
+      "source": "adapt-recipe-for-restrictions",
+      "target": "design-weekly-meal-plan",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "evaluate-dish-quality",
+      "target": "design-weekly-meal-plan",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    },
+    {
+      "source": "scale-recipe",
+      "target": "design-weekly-meal-plan",
+      "confidence": 0.80,
+      "type": "prerequisite"
+    }
+  ]
+}
