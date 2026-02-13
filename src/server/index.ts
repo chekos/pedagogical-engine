@@ -725,6 +725,227 @@ app.get("/api/simulate/:lessonId", async (req, res) => {
   }
 });
 
+// ─── Pedagogical tension analysis endpoint ───────────────────────
+app.post("/api/tensions", async (req, res) => {
+  const { domain, groupName, targetSkills, durationMinutes, constraints } = req.body;
+
+  if (!domain || !groupName || !targetSkills || !Array.isArray(targetSkills)) {
+    res.status(400).json({ error: "Missing required fields: domain, groupName, targetSkills (array)" });
+    return;
+  }
+  if (!validateSlug(domain) || !validateSlug(groupName)) {
+    res.status(400).json({ error: "Invalid domain or groupName (alphanumeric, hyphens, underscores only)" });
+    return;
+  }
+
+  try {
+    // Import and use the tension analysis logic directly
+    const { loadGraph } = await import("./tools/shared.js");
+    const { BLOOM_ORDER } = await import("./tools/domain-utils.js");
+
+    const graph = await loadGraph(domain);
+
+    // Load learner profiles
+    const learnersDir = path.join(DATA_DIR, "learners");
+    const learners: Array<{ name: string; id: string; skills: Map<string, number> }> = [];
+    try {
+      const files = await fs.readdir(learnersDir);
+      for (const file of files) {
+        if (!file.endsWith(".md")) continue;
+        const content = await fs.readFile(path.join(learnersDir, file), "utf-8");
+        if (!content.includes(`| **Group** | ${groupName} |`)) continue;
+        const nameMatch = content.match(/# Learner Profile: (.+)/);
+        const skills = new Map<string, number>();
+        for (const section of ["## Assessed Skills", "## Inferred Skills"]) {
+          const sectionContent = content.split(section)[1]?.split("##")[0] ?? "";
+          for (const line of sectionContent.split("\n")) {
+            const match = line.match(/^- (.+?):\s*([\d.]+)\s*confidence/i);
+            if (match) {
+              const existing = skills.get(match[1].trim()) ?? 0;
+              skills.set(match[1].trim(), Math.max(existing, parseFloat(match[2])));
+            }
+          }
+        }
+        learners.push({
+          name: nameMatch ? nameMatch[1] : file.replace(".md", ""),
+          id: file.replace(".md", ""),
+          skills,
+        });
+      }
+    } catch { /* no learners */ }
+
+    // Run tension checks inline (simpler than invoking MCP tool from REST)
+    interface TensionResult {
+      type: string;
+      severity: string;
+      title: string;
+      detail: string;
+      evidence: Record<string, unknown>;
+      suggestion: string;
+    }
+    const tensions: TensionResult[] = [];
+
+    // 1. Dependency ordering
+    const edgeMap = new Map<string, Set<string>>();
+    for (const edge of graph.edges) {
+      if (edge.type !== "prerequisite") continue;
+      if (!edgeMap.has(edge.target)) edgeMap.set(edge.target, new Set());
+      edgeMap.get(edge.target)!.add(edge.source);
+    }
+
+    for (let i = 0; i < targetSkills.length; i++) {
+      const skill = targetSkills[i];
+      const prereqs = edgeMap.get(skill);
+      if (!prereqs) continue;
+      for (const prereq of prereqs) {
+        const prereqIndex = targetSkills.indexOf(prereq);
+        if (prereqIndex > i) {
+          const skillDef = graph.skills.find((s) => s.id === skill);
+          const prereqDef = graph.skills.find((s) => s.id === prereq);
+          tensions.push({
+            type: "dependency_ordering",
+            severity: "critical",
+            title: `"${skillDef?.label ?? skill}" taught before its prerequisite`,
+            detail: `"${skillDef?.label ?? skill}" comes before "${prereqDef?.label ?? prereq}", but ${prereq} is a prerequisite for ${skill}.`,
+            evidence: { skill, prerequisite: prereq, skillPosition: i + 1, prereqPosition: prereqIndex + 1 },
+            suggestion: `Move "${prereqDef?.label ?? prereq}" before "${skillDef?.label ?? skill}".`,
+          });
+        }
+      }
+    }
+
+    // 2. Scope-time mismatch
+    if (durationMinutes) {
+      const baseMinutes: Record<string, number> = {
+        knowledge: 5, comprehension: 10, application: 15, analysis: 20, synthesis: 30, evaluation: 25,
+      };
+      let totalMinutes = 15; // overhead
+      const breakdown: Array<{ skill: string; bloom: string; minutes: number }> = [];
+      for (const sid of targetSkills) {
+        const skillDef = graph.skills.find((s) => s.id === sid);
+        if (!skillDef) continue;
+        let readiness = 0;
+        for (const l of learners) { readiness += (l.skills.get(sid) ?? 0); }
+        readiness = learners.length > 0 ? readiness / learners.length : 0.5;
+        const mins = Math.round((baseMinutes[skillDef.bloom_level] ?? 15) * (1 + (1 - readiness) * 0.5));
+        totalMinutes += mins;
+        breakdown.push({ skill: sid, bloom: skillDef.bloom_level, minutes: mins });
+      }
+      if (totalMinutes > durationMinutes) {
+        const over = totalMinutes - durationMinutes;
+        tensions.push({
+          type: "scope_time_mismatch",
+          severity: over / durationMinutes > 0.3 ? "critical" : "warning",
+          title: `${targetSkills.length} skills in ${durationMinutes} min is ~${Math.round(over / durationMinutes * 100)}% over capacity`,
+          detail: `Estimated: ~${totalMinutes} min needed. Available: ${durationMinutes} min.`,
+          evidence: { estimatedMinutes: totalMinutes, availableMinutes: durationMinutes, breakdown },
+          suggestion: `Consider reducing scope by ~${over} minutes worth of content.`,
+        });
+      }
+    }
+
+    // 3. Prerequisite gaps
+    if (learners.length > 0) {
+      const allPrereqs = new Set<string>();
+      const queue = [...targetSkills];
+      const visited = new Set<string>(targetSkills);
+      while (queue.length > 0) {
+        const current = queue.shift()!;
+        for (const edge of graph.edges) {
+          if (edge.target === current && edge.type === "prerequisite") {
+            allPrereqs.add(edge.source);
+            if (!visited.has(edge.source)) { visited.add(edge.source); queue.push(edge.source); }
+          }
+        }
+      }
+      for (const prereq of allPrereqs) {
+        if (targetSkills.includes(prereq)) continue;
+        const prereqDef = graph.skills.find((s) => s.id === prereq);
+        const missing: string[] = [];
+        const weak: Array<{ name: string; confidence: number }> = [];
+        for (const l of learners) {
+          const c = l.skills.get(prereq);
+          if (c === undefined) missing.push(l.name);
+          else if (c < 0.5) weak.push({ name: l.name, confidence: c });
+        }
+        const atRisk = missing.length + weak.length;
+        const pct = Math.round(atRisk / learners.length * 100);
+        if (pct >= 40) {
+          tensions.push({
+            type: "prerequisite_gap",
+            severity: pct >= 60 ? "critical" : "warning",
+            title: `${atRisk} of ${learners.length} learners lack "${prereqDef?.label ?? prereq}"`,
+            detail: `${missing.length > 0 ? `Not assessed: ${missing.join(", ")}. ` : ""}${weak.length > 0 ? `Low confidence: ${weak.map(w => `${w.name} (${w.confidence})`).join(", ")}.` : ""}`,
+            evidence: { prerequisite: prereq, missing, weak, atRiskPercentage: pct },
+            suggestion: pct >= 60
+              ? `Add a 10-15 min prerequisite review at session start.`
+              : `Quick 5-min check-in on "${prereqDef?.label ?? prereq}" at session start.`,
+          });
+        }
+      }
+    }
+
+    // 4. Bloom's level mismatch
+    if (learners.length > 0) {
+      for (const sid of targetSkills) {
+        const skillDef = graph.skills.find((s) => s.id === sid);
+        if (!skillDef) continue;
+        const targetBloom = BLOOM_ORDER[skillDef.bloom_level] ?? 0;
+        if (targetBloom < 4) continue;
+        const maxBlooms: number[] = [];
+        for (const l of learners) {
+          let maxB = 0;
+          for (const [s, c] of l.skills) {
+            if (c >= 0.6) {
+              const sd = graph.skills.find((sk) => sk.id === s);
+              if (sd) maxB = Math.max(maxB, BLOOM_ORDER[sd.bloom_level] ?? 0);
+            }
+          }
+          maxBlooms.push(maxB);
+        }
+        const avg = maxBlooms.reduce((a, b) => a + b, 0) / maxBlooms.length;
+        const gap = targetBloom - avg;
+        if (gap >= 2) {
+          const bloomNames = Object.entries(BLOOM_ORDER).sort(([, a], [, b]) => a - b).map(([n]) => n);
+          tensions.push({
+            type: "bloom_level_mismatch",
+            severity: gap >= 3 ? "critical" : "warning",
+            title: `"${skillDef.label}" is ${skillDef.bloom_level} — group is mostly at ${bloomNames[Math.round(avg)]}`,
+            detail: `${Math.round(gap)}-level Bloom's gap. Students need intermediate scaffolding.`,
+            evidence: { skill: sid, skillBloom: skillDef.bloom_level, groupAvgBloom: bloomNames[Math.round(avg)], gap: Math.round(gap) },
+            suggestion: `Add scaffolding at ${bloomNames[targetBloom - 1]} level before attempting ${skillDef.bloom_level}-level work.`,
+          });
+        }
+      }
+    }
+
+    // Sort by severity
+    const sevOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 };
+    tensions.sort((a, b) => (sevOrder[a.severity] ?? 2) - (sevOrder[b.severity] ?? 2));
+
+    const critCount = tensions.filter(t => t.severity === "critical").length;
+    const warnCount = tensions.filter(t => t.severity === "warning").length;
+
+    res.json({
+      domain,
+      group: groupName,
+      targetSkills,
+      durationMinutes: durationMinutes ?? null,
+      tensionCount: tensions.length,
+      critical: critCount,
+      warnings: warnCount,
+      tensions,
+      learnersAnalyzed: learners.length,
+      skillsInGraph: graph.skills.length,
+      edgesInGraph: graph.edges.length,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[tensions] Error:", message);
+    res.status(500).json({ error: message });
+  }
+});
+
 // ─── WebSocket handler for educator chat ─────────────────────────
 wss.on("connection", (ws: WebSocket) => {
   const sessionId = randomUUID();
