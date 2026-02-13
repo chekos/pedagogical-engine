@@ -27,29 +27,17 @@ interface LearnerLink {
 export default function ShareAssessmentPage() {
   const [groupName, setGroupName] = useState("");
   const [domain, setDomain] = useState("");
-  const [domains, setDomains] = useState<{ slug: string; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nameLoading, setNameLoading] = useState(true);
 
-  // Auto-generate a creative cohort name + load available domains on mount
+  // Auto-generate a creative cohort name on mount
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/generate-group-name`)
       .then((res) => res.json())
       .then((data) => { if (data.name) setGroupName(data.name); })
       .catch(() => {})
       .finally(() => setNameLoading(false));
-
-    fetch(`${BACKEND_URL}/api/domains`)
-      .then((res) => res.json())
-      .then((data) => {
-        const list = Array.isArray(data) ? data : data.domains || [];
-        setDomains(list.map((d: { slug: string; name?: string }) => ({
-          slug: d.slug,
-          name: d.name || d.slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
-        })));
-      })
-      .catch(() => {});
   }, []);
 
   // Single group link
@@ -150,7 +138,7 @@ export default function ShareAssessmentPage() {
                 Group name
               </label>
               <p className="text-xs text-text-tertiary mb-1.5">
-                A short identifier for your class or cohort. Use lowercase and hyphens.
+                A name for your class or cohort. We generated one for you.
               </p>
               <div className="relative">
                 <input
@@ -186,19 +174,16 @@ export default function ShareAssessmentPage() {
                 Skill domain
               </label>
               <p className="text-xs text-text-tertiary mb-1.5">
-                The subject area students will be assessed on.
+                The subject you're teaching. Type anything — we'll handle the rest.
               </p>
-              <select
+              <input
                 id="domain-name"
+                type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                className="w-full rounded-xl border border-border bg-surface-0 px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/50"
-              >
-                <option value="">Select a domain...</option>
-                {domains.map((d) => (
-                  <option key={d.slug} value={d.slug}>{d.name}</option>
-                ))}
-              </select>
+                placeholder="e.g. Python Data Analysis"
+                className="w-full rounded-xl border border-border bg-surface-0 px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50"
+              />
             </div>
           </div>
 
