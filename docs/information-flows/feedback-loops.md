@@ -9,7 +9,7 @@ graph TD
     subgraph "Loop 1: Teaching Wisdom"
         L1[Teach a lesson] --> D1[Debrief]
         D1 --> TN[Teaching Notes<br/>timing, confusion points,<br/>success patterns]
-        TN --> NL1[Next lesson uses wisdom<br/>"Based on 18 sessions,<br/>I've allocated 20 min instead of 15"]
+        TN --> NL1[Next lesson uses wisdom<br/>cites evidence and adjusts timing]
         NL1 --> L1
     end
 
