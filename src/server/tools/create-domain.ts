@@ -12,11 +12,12 @@ import {
   computeDomainStats,
   domainDir,
   saveDomain,
+  buildManifest,
 } from "./domain-utils.js";
 
 export const createDomainTool = tool(
   "create_domain",
-  "Create a new skill domain with skills and dependency edges. Validates the graph for circular dependencies, Bloom's level progression, orphan skills, and unreachable nodes. Writes skills.json and dependencies.json to data/domains/{domain}/.",
+  "Create a new skill domain with skills and dependency edges. Validates the graph for circular dependencies, Bloom's level progression, orphan skills, and unreachable nodes. Writes skills.json, dependencies.json, and manifest.json to data/domains/{domain}/.",
   {
     domain: DomainNameSchema.describe("Domain identifier (e.g. 'outdoor-ecology')"),
     description: z
@@ -36,8 +37,44 @@ export const createDomainTool = tool(
       .boolean()
       .default(false)
       .describe("If true, overwrite an existing domain. Default false."),
+    name: z
+      .string()
+      .optional()
+      .describe("Human-readable display name (e.g. 'Spanish Literature'). Defaults to title-cased domain slug."),
+    tags: z
+      .array(z.string())
+      .optional()
+      .describe("Subject tags for discovery (e.g. ['literature', 'spanish', 'humanities'])"),
+    audience: z
+      .object({
+        level: z.string().optional().describe("Skill level range (e.g. 'beginner-to-advanced')"),
+        ages: z.string().optional().describe("Age range (e.g. '16+')"),
+        setting: z.string().optional().describe("Teaching setting (e.g. 'classroom, seminar')"),
+      })
+      .optional()
+      .describe("Target audience metadata"),
+    icon: z
+      .string()
+      .optional()
+      .describe("Icon name (e.g. 'chart-bar', 'leaf', 'fire', 'seedling', 'book'). Default 'book'."),
+    color: z
+      .string()
+      .optional()
+      .describe("Hex color for UI theming (e.g. '#3b82f6'). Default '#6366f1'."),
+    author: z
+      .string()
+      .optional()
+      .describe("Author name. Default 'Pedagogical Engine Team'."),
+    license: z
+      .string()
+      .optional()
+      .describe("License. Default 'MIT'."),
+    featured: z
+      .boolean()
+      .optional()
+      .describe("Whether to feature this domain prominently. Default false."),
   },
-  async ({ domain, description, skills, edges, overwrite }) => {
+  async ({ domain, description, skills, edges, overwrite, name, tags, audience, icon, color, author, license, featured }) => {
     // Validate the graph
     const validation = validateDomain(skills, edges);
 
@@ -97,7 +134,11 @@ export const createDomainTool = tool(
       })),
     };
 
-    await saveDomain(domain, skillsData, depsData);
+    const manifestData = buildManifest(domain, description, skills, edges, {
+      name, tags, audience, icon, color, author, license, featured,
+    });
+
+    await saveDomain(domain, skillsData, depsData, manifestData);
 
     const stats = computeDomainStats(skills, edges);
 

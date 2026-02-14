@@ -70,15 +70,18 @@ export function domainDir(domain: string): string {
 
 export async function loadDomain(domain: string) {
   const dir = domainDir(domain);
-  const [skillsRaw, depsRaw] = await Promise.all([
+  const [skillsRaw, depsRaw, manifestRaw] = await Promise.all([
     fs.readFile(path.join(dir, "skills.json"), "utf-8"),
     fs.readFile(path.join(dir, "dependencies.json"), "utf-8"),
+    fs.readFile(path.join(dir, "manifest.json"), "utf-8").catch(() => null),
   ]);
   const skillsData = JSON.parse(skillsRaw);
   const depsData = JSON.parse(depsRaw);
+  const manifestData = manifestRaw ? JSON.parse(manifestRaw) : null;
   return {
     skillsData,
     depsData,
+    manifestData,
     skills: skillsData.skills as Skill[],
     edges: depsData.edges as Edge[],
   };
@@ -87,10 +90,11 @@ export async function loadDomain(domain: string) {
 export async function saveDomain(
   domain: string,
   skillsData: Record<string, unknown>,
-  depsData: Record<string, unknown>
+  depsData: Record<string, unknown>,
+  manifestData?: Record<string, unknown>
 ) {
   const dir = domainDir(domain);
-  await Promise.all([
+  const writes: Promise<void>[] = [
     fs.writeFile(
       path.join(dir, "skills.json"),
       JSON.stringify(skillsData, null, 2) + "\n"
@@ -99,7 +103,16 @@ export async function saveDomain(
       path.join(dir, "dependencies.json"),
       JSON.stringify(depsData, null, 2) + "\n"
     ),
-  ]);
+  ];
+  if (manifestData) {
+    writes.push(
+      fs.writeFile(
+        path.join(dir, "manifest.json"),
+        JSON.stringify(manifestData, null, 2) + "\n"
+      )
+    );
+  }
+  await Promise.all(writes);
 }
 
 // --- Graph Validation ---
@@ -339,5 +352,75 @@ export function computeDomainStats(skills: Skill[], edges: Edge[]) {
     bloomDistribution: bloomDist,
     rootSkills: skills.filter((s) => !hasIncoming.has(s.id)).map((s) => s.id),
     leafSkills: skills.filter((s) => !hasOutgoing.has(s.id)).map((s) => s.id),
+  };
+}
+
+// --- Manifest Generation ---
+
+export interface ManifestOverrides {
+  name?: string;
+  tags?: string[];
+  audience?: { level?: string; ages?: string; setting?: string };
+  icon?: string;
+  color?: string;
+  author?: string;
+  license?: string;
+  featured?: boolean;
+}
+
+/**
+ * Build a manifest.json for a domain.
+ * - New domains: generates from overrides + defaults + computed stats.
+ * - Existing manifests: preserves all fields, refreshes stats + updatedAt.
+ */
+export function buildManifest(
+  domain: string,
+  description: string,
+  skills: Skill[],
+  edges: Edge[],
+  overrides: ManifestOverrides = {},
+  existingManifest?: Record<string, unknown>
+): Record<string, unknown> {
+  const bloomLevels = new Set(skills.map((s) => s.bloom_level)).size;
+  const now = new Date().toISOString();
+
+  // Updating an existing manifest — preserve fields, refresh stats
+  if (existingManifest && Object.keys(existingManifest).length > 0) {
+    return {
+      ...existingManifest,
+      stats: {
+        skills: skills.length,
+        dependencies: edges.length,
+        bloomLevels,
+      },
+      updatedAt: now,
+    };
+  }
+
+  // New manifest — apply defaults then overrides
+  const defaultName = domain
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+  return {
+    name: overrides.name || defaultName,
+    slug: domain,
+    version: "1.0.0",
+    description,
+    author: overrides.author || "Pedagogical Engine Team",
+    license: overrides.license || "MIT",
+    tags: overrides.tags || [],
+    audience: overrides.audience || null,
+    stats: {
+      skills: skills.length,
+      dependencies: edges.length,
+      bloomLevels,
+    },
+    icon: overrides.icon || "book",
+    color: overrides.color || "#6366f1",
+    featured: overrides.featured ?? false,
+    createdAt: now,
+    updatedAt: now,
   };
 }

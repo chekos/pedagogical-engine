@@ -15,6 +15,7 @@ import {
   computeDomainStats,
   loadDomain,
   saveDomain,
+  buildManifest,
 } from "./domain-utils.js";
 
 const AddSkillSchema = z.object({
@@ -290,7 +291,20 @@ export const updateDomainTool = tool(
     skillsData.skills = currentSkills;
     depsData.edges = currentEdges;
 
-    await saveDomain(domain, skillsData, depsData);
+    // Refresh manifest stats if manifest exists
+    let manifestData: Record<string, unknown> | undefined;
+    if (loaded.manifestData) {
+      manifestData = buildManifest(
+        domain,
+        (skillsData.description as string) || "",
+        currentSkills,
+        currentEdges,
+        {},
+        loaded.manifestData
+      );
+    }
+
+    await saveDomain(domain, skillsData, depsData, manifestData);
 
     const stats = computeDomainStats(currentSkills, currentEdges);
 
