@@ -158,6 +158,34 @@ function getToolLabel(toolName: string): string {
 
 This provides reasonable labels for unmapped tools without requiring per-tool entries.
 
+## Current state: server-side context extraction
+
+Context extraction was moved server-side in `src/server/context-extractor.ts` (commit c4a0c52). The server now accumulates context on the session and emits `session_context` WebSocket messages. The client handles these messages and updates the sidebar directly, with the old client-side `extractContext` kept as a fallback.
+
+However, `context-extractor.ts` still uses the same 8-tool switch statement. The generic pattern-based approach above should be applied there instead — it's the canonical extraction location now.
+
+## Result-based extraction
+
+The current server-side extractor reads tool **inputs** — what the agent asked for. It does not read tool **results** — what actually happened. This means:
+
+1. **Failed calls show as successful context.** If `load_roster` is called with `groupName: "tuesday-cohort"` but the group doesn't exist, the sidebar still shows "Group: tuesday-cohort" because the extractor read the input, not the error result.
+
+2. **No access to computed data.** Tool results contain richer information than inputs. For example, `query_group` returns skill distributions, common gaps, and pairing suggestions. `load_roster` returns the actual member list with names. None of this reaches the sidebar because the extractor only reads input parameters.
+
+### What to do
+
+The Agent SDK emits `tool_result` messages after each tool execution. The server can inspect these to:
+
+1. **Skip failed calls** — if the tool result indicates an error, don't update context from that call's inputs.
+2. **Extract from results** — pull confirmed data from successful results (actual member names returned by `load_roster`, actual skill counts from `query_group`, etc.). This replaces optimistic input-based extraction with grounded result-based extraction.
+
+The `extractSessionContext` function in `context-extractor.ts` should accept an optional `results` parameter alongside `toolUses`. When results are available, prefer them over inputs. When they're not (fallback path), continue using inputs as today.
+
 ## Priority
 
-The generic `extractContext` approach is the highest priority because it affects the session context sidebar's completeness. The label/progress fallbacks are lower priority — the raw tool names are functional, just not polished.
+All four items are actionable now:
+
+1. **Generic extraction in `context-extractor.ts`** — replace the 8-tool switch with the pattern-based approach so all 28 tools contribute context automatically
+2. **Result-based extraction** — hook into tool results in the server agent loop so failed calls don't pollute context and successful calls provide richer data
+3. **TOOL_META fallback labels** — add the `getToolLabel` humanizer so unmapped tools get readable names in tool result cards
+4. **STAGE_LABELS fallback** — add the same humanizer for progress indicators
