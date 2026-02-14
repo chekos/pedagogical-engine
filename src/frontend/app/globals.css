@@ -32,6 +32,7 @@
   --animate-voice-ring: voiceRing 1.5s ease-out infinite;
   --animate-waveform-bar: waveformBar 0.8s ease-in-out infinite;
   --animate-bloom-cycle: bloomCycle 3s ease-in-out infinite;
+  --animate-slide-in-right: slideInRight 0.25s ease-out;
 }
 
 @keyframes fadeIn {
@@ -126,6 +127,11 @@
 @keyframes waveformBar {
   0%, 100% { height: 6px; }
   50% { height: 18px; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 @keyframes edgeCascade {

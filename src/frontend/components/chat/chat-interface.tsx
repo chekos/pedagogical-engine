@@ -8,6 +8,7 @@ import MessageBubble from "./message-bubble";
 import ToolResult from "./tool-result";
 import ProgressIndicator from "./progress-indicator";
 import VoiceMicButton from "./voice-mic-button";
+import SessionContextSidebar, { EMPTY_SESSION_CONTEXT, type SessionContext } from "./session-context-sidebar";
 import Link from "next/link";
 
 interface ChatMessage {
@@ -46,6 +47,11 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
   const ttsQueueRef = useRef<string | null>(null);
   const ttsEnabledRef = useRef(false);
   useEffect(() => { ttsEnabledRef.current = ttsEnabled; }, [ttsEnabled]);
+
+  // Session context sidebar
+  const [sessionContext, setSessionContext] = useState<SessionContext>(EMPTY_SESSION_CONTEXT);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const toggleSidebar = useCallback(() => setSidebarCollapsed(prev => !prev), []);
 
   // Voice output (text-to-speech)
   const {
@@ -103,6 +109,79 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
     prevSttStatusRef.current = sttStatus;
   }, [sttStatus, sttTranscript]);
 
+  // Extract session context from tool uses
+  const extractContext = useCallback((tools: ToolUse[]) => {
+    setSessionContext((prev) => {
+      let next = { ...prev };
+      for (const tool of tools) {
+        const input = tool.input;
+        switch (tool.name) {
+          case "mcp__pedagogy__load_roster":
+            if (typeof input.groupName === "string") next.groupName = input.groupName;
+            if (typeof input.domain === "string") next.domain = input.domain;
+            if (Array.isArray(input.members)) {
+              const names = input.members
+                .map((m: unknown) => {
+                  if (typeof m === "string") return m;
+                  if (typeof m === "object" && m !== null && "name" in m && typeof (m as Record<string, unknown>).name === "string") {
+                    return (m as Record<string, unknown>).name as string;
+                  }
+                  return undefined;
+                })
+                .filter((n): n is string => typeof n === "string");
+              if (names.length > 0) {
+                next.learnerNames = [...new Set([...next.learnerNames, ...names])];
+              }
+            }
+            break;
+          case "mcp__pedagogy__query_skill_graph":
+            if (typeof input.domain === "string") next.domain = input.domain;
+            if (typeof input.skillId === "string") {
+              next.skillsDiscussed = [...new Set([...next.skillsDiscussed, input.skillId])];
+            }
+            if (Array.isArray(input.skillIds)) {
+              const ids = input.skillIds.filter((s: unknown): s is string => typeof s === "string");
+              next.skillsDiscussed = [...new Set([...next.skillsDiscussed, ...ids])];
+            }
+            break;
+          case "mcp__pedagogy__query_group":
+            if (typeof input.groupName === "string") next.groupName = input.groupName;
+            if (typeof input.domain === "string") next.domain = input.domain;
+            break;
+          case "mcp__pedagogy__assess_learner":
+            if (typeof input.learnerId === "string") {
+              next.learnerNames = [...new Set([...next.learnerNames, input.learnerId])];
+            }
+            if (typeof input.domain === "string") next.domain = input.domain;
+            if (typeof input.skillId === "string") {
+              next.skillsDiscussed = [...new Set([...next.skillsDiscussed, input.skillId])];
+            }
+            break;
+          case "mcp__pedagogy__generate_assessment_link":
+          case "mcp__pedagogy__check_assessment_status":
+            if (typeof input.groupName === "string") next.groupName = input.groupName;
+            if (typeof input.domain === "string") next.domain = input.domain;
+            break;
+          case "mcp__pedagogy__audit_prerequisites":
+          case "mcp__pedagogy__compose_lesson_plan":
+            if (typeof input.groupName === "string") next.groupName = input.groupName;
+            if (typeof input.domain === "string") next.domain = input.domain;
+            if (typeof input.duration === "number") {
+              const c = `${input.duration} minutes`;
+              if (!next.constraints.includes(c)) next.constraints = [...next.constraints, c];
+            }
+            if (typeof input.constraints === "string" && input.constraints.trim()) {
+              const parts = input.constraints.split(/[,;]/).map((s: string) => s.trim()).filter(Boolean);
+              const newConstraints = parts.filter((p: string) => !next.constraints.includes(p));
+              if (newConstraints.length > 0) next.constraints = [...next.constraints, ...newConstraints];
+            }
+            break;
+        }
+      }
+      return next;
+    });
+  }, []);
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
@@ -139,6 +218,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
       case "assistant": {
         if (msg.toolUses && msg.toolUses.length > 0) {
           setActiveTools(msg.toolUses);
+          extractContext(msg.toolUses);
         }
 
         const streamId = streamingMessageIdRef.current;
@@ -249,7 +329,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         break;
       }
     }
-  }, []);
+  }, [extractContext]);
 
   useEffect(() => {
     const client = new ChatClient({
@@ -348,16 +428,32 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             <h1 className="text-lg font-heading text-text-primary">Teaching Workspace</h1>
           </div>
         </div>
-        {status !== "connected" && (
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${connLabel.color}`} />
-            <span className="text-xs text-text-tertiary">{connLabel.text}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {status !== "connected" && (
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${connLabel.color}`} />
+              <span className="text-xs text-text-tertiary">{connLabel.text}</span>
+            </div>
+          )}
+          {/* Mobile sidebar toggle */}
+          <button
+            onClick={toggleSidebar}
+            className="md:hidden p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-2 transition-colors"
+            title="Session context"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+        </div>
       </header>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4">
+      {/* Main content area with sidebar */}
+      <div className="flex-1 flex relative overflow-hidden">
+        {/* Chat column */}
+        <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarCollapsed ? "" : "md:mr-[280px]"}`}>
+        {/* Messages area */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4">
         {messages.length === 0 && (status === "error" || status === "disconnected") && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
@@ -518,7 +614,17 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             </button>
           )}
         </div>
-      </div>
+      </div>{/* end input area */}
+      </div>{/* end chat column */}
+
+        {/* Session context sidebar */}
+        <SessionContextSidebar
+          context={sessionContext}
+          connectionStatus={status}
+          collapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
+        />
+      </div>{/* end main content area */}
     </div>
   );
 }
