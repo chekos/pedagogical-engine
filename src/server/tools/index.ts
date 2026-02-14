@@ -26,6 +26,15 @@ import { analyzeCrossDomainTransferTool } from "./analyze-cross-domain-transfer.
 import { explainReasoningTool, storeReasoningTracesTool } from "./explain-reasoning.js";
 import { analyzeMetaPedagogicalPatternsTool } from "./analyze-meta-pedagogical-patterns.js";
 import { reportAssessmentProgressTool } from "./report-assessment-progress.js";
+import { googleCheckConnectionTool } from "./google-check-connection.js";
+import { googleRequestConnectionTool } from "./google-request-connection.js";
+import { googleExportLessonToDocsTool } from "./google-export-lesson-to-docs.js";
+import { googleImportRosterTool } from "./google-import-roster.js";
+import { googleExportAssessmentsTool } from "./google-export-assessments.js";
+import { googleListDriveTool } from "./google-list-drive.js";
+import { googleShareDocumentTool } from "./google-share-document.js";
+import { googleSyncClassroomTool } from "./google-sync-classroom.js";
+import { googleExportLessonToSlidesTool } from "./google-export-lesson-to-slides.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -59,5 +68,14 @@ export const pedagogyServer = createSdkMcpServer({
     storeReasoningTracesTool,
     analyzeMetaPedagogicalPatternsTool,
     reportAssessmentProgressTool,
+    googleCheckConnectionTool,
+    googleRequestConnectionTool,
+    googleExportLessonToDocsTool,
+    googleImportRosterTool,
+    googleExportAssessmentsTool,
+    googleListDriveTool,
+    googleShareDocumentTool,
+    googleSyncClassroomTool,
+    googleExportLessonToSlidesTool,
   ],
 });

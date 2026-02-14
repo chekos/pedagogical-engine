@@ -14,6 +14,7 @@
     "express": "^4",
     "react": "^19",
     "nanoid": "^5",
+    "googleapis": "^144",
     "ws": "^8",
     "zod": "^4"
   },

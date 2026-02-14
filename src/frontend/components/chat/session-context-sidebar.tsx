@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { ConnectionStatus } from "@/lib/api";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export interface SessionContext {
   groupName: string | null;
   domain: string | null;
+  lessonId: string | null;
   constraints: string[];
   learnerNames: string[];
   skillsDiscussed: string[];
@@ -14,6 +17,7 @@ export interface SessionContext {
 export const EMPTY_SESSION_CONTEXT: SessionContext = {
   groupName: null,
   domain: null,
+  lessonId: null,
   constraints: [],
   learnerNames: [],
   skillsDiscussed: [],
@@ -53,6 +57,56 @@ const STATUS_LABEL: Record<ConnectionStatus, string> = {
   disconnected: "Disconnected",
   error: "Error",
 };
+
+function GoogleStatusBadge() {
+  const [googleStatus, setGoogleStatus] = useState<{
+    connected: boolean;
+    email: string | null;
+  } | null>(null);
+
+  const checkStatus = useCallback(() => {
+    fetch(`${API_BASE}/api/auth/google/status`)
+      .then((r) => r.json())
+      .then((data) => setGoogleStatus(data))
+      .catch(() => setGoogleStatus(null));
+  }, []);
+
+  // Check on mount and every 60 seconds
+  useEffect(() => {
+    checkStatus();
+    const interval = setInterval(checkStatus, 60_000);
+    return () => clearInterval(interval);
+  }, [checkStatus]);
+
+  // Also re-check when localStorage signal fires (from OAuth popup)
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === "google-oauth-connected") checkStatus();
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }, [checkStatus]);
+
+  if (!googleStatus) return null;
+
+  return (
+    <div>
+      <SectionHeading>Google</SectionHeading>
+      <div className="flex items-center gap-2">
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${
+            googleStatus.connected ? "bg-green-400" : "bg-gray-400"
+          }`}
+        />
+        <span className="text-xs text-text-secondary">
+          {googleStatus.connected
+            ? googleStatus.email || "Connected"
+            : "Not connected"}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function SidebarContent({ context }: { context: SessionContext }) {
   const hasAnyContext =
@@ -106,6 +160,16 @@ function SidebarContent({ context }: { context: SessionContext }) {
         </div>
       )}
 
+      {/* Lesson */}
+      {context.lessonId && (
+        <div>
+          <SectionHeading>Lesson</SectionHeading>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-surface-2 text-text-secondary">
+            {context.lessonId}
+          </span>
+        </div>
+      )}
+
       {/* Constraints */}
       {context.constraints.length > 0 && (
         <div>
@@ -137,6 +201,9 @@ function SidebarContent({ context }: { context: SessionContext }) {
           </div>
         </div>
       )}
+
+      {/* Google Workspace status */}
+      <GoogleStatusBadge />
     </>
   );
 }

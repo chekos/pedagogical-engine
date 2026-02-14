@@ -6,6 +6,7 @@ import type { ToolUse } from "@/lib/api";
 import LessonPlanView from "@/components/lesson-plan/lesson-plan-view";
 import GroupDashboard from "@/components/visualizations/group-dashboard";
 import AskUserQuestionCard from "./ask-user-question-card";
+import GoogleConnectCard from "./google-connect-card";
 import { getGroupDashboardData, getLiveGraphData, getLiveGraphDataWithGroupOverlay } from "@/lib/demo-data";
 
 // Dynamic import for ReactFlow component (client-side only)
@@ -32,6 +33,15 @@ const TOOL_META: Record<string, { label: string; bloomColor: string }> = {
   "Skill": { label: "Loading Skill", bloomColor: "var(--bloom-understand)" },
   "Task": { label: "Running Subagent", bloomColor: "var(--bloom-create)" },
   "AskUserQuestion": { label: "Question for You", bloomColor: "var(--accent)" },
+  "mcp__pedagogy__check_google_connection": { label: "Checking Google Connection", bloomColor: "var(--bloom-understand)" },
+  "mcp__pedagogy__request_google_connection": { label: "Requesting Google Access", bloomColor: "var(--accent)" },
+  "mcp__pedagogy__export_lesson_to_docs": { label: "Exporting to Google Docs", bloomColor: "var(--bloom-create)" },
+  "mcp__pedagogy__import_roster_from_sheets": { label: "Importing from Sheets", bloomColor: "var(--bloom-remember)" },
+  "mcp__pedagogy__export_assessments_to_sheets": { label: "Exporting to Sheets", bloomColor: "var(--bloom-create)" },
+  "mcp__pedagogy__list_drive_files": { label: "Browsing Drive", bloomColor: "var(--bloom-understand)" },
+  "mcp__pedagogy__share_document": { label: "Sharing Document", bloomColor: "var(--bloom-apply)" },
+  "mcp__pedagogy__sync_with_classroom": { label: "Syncing with Classroom", bloomColor: "var(--bloom-apply)" },
+  "mcp__pedagogy__export_lesson_to_slides": { label: "Exporting to Slides", bloomColor: "var(--bloom-create)" },
 };
 
 /** Strip MCP prefix and convert snake_case to Title Case */
@@ -192,6 +202,14 @@ function isAskUserQuestion(tool: ToolUse): boolean {
   return tool.name === "AskUserQuestion" && Array.isArray(tool.input.questions);
 }
 
+// Detect if tool is a Google connect request
+function isGoogleConnectRequest(tool: ToolUse): boolean {
+  return (
+    tool.name === "mcp__pedagogy__request_google_connection" &&
+    typeof tool.input.reason === "string"
+  );
+}
+
 interface ToolResultProps {
   tool: ToolUse;
   isActive?: boolean;
@@ -216,6 +234,16 @@ export default memo(function ToolResult({ tool, isActive = false, onSendMessage,
           multiSelect?: boolean;
         }>}
         onSubmit={onSendMessage}
+      />
+    );
+  }
+
+  // Special rendering for Google connect request — inline card with OAuth popup
+  if (isGoogleConnectRequest(tool) && onSendMessage) {
+    return (
+      <GoogleConnectCard
+        reason={String(tool.input.reason)}
+        onConnected={() => onSendMessage("I've connected my Google account.")}
       />
     );
   }

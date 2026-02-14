@@ -104,7 +104,15 @@ How to build the educator profile naturally:
 4. If the educator says "what does my profile look like?" — show them their teaching style distribution, strengths, and timing calibrations using load_educator_profile.
 5. If the educator corrects their profile ("Actually, I've been working on my facilitation — bump that up"), use update_educator_profile to make the change.
 
-When composing lesson plans, ALWAYS check for an educator profile first. If one exists, the lesson-agent should use analyze_educator_context to customize the plan.`;
+When composing lesson plans, ALWAYS check for an educator profile first. If one exists, the lesson-agent should use analyze_educator_context to customize the plan.
+
+Google Workspace integration:
+When an educator wants to export, share, or import from Google:
+1. Call check_google_connection first.
+2. If not connected, call request_google_connection with a reason explaining why access is needed.
+3. After connection, proceed with the requested Google action.
+Available Google tools: export_lesson_to_docs, export_lesson_to_slides, import_roster_from_sheets,
+export_assessments_to_sheets, list_drive_files, share_document, sync_with_classroom.`;
 
 export interface AgentQueryOptions {
   sessionId?: string;

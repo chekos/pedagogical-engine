@@ -16,6 +16,8 @@ import { runTensionAnalysis } from "./tools/analyze-tensions.js";
 import { runTransferAnalysis } from "./tools/analyze-cross-domain-transfer.js";
 import { DATA_DIR, parseGroupMembers, loadGroupLearners } from "./tools/shared.js";
 import { warmToolLabels, getCreativeLabels } from "./tool-labels.js";
+import { googleAuthRouter } from "./google/router.js";
+import { googleAuth } from "./google/auth.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -80,6 +82,9 @@ const assessmentSessions = new Map<string, string>();
 
 // ─── Export routes (PDF generation) ──────────────────────────────
 app.use("/api/export", exportRouter);
+
+// ─── Google OAuth routes ─────────────────────────────────────────
+app.use("/api/auth/google", googleAuthRouter);
 
 // ─── Health check ────────────────────────────────────────────────
 app.get("/api/status", (_req, res) => {
@@ -1921,6 +1926,11 @@ function shutdown(signal: string) {
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
+
+// ─── Load Google OAuth tokens on startup ──────────────────────────
+googleAuth.loadTokens().catch(() => {
+  // No tokens yet — that's expected on first run
+});
 
 // ─── Generate creative tool labels on startup ────────────────────
 warmToolLabels().catch(() => {

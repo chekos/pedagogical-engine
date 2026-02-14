@@ -14,10 +14,10 @@ an experienced teacher, not a content generator.
 ## Architecture
 - Skills in .claude/skills/ encode your pedagogical methodology
 - Subagents in .claude/agents/ handle specialized reasoning branches
-- 27 custom MCP tools in the pedagogy MCP server access data in data/
+- 36 custom MCP tools in the pedagogy MCP server access data in data/
 - All persistent data lives in data/ as JSON and Markdown files
 
-## What's built (as of Session 11 — Feb 13, 2026)
+## What's built (as of Session 12 — Feb 14, 2026)
 
 ### 9 Moonshot features
 1. **Lesson simulation** — predict friction before teaching
@@ -33,7 +33,7 @@ an experienced teacher, not a content generator.
 ### Backend (src/server/)
 - Express + WebSocket server on port 3000
 - Agent SDK integration with Opus 4.6 for educator conversations, Sonnet for assessments
-- 27 custom MCP tools via `createSdkMcpServer`:
+- 36 custom MCP tools via `createSdkMcpServer`:
   - `load_roster` — load or create groups and learner profiles
   - `query_skill_graph` — BFS/DFS traversal, dependency inference, Bloom's level filtering
   - `generate_assessment_link` — create assessment sessions with shareable codes
@@ -61,6 +61,15 @@ an experienced teacher, not a content generator.
   - `explain_pedagogical_reasoning` — retrieve and compose evidence-based explanations for any decision in a lesson plan, grounded in skill graph, learner profiles, Bloom's levels, and constraints
   - `store_reasoning_traces` — store structured reasoning traces alongside lesson plans during composition, capturing what was decided, why, what alternatives were considered, and what would change the decision
   - `analyze_meta_pedagogical_patterns` — detect when an educator's questions reveal a pattern (e.g., keeps asking about timing) and surface the underlying pedagogical principle to teach
+  - `check_google_connection` — check whether Google account is connected, returns status, email, and services
+  - `request_google_connection` — request OAuth connection; frontend renders inline connect card
+  - `export_lesson_to_docs` — export a lesson plan to a formatted Google Doc with headings, bold, lists
+  - `export_lesson_to_slides` — export a lesson plan to a Google Slides presentation (one slide per section)
+  - `import_roster_from_sheets` — import student names from a Google Sheet as learner profiles
+  - `export_assessments_to_sheets` — export a group's skill matrix to a Google Sheet
+  - `list_drive_files` — list files from Google Drive with optional query/mimeType filter
+  - `share_document` — share a Google Drive file with email addresses
+  - `sync_with_classroom` — list Google Classroom courses or import students from a course
 - Session management with WebSocket connection mapping
 - Graceful shutdown, periodic session cleanup
 
@@ -114,6 +123,13 @@ an experienced teacher, not a content generator.
   - Expandable trace cards showing decision, reasoning, evidence tags, alternatives considered, and what would change
   - Evidence breakdown by type: skill graph, learner profiles, Bloom's taxonomy, constraints, teaching wisdom, educator profile
   - Pedagogical principles reference grid
+- Google Workspace onboarding (/onboarding) — 3-step OAuth connect wizard
+  - Step 1: value prop with 4 benefit cards (Docs, Sheets, Classroom, Drive) + connect CTA + skip
+  - Step 3: success state with connected email, service checklist, "Start planning" link
+  - OAuth callback page (/onboarding/callback) handles success/error with localStorage signaling
+- Inline Google connect card in chat — rendered when agent calls `request_google_connection`
+  - Opens OAuth consent in popup, polls for close, checks status, sends confirmation to agent
+- Google status badge in session context sidebar — polls `/api/auth/google/status`
 - Custom theme with light/dark mode via CSS variables
 
 ### Meta-pedagogical layer (Moonshot 4)
@@ -264,6 +280,7 @@ an experienced teacher, not a content generator.
 - Educator profiles: data/educators/{id}.json (JSON — teaching style, strengths, timing patterns)
 - Reasoning traces: data/reasoning-traces/{lesson-id}.json (JSON — decision traces with evidence chains)
 - Meta-pedagogical question history: data/meta-pedagogical/{educator-id}-questions.json (JSON — question patterns for teaching moments)
+- Google OAuth tokens: data/auth/google-tokens.json (JSON — auto-refreshed, gitignored)
 
 ## Behavioral rules
 - Always read the relevant skill before performing a task
@@ -276,6 +293,7 @@ an experienced teacher, not a content generator.
 - After composing a lesson plan, generate and store reasoning traces for every major decision — traces capture evidence, alternatives, and conditions for changing the decision
 - When an educator asks "why" about a plan decision, use explain_pedagogical_reasoning to retrieve traces and compose specific, evidence-grounded explanations
 - When an educator's questions show a pattern, use analyze_meta_pedagogical_patterns to detect it and offer to teach the underlying pedagogical principle
+- When an educator wants to export, share, or import from Google, call check_google_connection first; if not connected, call request_google_connection before proceeding
 - Never hardcode skill definitions — always read from data/domains/
 
 ## Dev setup
@@ -301,6 +319,22 @@ an experienced teacher, not a content generator.
   - ExportButton component with download, loading, and error states
   - /lessons page — browse and export all lesson plans
   - Inline export buttons in lesson plan view, dashboard header
+
+### Google Workspace integration (src/server/google/)
+- OAuth2 authentication with `googleapis` npm package (in-process, no external binary)
+- `GoogleAuthManager` singleton: OAuth2 client, token persistence, 60s cache, CSRF state validation
+- Tokens stored at `data/auth/google-tokens.json`, auto-refreshed and persisted
+- Express router at `/api/auth/google` with `/status`, `/start`, `/callback`, `/disconnect` endpoints
+- Google API wrappers:
+  - `docs.ts` — create formatted Docs from markdown (headings, bold, bullet lists)
+  - `sheets.ts` — read from and create Sheets with auto-formatting
+  - `slides.ts` — create presentations from lesson plans (one slide per section)
+  - `drive.ts` — list files and share with permissions
+  - `classroom.ts` — list courses and import students
+- 9 MCP tools for Google operations (all check connection first, return error if not connected)
+- Agent system prompt instructs: check_google_connection → request_google_connection → proceed
+- Frontend: inline connect card in chat, onboarding wizard at `/onboarding`
+- Env vars: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
 
 ## Current limitations
 - 4 domains (python-data-analysis, farm-science, outdoor-ecology, culinary-fundamentals) — extensible to more

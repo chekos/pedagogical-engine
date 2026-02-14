@@ -118,12 +118,19 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
     setSessionContext((prev) => {
       let next = { ...prev };
       for (const tool of tools) {
+        // Extract lessonId from file-based tools (Read/Write on lesson files)
+        if ((tool.name === "Read" || tool.name === "Write") && typeof tool.input.file_path === "string") {
+          const lessonMatch = tool.input.file_path.match(/lessons\/(.+?)\.md$/);
+          if (lessonMatch) next.lessonId = lessonMatch[1];
+        }
+
         if (!tool.name.startsWith("mcp__pedagogy__")) continue;
         const input = tool.input;
 
         // Common parameters — consistent across tools
         if (typeof input.domain === "string") next.domain = input.domain;
         if (typeof input.groupName === "string") next.groupName = input.groupName;
+        if (typeof input.lessonId === "string") next.lessonId = input.lessonId;
 
         // Skill references
         if (typeof input.skillId === "string") {
