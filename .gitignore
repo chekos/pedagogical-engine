@@ -6,4 +6,4 @@ dist/
 .env.local
 .env.production
 .worktrees/
-data/auth/
+agent-workspace/data/auth/

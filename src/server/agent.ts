@@ -13,7 +13,7 @@ import { agentDefinitions } from "./agents/index.js";
 
 // agent.ts is at src/server/ — go up 2 levels to project root
 const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(import.meta.dirname ?? process.cwd(), import.meta.dirname ? "../.." : ".");
-const DATA_DIR = process.env.DATA_DIR || path.join(PROJECT_ROOT, "data");
+const DATA_DIR = process.env.DATA_DIR || path.join(PROJECT_ROOT, "agent-workspace", "data");
 // Agent workspace — separate from developer's .claude/skills/
 const AGENT_WORKSPACE = path.join(PROJECT_ROOT, "agent-workspace");
 

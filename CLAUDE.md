@@ -16,7 +16,7 @@ an experienced teacher, not a content generator.
 - Agent skills in `agent-workspace/.claude/skills/` are what the in-app agent uses (pedagogical + Office export skills)
 - Agent subagents in `agent-workspace/.claude/agents/` handle specialized reasoning branches
 - 36 custom MCP tools in the pedagogy MCP server access data in data/
-- All persistent data lives in data/ as JSON and Markdown files
+- All persistent data lives in agent-workspace/data/ as JSON and Markdown files
 - Agent workspace separation: the agent SDK runs with `cwd: agent-workspace/` so it picks up agent-specific skills, not developer skills
 
 ## What's built (as of Session 12 — Feb 14, 2026)
@@ -271,7 +271,7 @@ an experienced teacher, not a content generator.
 - Skills for developers working on the codebase (not loaded by the in-app agent)
 - Reference files: Bloom's taxonomy patterns, inference rules, lesson plan template
 
-### Demo data (data/)
+### Demo data (agent-workspace/data/)
 - Domain: python-data-analysis (25 skills, 48 dependency edges, 6 Bloom's levels)
 - Group: tuesday-cohort (5 learners with diverse skill profiles)
 - Learners: Priya (advanced), Marcus (intermediate, accessibility needs), Sofia (intermediate, viz-strong), Alex (beginner), Nkechi (mixed — R expert learning Python)
@@ -279,6 +279,7 @@ an experienced teacher, not a content generator.
 - Educators: Dr. Sarah Chen (lecture/structured expert), Marcus Rodriguez (hands-on facilitator) — contrasting profiles for same-lesson comparison demo
 
 ## Data conventions
+All persistent data lives in `agent-workspace/data/` — accessible to both the agent (relative `data/` from its cwd) and server code (via `DATA_DIR`).
 - Skill graphs: data/domains/{domain}/skills.json, dependencies.json (JSON — programmatic traversal)
 - Learner profiles: data/learners/{id}.md (Markdown — human-readable, educator-editable)
 - Groups: data/groups/{name}.md (Markdown — human-readable)
