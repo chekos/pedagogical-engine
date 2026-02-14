@@ -219,6 +219,51 @@ export const assessLearnerTool = tool(
 
     await fs.writeFile(learnerPath, content, "utf-8");
 
+    // Ensure the learner is listed in their group file
+    const groupMatch = content.match(/\| \*\*Group\*\* \| (.+?) \|/);
+    if (groupMatch) {
+      const groupSlug = groupMatch[1].trim();
+      const groupPath = path.join(DATA_DIR, "groups", `${groupSlug}.md`);
+      try {
+        let groupContent = await fs.readFile(groupPath, "utf-8");
+        // Check if learner is already listed as a member
+        if (!groupContent.includes(`(\`${learnerId}\`)`)) {
+          // Extract learner name from profile
+          const nameMatch = content.match(/\| \*\*Name\*\* \| (.+?) \|/);
+          const learnerName = nameMatch?.[1]?.trim() ?? learnerId;
+          // Add to members list
+          if (groupContent.includes("_No members yet._")) {
+            groupContent = groupContent.replace("_No members yet._", `- ${learnerName} (\`${learnerId}\`)`);
+          } else {
+            // Append after the last member line in the Members section
+            const membersIdx = groupContent.indexOf("## Members");
+            if (membersIdx !== -1) {
+              const afterMembers = groupContent.slice(membersIdx);
+              const nextSection = afterMembers.indexOf("\n## ", 4);
+              const insertPos = nextSection !== -1
+                ? membersIdx + nextSection
+                : groupContent.length;
+              groupContent = groupContent.slice(0, insertPos).trimEnd() +
+                `\n- ${learnerName} (\`${learnerId}\`)\n` +
+                groupContent.slice(insertPos);
+            }
+          }
+          // Update member count
+          const countMatch = groupContent.match(/\| \*\*Member count\*\* \| (\d+) \|/);
+          if (countMatch) {
+            const newCount = parseInt(countMatch[1]) + 1;
+            groupContent = groupContent.replace(
+              /\| \*\*Member count\*\* \| \d+ \|/,
+              `| **Member count** | ${newCount} |`
+            );
+          }
+          await fs.writeFile(groupPath, groupContent, "utf-8");
+        }
+      } catch {
+        // Group file doesn't exist or can't be read — skip
+      }
+    }
+
     return toolResponse({
       learnerId,
       domain,

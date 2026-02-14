@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { BACKEND_URL } from "@/lib/constants";
 
 interface CodeEntryProps {
   initialCode?: string;
-  onSubmit: (code: string, name: string) => void;
+  onSubmit: (code: string, name: string, skillAreas?: string[]) => void;
 }
 
 export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps) {
   const [code, setCode] = useState(initialCode);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -25,7 +27,25 @@ export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps
       return;
     }
 
-    onSubmit(code.trim(), name.trim());
+    // Validate code and fetch metadata
+    setIsValidating(true);
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/api/assess/${encodeURIComponent(code.trim())}`
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Assessment code not found. Check and try again.");
+        return;
+      }
+      const data = await res.json();
+      onSubmit(code.trim(), name.trim(), data.skillAreas);
+    } catch {
+      // Network error — submit anyway, the chat will handle the error
+      onSubmit(code.trim(), name.trim());
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   return (
@@ -99,12 +119,15 @@ export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-accent text-white py-3.5 text-sm font-medium hover:bg-accent-muted transition-colors flex items-center justify-center gap-2"
+            disabled={isValidating}
+            className="w-full rounded-xl bg-accent text-white py-3.5 text-sm font-medium hover:bg-accent-muted disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
           >
-            Let&apos;s get started
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
+            {isValidating ? "Checking..." : "Let\u2019s get started"}
+            {!isValidating && (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            )}
           </button>
         </form>
 

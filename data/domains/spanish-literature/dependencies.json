@@ -1,0 +1,49 @@
+{
+  "domain": "spanish-literature",
+  "version": "1.0.0",
+  "description": "Directed dependency edges between spanish-literature skills. Source is the prerequisite; target is the dependent skill.",
+  "edges": [
+    {
+      "source": "reading-comprehension-spanish",
+      "target": "define-magical-realism",
+      "confidence": 0.9,
+      "type": "prerequisite"
+    },
+    {
+      "source": "basic-literary-terminology",
+      "target": "define-magical-realism",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "define-magical-realism",
+      "target": "key-literary-devices-magical-realism",
+      "confidence": 0.9,
+      "type": "prerequisite"
+    },
+    {
+      "source": "latin-american-historical-context",
+      "target": "key-literary-devices-magical-realism",
+      "confidence": 0.75,
+      "type": "recommended"
+    },
+    {
+      "source": "define-magical-realism",
+      "target": "distinguish-magical-realism-from-related-genres",
+      "confidence": 0.9,
+      "type": "prerequisite"
+    },
+    {
+      "source": "key-literary-devices-magical-realism",
+      "target": "recognize-magical-realism-in-passage",
+      "confidence": 0.9,
+      "type": "prerequisite"
+    },
+    {
+      "source": "distinguish-magical-realism-from-related-genres",
+      "target": "recognize-magical-realism-in-passage",
+      "confidence": 0.8,
+      "type": "prerequisite"
+    }
+  ]
+}

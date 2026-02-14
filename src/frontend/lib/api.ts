@@ -49,13 +49,19 @@ export interface ToolProgressMessage {
   elapsed: number;
 }
 
+export interface StreamDeltaMessage {
+  type: "stream_delta";
+  text: string;
+}
+
 export type ServerMessage =
   | AssistantMessage
   | ResultMessage
   | SystemMessage
   | SessionMessage
   | ErrorMessage
-  | ToolProgressMessage;
+  | ToolProgressMessage
+  | StreamDeltaMessage;
 
 // ─── Configuration ─────────────────────────────────────────────
 
@@ -322,6 +328,8 @@ export async function submitSectionFeedback(
 export interface AssessmentResponse {
   messages: Array<{ type: string; text: string }>;
   result: ResultMessage | null;
+  assessmentComplete?: boolean;
+  coveredSkills?: Array<{ skillId: string; skillLabel: string }>;
 }
 
 export async function sendAssessmentMessage(
@@ -488,5 +496,90 @@ export async function checkBackendStatus(): Promise<{
 }> {
   const res = await fetch(`${BACKEND_URL}/api/status`);
   if (!res.ok) throw new Error("Backend unavailable");
+  return res.json();
+}
+
+// ─── Domain & Group Discovery ─────────────────────────────────
+
+export interface DomainSummary {
+  slug: string;
+  name: string;
+  description: string;
+  stats: { skills: number; dependencies: number };
+}
+
+export interface DomainDetail {
+  slug: string;
+  skills: Array<{
+    id: string;
+    label: string;
+    bloom_level: string;
+    assessable: boolean;
+    dependencies: string[];
+  }>;
+  edges: Array<{
+    source: string;
+    target: string;
+    confidence: number;
+    type: string;
+  }>;
+}
+
+export interface GroupSummary {
+  slug: string;
+  name: string;
+  domain: string;
+  memberCount: number;
+  members: Array<{ id: string; name: string }>;
+}
+
+export interface GroupStatus {
+  group: string;
+  domain: string;
+  summary: {
+    total: number;
+    completed: number;
+    notStarted: number;
+    completionRate: number;
+  };
+  learners: Array<{
+    id: string;
+    name: string;
+    status: "completed" | "not_started" | "in_progress";
+    skillCount: number;
+    skills: Record<string, { confidence: number; type: string }>;
+  }>;
+  skillNames: string[];
+}
+
+export async function fetchDomains(): Promise<DomainSummary[]> {
+  const res = await fetch(`${BACKEND_URL}/api/domains`);
+  if (!res.ok) throw new Error("Failed to fetch domains");
+  const data = await res.json();
+  return data.domains;
+}
+
+export async function fetchDomainDetail(slug: string): Promise<DomainDetail> {
+  const res = await fetch(`${BACKEND_URL}/api/domains/${encodeURIComponent(slug)}`);
+  if (!res.ok) throw new Error(`Domain '${slug}' not found`);
+  const data = await res.json();
+  return data;
+}
+
+export async function fetchGroups(): Promise<GroupSummary[]> {
+  const res = await fetch(`${BACKEND_URL}/api/groups`);
+  if (!res.ok) throw new Error("Failed to fetch groups");
+  const data = await res.json();
+  return data.groups;
+}
+
+export async function fetchGroupStatus(
+  group: string,
+  domain: string
+): Promise<GroupStatus> {
+  const res = await fetch(
+    `${BACKEND_URL}/api/assess/status/${encodeURIComponent(group)}/${encodeURIComponent(domain)}`
+  );
+  if (!res.ok) throw new Error(`Group status not found for ${group}/${domain}`);
   return res.json();
 }

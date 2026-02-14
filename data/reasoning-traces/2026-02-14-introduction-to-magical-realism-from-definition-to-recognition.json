@@ -1,0 +1,208 @@
+{
+  "lessonId": "2026-02-14-introduction-to-magical-realism-from-definition-to-recognition",
+  "domain": "spanish-literature",
+  "groupName": "mr-sanchez-ap-spanish-lit",
+  "createdAt": "2026-02-14T01:08:48.223Z",
+  "traceCount": 8,
+  "traces": [
+    {
+      "id": "trace-001",
+      "sectionId": "scope-reduction",
+      "decisionType": "ordering",
+      "decision": "Dropped 'distinguish-magical-realism-from-related-genres' as a full teaching target and folded it into the definition section as a brief aside",
+      "reasoning": "The original 4-skill scope required an estimated 69 minutes of content for a 50-minute session -- a 38% time overrun. The skill graph shows 'distinguish-magical-realism-from-related-genres' as a prerequisite for 'recognize-magical-realism-in-passage,' but the dependency confidence is 0.8 (vs 0.9 for key-literary-devices-magical-realism). A brief aside during the definition section ('it is not fantasy, not surrealism') plants the conceptual seed without consuming a dedicated 8-10 minute segment. This frees time for the passage walkthrough, which is where the 'one thing' lives. Students will develop the full distinction throughout the AP course.",
+      "evidence": {
+        "skillGraph": ["distinguish-magical-realism-from-related-genres (comprehension, dependency confidence 0.8)", "recognize-magical-realism-in-passage depends on both key-literary-devices and distinguish, but distinguish at lower confidence"],
+        "learnerProfiles": ["Only 1 of ~20 students assessed; cannot confirm prerequisite coverage for the class"],
+        "bloomsLevels": ["distinguish is comprehension level -- normally 10-15 min for a new group", "recognize is application level -- needs 12+ min for guided practice"],
+        "constraints": ["50-minute period, guest lecture format, early in the school year"],
+        "teachingWisdom": []
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Keep all 4 skills and compress each section",
+          "whyRejected": "Compressing 69 minutes of content into 50 minutes means every section is rushed. The passage walkthrough -- the most important activity -- would be cut to 5-6 minutes, barely enough to model one question. Better to do 3 skills well than 4 skills poorly."
+        },
+        {
+          "option": "Drop 'recognize-magical-realism-in-passage' instead (keep the distinction, cut the application)",
+          "whyRejected": "The 'one thing' for this session is passage recognition. Dropping the application-level skill means students hear about magical realism but never practice identifying it. That is a lecture, not a lesson. The distinction skill is more cuttable because (a) it has lower dependency confidence for passage recognition, and (b) students will encounter it repeatedly throughout the AP course."
+        }
+      ],
+      "wouldChangeIf": "If this were a 75-minute block period, all 4 skills fit comfortably. The distinction skill would get its own 10-minute segment with side-by-side passage comparisons (one magical realism, one fantasy, one surrealism). That would be the stronger pedagogical approach."
+    },
+    {
+      "id": "trace-002",
+      "sectionId": "phase-1",
+      "decisionType": "activity_choice",
+      "decision": "Guaranteed-win warm-up pair share ('most surreal thing that happened to you') placed before any content delivery",
+      "reasoning": "Three factors converged on this decision: (1) Affective context analysis recommended 'start with a guaranteed-win exercise' for a group with no affective data on file. (2) This is a guest speaker in an unfamiliar classroom -- students will be more reserved than usual. A pair-share with a neighbor (not the stranger) lowers the participation barrier. (3) The warm-up directly primes the core concept of magical realism ('real events that feel impossible') without using any literary vocabulary, creating a experiential bridge to the definition. Every student has an answer to this question -- it is impossible to fail.",
+      "evidence": {
+        "skillGraph": ["define-magical-realism depends on prior understanding of 'real but impossible'"],
+        "learnerProfiles": ["Sergio's assessment shows he connects magical realism to lived experience (0.94 on key-literary-devices) -- the warm-up validates this instinct for the whole class"],
+        "bloomsLevels": ["Pre-knowledge activation -- below Bloom's knowledge level, deliberately accessible"],
+        "constraints": ["Guest speaker format -- no prior relationship with students", "50-minute period -- warm-up must be 5 min max"],
+        "teachingWisdom": []
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Start directly with the definition (no warm-up)",
+          "whyRejected": "A stranger launching into a definition of magical realism to a room of teenagers who have not spoken yet creates a one-directional dynamic that is very hard to reverse. The first activity sets the participation norm for the session. If students are silent for the first 15 minutes, they will likely stay silent for the passage walkthrough."
+        },
+        {
+          "option": "Start with a passage cold read ('read this and tell me what you notice')",
+          "whyRejected": "Too high-stakes for a guest speaker's opening. Students have no framework yet for what they are looking for. Some would disengage because they feel they cannot succeed. The warm-up gives everyone a win before introducing challenge."
+        },
+        {
+          "option": "Start with a video clip of a magical realism scene",
+          "whyRejected": "Adds tech dependency (video playback, speakers, internet potentially) to the first 3 minutes. If the video fails, you have lost the opening. Also, watching a video is passive -- the pair-share requires every student to speak, which is a stronger rapport-builder for a guest speaker."
+        }
+      ],
+      "wouldChangeIf": "If the speaker had an existing relationship with the class (e.g., if this were Mr. Sanchez teaching), the warm-up could be shorter (2 min) or replaced with a cold passage read -- students would have the trust to risk public responses. The extended warm-up is specifically calibrated for the guest speaker dynamic."
+    },
+    {
+      "id": "trace-003",
+      "sectionId": "phase-2",
+      "decisionType": "ordering",
+      "decision": "Definition (8 min) before devices (10 min) before passage walkthrough (12 min) -- a deductive, lecture-to-application arc",
+      "reasoning": "The skill graph enforces this ordering: define-magical-realism is a prerequisite for key-literary-devices-magical-realism (confidence 0.9), which is a prerequisite for recognize-magical-realism-in-passage (confidence 0.9). The dependency chain is strict. Additionally, the group is new to magical realism (only Sergio has partial knowledge at 0.63 on the definition). For a group encountering a concept for the first time, a deductive approach (framework first, then application) is more reliable than an inductive approach (passage first, then extract the framework). The guest speaker format reinforces this: lecture-to-application is the natural shape for a guest talk with interactive elements.",
+      "evidence": {
+        "skillGraph": ["define-magical-realism -> key-literary-devices (0.9 prerequisite)", "key-literary-devices -> recognize-in-passage (0.9 prerequisite)", "Strict dependency chain with no bypass path"],
+        "learnerProfiles": ["Sergio: 0.63 on define (partial)", "Rest of class: assumed no prior knowledge of magical realism specifically"],
+        "bloomsLevels": ["knowledge -> comprehension -> application (ascending Bloom's, which matches the dependency chain)"],
+        "constraints": ["Guest speaker said 'this is more of a lecture' -- deductive arc fits the educator's stated preference"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Inductive approach: start with the passage, then extract definition and devices from what students notice",
+          "whyRejected": "For a group with near-zero prior knowledge of magical realism, an inductive approach risks students seeing the passage as 'weird fiction' without the conceptual vocabulary to analyze it. The devices are not intuitive enough to extract without scaffolding -- students might notice 'something strange happens' but would not identify 'matter-of-fact narration' or 'unresolved supernatural elements' as distinct devices. Inductive works for groups that have partial familiarity with the concept."
+        },
+        {
+          "option": "Interleaved: one device at a time, with a passage snippet illustrating each",
+          "whyRejected": "Elegant in theory, but requires 5 separate passage excerpts and 5 context-switches between lecture and close reading. In a 50-minute session with a guest speaker, the overhead of distributing, reading, and transitioning 5 times would consume too much time. One concentrated passage walkthrough is more efficient and creates a stronger 'aha' moment when students see multiple devices in a single text."
+        }
+      ],
+      "wouldChangeIf": "If this were a 90-minute session or a multi-day unit, the interleaved approach would be superior. Seeing each device in isolation before seeing them combined would build stronger individual recognition. Also, if the group had intermediate knowledge of magical realism (some had read Garcia Marquez already), an inductive passage-first approach would be more engaging because students could draw on existing knowledge."
+    },
+    {
+      "id": "trace-004",
+      "sectionId": "phase-3",
+      "decisionType": "activity_choice",
+      "decision": "Passage walkthrough is GUIDED (speaker-led with student contributions) rather than independent student analysis",
+      "reasoning": "Three factors: (1) Guest speaker format -- the speaker does not have the relationship capital to assign independent analytical work and troubleshoot when students struggle. Guided analysis lets the speaker model the thinking process while inviting contributions at safe moments. (2) Affective context -- with no affective data on file and a confidence-building recommendation, speaker-led analysis eliminates the risk of students freezing on an unfamiliar task in front of a stranger. Students participate by responding to targeted questions, not by performing solo analysis. (3) Time -- independent analysis requires more time (students read at different speeds, some need hints, regrouping takes time). A guided walkthrough is more time-efficient for a 50-minute session.",
+      "evidence": {
+        "skillGraph": ["recognize-magical-realism-in-passage is application level -- requires modeling before independent practice"],
+        "learnerProfiles": ["Only Sergio is assessed; cannot predict where most students will struggle", "Sergio finds symbolic interpretation challenging -- even the strongest assessed student might hold back during independent analysis"],
+        "bloomsLevels": ["Application level -- first exposure requires guided practice before independent practice"],
+        "constraints": ["Guest speaker -- no existing relationship with students", "50 minutes -- no time for independent work + debrief cycle"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Independent analysis: students read the passage and identify devices in pairs, then share",
+          "whyRejected": "Too risky for a guest speaker with an unassessed group. If most students cannot identify any devices, the share-out becomes painful silence. The speaker has no relationship to fall back on ('come on, we talked about this yesterday'). Also adds 5-7 minutes (reading time + pair discussion + share-out) that this session cannot afford."
+        },
+        {
+          "option": "Think-pair-share: students read independently, discuss with a partner, then speaker leads debrief",
+          "whyRejected": "Better than fully independent, but still assumes students can make initial progress alone. For a brand-new concept, some students will not know where to start, and their partner may not either. The pair discussion becomes two confused people confirming each other's confusion. Guided walkthrough prevents this by giving every student at least one successful analytical pass through the text."
+        }
+      ],
+      "wouldChangeIf": "If this were session 3 or 4 on magical realism (students had already seen the framework applied to 2-3 passages), independent or think-pair-share analysis would be the right move. Students would have the vocabulary and pattern recognition to make initial attempts. The guided approach is specifically for first exposure."
+    },
+    {
+      "id": "trace-005",
+      "sectionId": "phase-2",
+      "decisionType": "timing",
+      "decision": "10 minutes allocated to the 5 literary devices section (2 minutes per device)",
+      "reasoning": "Five devices at comprehension level for a new group suggests 15-20 minutes by the Bloom's baseline. However, this session cannot afford that -- the passage walkthrough needs 12+ minutes and is the higher-priority activity. The compression to 10 minutes is made feasible by two strategies: (1) each device gets a vivid, concrete example from a well-known text, making the device memorable without extended explanation, and (2) the passage walkthrough will reinforce 3-4 of the 5 devices through applied recognition, effectively giving students a second pass. The plan explicitly includes a contingency: if running behind, cut devices 4 and 5 to one sentence each and let students encounter them in the passage.",
+      "evidence": {
+        "skillGraph": ["key-literary-devices-magical-realism is comprehension level -- normally 10-15 min"],
+        "learnerProfiles": ["Sergio at 0.94 on devices -- but he is assessed; the rest of the class is assumed new", "AP students -- likely fast comprehension of vocabulary once examples are provided"],
+        "bloomsLevels": ["Comprehension level -- 2 min per concept is tight but viable with strong examples"],
+        "constraints": ["50 minutes total -- devices compete with passage walkthrough for time", "Guest lecture format -- lecture sections should stay engaging, not drag"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "15 minutes for devices (3 min each) with deeper examples",
+          "whyRejected": "Would push the passage walkthrough start to minute 31, leaving only 9 minutes for guided analysis. That is not enough to model the full 3-question framework. The passage walkthrough is where the 'one thing' lives -- it cannot be compressed below 10-12 minutes."
+        },
+        {
+          "option": "Teach only 3 devices (cut sensory overload and circular time entirely)",
+          "whyRejected": "Circular time and sensory overload are important for recognizing magical realism in passages where the more 'obvious' devices (supernatural events, enchanted objects) are less prominent. Naming all 5 -- even briefly -- gives students a complete toolkit. The Esquivel passage demonstrates 3 of 5; students will encounter the others in future readings."
+        }
+      ],
+      "wouldChangeIf": "If this were a 75-minute session, devices would get 18-20 minutes with two examples per device and a brief pair activity ('which device does this sentence illustrate?'). That would be the pedagogically stronger approach. The 10-minute compression is a time-budget compromise."
+    },
+    {
+      "id": "trace-006",
+      "sectionId": "phase-2",
+      "decisionType": "content_depth",
+      "decision": "Full talking points and suggested phrasings provided throughout the plan, not brief bullet points",
+      "reasoning": "No educator profile exists for the guest speaker. Without knowing their domain expertise, improvisation comfort, or teaching experience, the plan defaults to maximum scaffolding: full suggested phrasings, specific examples with context, and detailed stage direction for every transition. An expert speaker will skim these and use their own words. A less experienced speaker has everything they need to deliver a strong session. This is the safe default when educator expertise is unknown.",
+      "evidence": {
+        "skillGraph": [],
+        "learnerProfiles": [],
+        "bloomsLevels": [],
+        "constraints": ["No educator profile on file", "Guest speaker -- may be unfamiliar with this classroom's dynamics"],
+        "educatorProfile": ["No profile exists -- defaulting to full talking points"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Brief bullet points with timing cues only (trust the speaker to fill in)",
+          "whyRejected": "Without an educator profile confirming expert-level content knowledge, bullet points risk leaving a less experienced speaker underprepared. The worst case for full talking points is that an expert skims them. The worst case for bullet points is that a less experienced speaker stands in front of a class without enough to say. The downside of over-scaffolding is minor; the downside of under-scaffolding is a failed session."
+        }
+      ],
+      "wouldChangeIf": "If the educator profile showed expert content confidence in spanish-literature and high improvisation comfort, the plan would shift to brief bullets with timing cues and 'watch for' notes. The content delivery would be fully in the speaker's hands. See the Dr. Sarah Chen vs. Marcus Rodriguez comparison in the python-data-analysis domain for how the same lesson differs based on educator profile."
+    },
+    {
+      "id": "trace-007",
+      "sectionId": "contingency",
+      "decisionType": "contingency",
+      "decision": "Specific contingency alternatives provided (not open-ended pivots) at two time checkpoints: minute 16 and minute 28",
+      "reasoning": "Without an educator profile, the plan cannot determine whether the speaker is an improviser (who would benefit from open-ended contingencies like 'pivot to a discussion about why this is hard') or a structuralist (who needs specific instructions like 'cut devices 4 and 5 to one sentence each'). The safe default for an unknown speaker is specific alternatives -- they are usable by both improvisers and structuralists. The two checkpoint times (16 and 28) correspond to the two most likely failure modes: the definition section running long (eating into devices) and the devices section running long (eating into the passage walkthrough).",
+      "evidence": {
+        "skillGraph": ["dependency chain is define -> devices -> passage -- delays cascade forward"],
+        "learnerProfiles": ["Unassessed group -- cannot predict engagement level, which is the primary driver of timing overruns"],
+        "constraints": ["50-minute period with hard stop", "Guest speaker -- no prior experience with this class's pacing"],
+        "educatorProfile": ["No profile exists -- defaulting to specific alternatives (usable by any speaker type)"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Open-ended contingencies ('if running behind, improvise a shorter version')",
+          "whyRejected": "An experienced improviser would be fine, but a less experienced speaker might freeze when told to 'improvise a shorter version.' Specific instructions ('cut these two devices to one sentence each') are actionable by anyone."
+        },
+        {
+          "option": "No contingencies -- trust the timing",
+          "whyRejected": "A guest speaker in an unfamiliar classroom will almost certainly hit a timing issue. Student questions, slow warm-up participation, projector setup delays -- any of these can eat 3-5 minutes. Contingency planning is not pessimism; it is how you protect the 'one thing' from being crowded out by earlier sections running long."
+        }
+      ],
+      "wouldChangeIf": "If the educator profile showed high improvisation comfort and strong facilitation skills, contingencies would shift to open-ended pivots: 'If running behind, you know the material -- condense the devices section to whatever you think is essential and get to the passage.' That gives an experienced facilitator the freedom to make real-time judgment calls."
+    },
+    {
+      "id": "trace-008",
+      "sectionId": "passage-selection",
+      "decisionType": "activity_choice",
+      "decision": "Selected Laura Esquivel's 'Como agua para chocolate' cooking scene as the primary analysis passage (Passage B), with Garcia Marquez's 'Un senor muy viejo con unas alas enormes' as a secondary reference (Passage A)",
+      "reasoning": "The Esquivel passage is ideal for a first guided walkthrough because it demonstrates 3 of the 5 devices clearly and concretely: (1) enchanted objects (food with supernatural effects), (2) sensory overload (cooking descriptions rich with smell, taste, texture), and (3) unresolved supernatural elements (the text never explains why eating the food causes these reactions). The matter-of-fact narration is also evident. This density of devices in a single short passage means the speaker can demonstrate the 3-question framework completely without needing to switch texts. The Garcia Marquez passage is held in reserve for the quick check activity or as a reference point during the definition section. Using two different authors also signals that magical realism is not just Garcia Marquez.",
+      "evidence": {
+        "skillGraph": ["recognize-magical-realism-in-passage requires identifying devices in context -- the passage must contain multiple identifiable devices"],
+        "learnerProfiles": ["Sergio's assessment mentions he has not read 'Cien anos de soledad' yet but knows it is coming -- using Esquivel avoids 'spoiling' the major text while still demonstrating the same devices", "AP Spanish Lit course will cover these texts -- this is an appetizer, not the main course"],
+        "bloomsLevels": ["Application level requires concrete, analyzable material -- the passage must be rich enough to support guided analysis but short enough to read in 60 seconds"],
+        "constraints": ["Printed passages -- must be short enough to fit on one page", "Spanish language -- passage must be accessible to AP-level readers without extensive vocabulary support"]
+      },
+      "alternativesConsidered": [
+        {
+          "option": "Use only Garcia Marquez passages (the canonical author)",
+          "whyRejected": "Using only Garcia Marquez reinforces the common misconception that magical realism = Garcia Marquez. Using Esquivel for the main analysis and Garcia Marquez for the definition examples shows the mode in two different authorial voices. Also, Sergio has not read 'Cien anos' yet -- using a major passage from it could reduce the impact of his first full encounter with the text in the course."
+        },
+        {
+          "option": "Use a Borges passage",
+          "whyRejected": "Borges is often classified as magical realism but his work is more accurately described as fantastical or philosophical fiction. For a first introduction, using Borges risks confusing the distinction between magical realism and related modes. Better to start with a clear, unambiguous example (Esquivel) and let students encounter the boundary cases later."
+        },
+        {
+          "option": "Use a contemporary author (e.g., Carmen Maria Machado, Samanta Schweblin)",
+          "whyRejected": "While pedagogically interesting, contemporary authors are less likely to appear on the AP Spanish Literature exam and may not align with Mr. Sanchez's course plan. The guest lecture should set students up for the texts they will actually encounter. Also, the canonical texts have the clearest, most didactically useful examples of the devices."
+        }
+      ],
+      "wouldChangeIf": "If Mr. Sanchez indicated that the class would be reading 'Como agua para chocolate' in the next two weeks, the passage selection should change to avoid pre-reading a text they are about to encounter fresh. In that case, a passage from Isabel Allende's 'La casa de los espiritus' would be a strong alternative -- similarly rich in devices, different authorial voice, and likely on the AP reading list."
+    }
+  ]
+}

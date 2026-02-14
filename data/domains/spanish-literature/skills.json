@@ -1,0 +1,67 @@
+{
+  "domain": "spanish-literature",
+  "version": "1.0.0",
+  "description": "Magical realism in Latin American literature, focused on Gabriel García Márquez. Designed for a one-hour introductory webinar for AP Spanish Literature high school students. Covers definition, historical context, key literary devices, genre comparison, and passage recognition.",
+  "skills": [
+    {
+      "id": "reading-comprehension-spanish",
+      "label": "Reading comprehension in Spanish",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "basic-literary-terminology",
+      "label": "Basic literary terminology",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "define-magical-realism",
+      "label": "Define magical realism",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": [
+        "reading-comprehension-spanish",
+        "basic-literary-terminology"
+      ]
+    },
+    {
+      "id": "latin-american-historical-context",
+      "label": "Latin American historical context",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "key-literary-devices-magical-realism",
+      "label": "Key literary devices of magical realism",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": [
+        "define-magical-realism",
+        "latin-american-historical-context"
+      ]
+    },
+    {
+      "id": "distinguish-magical-realism-from-related-genres",
+      "label": "Distinguish magical realism from fantasy and surrealism",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": [
+        "define-magical-realism"
+      ]
+    },
+    {
+      "id": "recognize-magical-realism-in-passage",
+      "label": "Recognize magical realism in a passage",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": [
+        "key-literary-devices-magical-realism",
+        "distinguish-magical-realism-from-related-genres"
+      ]
+    }
+  ]
+}

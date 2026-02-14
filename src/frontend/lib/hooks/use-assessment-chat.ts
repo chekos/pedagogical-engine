@@ -20,6 +20,7 @@ export interface UseAssessmentChatReturn {
   input: string;
   setInput: (value: string) => void;
   isLoading: boolean;
+  loadingDurationSec: number;
   isComplete: boolean;
   progress: { covered: number; total: number; percent: number };
   error: string | null;
@@ -27,6 +28,8 @@ export interface UseAssessmentChatReturn {
   sendMessage: () => Promise<void>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   inputRef: React.RefObject<HTMLInputElement | null>;
+  coveredSkillIds: Set<string>;
+  coveredSkillLabels: Map<string, string>;
 }
 
 function estimateProgress(messages: AssessmentMessage[]): {
@@ -50,8 +53,11 @@ export function useAssessmentChat({
   const [messages, setMessages] = useState<AssessmentMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingDurationSec, setLoadingDurationSec] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
+  const [coveredSkillIds, setCoveredSkillIds] = useState<Set<string>>(new Set());
+  const [coveredSkillLabels, setCoveredSkillLabels] = useState<Map<string, string>>(new Map());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasStarted = useRef(false);
@@ -63,6 +69,36 @@ export function useAssessmentChat({
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  // Tick loading duration counter
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingDurationSec(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingDurationSec((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  // Merge covered skills from a response into accumulated state
+  const mergeCoveredSkills = useCallback(
+    (skills?: Array<{ skillId: string; skillLabel: string }>) => {
+      if (!skills || skills.length === 0) return;
+      setCoveredSkillIds((prev) => {
+        const next = new Set(prev);
+        for (const s of skills) next.add(s.skillId);
+        return next;
+      });
+      setCoveredSkillLabels((prev) => {
+        const next = new Map(prev);
+        for (const s of skills) next.set(s.skillId, s.skillLabel);
+        return next;
+      });
+    },
+    []
+  );
 
   // Auto-start assessment on mount
   useEffect(() => {
@@ -87,8 +123,9 @@ export function useAssessmentChat({
         );
 
         setMessages(assistantMessages);
+        mergeCoveredSkills(res.coveredSkills);
 
-        if (res.result?.subtype === "success") {
+        if (res.assessmentComplete === true) {
           setIsComplete(true);
         }
       } catch (err) {
@@ -111,7 +148,7 @@ export function useAssessmentChat({
     }
 
     start();
-  }, [code, learnerName, autoStartMessage]);
+  }, [code, learnerName, autoStartMessage, mergeCoveredSkills]);
 
   const sendMessage = useCallback(async () => {
     const trimmed = input.trim();
@@ -140,8 +177,9 @@ export function useAssessmentChat({
       );
 
       setMessages((prev) => [...prev, ...assistantMessages]);
+      mergeCoveredSkills(res.coveredSkills);
 
-      if (res.result?.subtype === "success") {
+      if (res.assessmentComplete === true) {
         setIsComplete(true);
       }
     } catch (err) {
@@ -150,15 +188,26 @@ export function useAssessmentChat({
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, isComplete, code, learnerName]);
+  }, [input, isLoading, isComplete, code, learnerName, mergeCoveredSkills]);
 
-  const progress = estimateProgress(messages);
+  // Use real tracked skills when available, fall back to message-count estimate
+  const progress =
+    coveredSkillIds.size > 0
+      ? {
+          covered: coveredSkillIds.size,
+          total: Math.max(coveredSkillIds.size, 6),
+          percent: Math.round(
+            (coveredSkillIds.size / Math.max(coveredSkillIds.size, 6)) * 100
+          ),
+        }
+      : estimateProgress(messages);
 
   return {
     messages,
     input,
     setInput,
     isLoading,
+    loadingDurationSec,
     isComplete,
     progress,
     error,
@@ -166,5 +215,7 @@ export function useAssessmentChat({
     sendMessage,
     messagesEndRef,
     inputRef,
+    coveredSkillIds,
+    coveredSkillLabels,
   };
 }

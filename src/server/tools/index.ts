@@ -25,6 +25,7 @@ import { analyzeEducatorContextTool } from "./analyze-educator-context.js";
 import { analyzeCrossDomainTransferTool } from "./analyze-cross-domain-transfer.js";
 import { explainReasoningTool, storeReasoningTracesTool } from "./explain-reasoning.js";
 import { analyzeMetaPedagogicalPatternsTool } from "./analyze-meta-pedagogical-patterns.js";
+import { reportAssessmentProgressTool } from "./report-assessment-progress.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -57,5 +58,6 @@ export const pedagogyServer = createSdkMcpServer({
     explainReasoningTool,
     storeReasoningTracesTool,
     analyzeMetaPedagogicalPatternsTool,
+    reportAssessmentProgressTool,
   ],
 });

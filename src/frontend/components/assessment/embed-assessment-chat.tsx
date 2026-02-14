@@ -1,7 +1,35 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import type { Components } from "react-markdown";
 import { useAssessmentChat } from "@/lib/hooks/use-assessment-chat";
+
+const markdownComponents: Components = {
+  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  pre: ({ children }) => <pre className="not-prose">{children}</pre>,
+  code: ({ className, children, ...props }) => {
+    const isBlock = className?.startsWith("language-");
+    if (isBlock) {
+      return (
+        <code className={`block font-mono text-[0.85em] ${className ?? ""}`} {...props}>
+          {children}
+        </code>
+      );
+    }
+    return <code {...props}>{children}</code>;
+  },
+  ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent-muted underline underline-offset-2 hover:text-accent">
+      {children}
+    </a>
+  ),
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em>{children}</em>,
+};
 
 interface EmbedAssessmentChatProps {
   code: string;
@@ -22,6 +50,7 @@ export default function EmbedAssessmentChat({
     input,
     setInput,
     isLoading,
+    loadingDurationSec,
     isComplete,
     progress,
     error,
@@ -147,7 +176,18 @@ export default function EmbedAssessmentChat({
                   : "bg-surface-2 text-text-primary rounded-bl-md"
               }`}
             >
-              <p className="whitespace-pre-wrap">{msg.text}</p>
+              {msg.role === "user" ? (
+                <p className="whitespace-pre-wrap">{msg.text}</p>
+              ) : (
+                <div className="prose-chat">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -168,7 +208,11 @@ export default function EmbedAssessmentChat({
                   <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
                 </div>
                 <span className="text-[10px] text-text-tertiary">
-                  Thinking...
+                  {loadingDurationSec > 20
+                    ? "Saving your results — almost done!"
+                    : loadingDurationSec > 8
+                      ? "Still working..."
+                      : "Thinking..."}
                 </span>
               </div>
             </div>

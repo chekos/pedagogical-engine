@@ -79,6 +79,8 @@ When an educator says "I want to teach something new", "let me set up my subject
 4. Iterate: Let the educator add, remove, or modify skills and dependencies. Use update_domain for incremental changes.
 5. Save: Use create_domain to write the finalized domain to data/domains/{domain-name}/.
 
+After saving, suggest natural next steps — setting up a group, assessing students, or composing a lesson plan — so the educator knows what's possible and isn't left at a dead end.
+
 Available domain tools:
 - mcp__pedagogy__create_domain — creates a new domain with full validation
 - mcp__pedagogy__update_domain — modifies an existing domain (add/remove/modify skills and edges, list all domains)
@@ -135,6 +137,7 @@ export async function createEducatorQuery(
       append: EDUCATOR_SYSTEM_PROMPT,
     },
     persistSession: true,
+    includePartialMessages: true,
   };
 
   if (options.resume) {
@@ -240,7 +243,8 @@ When the educator asks a question:
 export async function createAssessmentQuery(
   assessmentCode: string,
   learnerName: string,
-  message: string
+  message: string,
+  options: AgentQueryOptions = {}
 ): Promise<Query> {
   // Load the assessment session to get context
   const assessmentPath = path.join(
@@ -319,6 +323,11 @@ After completing the assessment conversation:
 2. Use the returned integrity modifier when calling \`assess_learner\` (pass it as integrityModifier)
 3. Include the integrity notes markdown (integrityMarkdown field from the result) as integrityNotes in the assess_learner call
 
+## Progress Reporting
+Before asking questions about each new skill area, call report_assessment_progress
+with the skill ID and label from the domain's skill graph. Call it once per skill
+transition — not for every question, just when you shift to a new topic.
+
 ## Technical Rules
 - Record confidence levels for every skill (assessed or inferred)
 - Note the Bloom's level demonstrated, not just pass/fail
@@ -326,28 +335,36 @@ After completing the assessment conversation:
 - Cover roughly 6 skill areas, but adapt based on the learner's level
 - After assessment, call analyze_assessment_integrity BEFORE assess_learner`;
 
-  return query({
-    prompt: `Hi, I'm ${learnerName}. ${message}`,
-    options: {
-      model: "sonnet",
-      cwd: PROJECT_ROOT,
-      settingSources: ["project"],
-      mcpServers: {
-        pedagogy: pedagogyServer,
-      },
-      allowedTools: [
-        "Read",
-        "Glob",
-        "Skill",
-        "mcp__pedagogy__assess_learner",
-        "mcp__pedagogy__query_skill_graph",
-        "mcp__pedagogy__analyze_assessment_integrity",
-      ],
-      permissionMode: "bypassPermissions",
-      allowDangerouslySkipPermissions: true,
-      agents: agentDefinitions,
-      systemPrompt,
-      persistSession: false,
+  const queryOptions: Options = {
+    model: "sonnet",
+    cwd: PROJECT_ROOT,
+    settingSources: ["project"],
+    mcpServers: {
+      pedagogy: pedagogyServer,
     },
-  });
+    allowedTools: [
+      "Read",
+      "Glob",
+      "Skill",
+      "mcp__pedagogy__assess_learner",
+      "mcp__pedagogy__query_skill_graph",
+      "mcp__pedagogy__analyze_assessment_integrity",
+      "mcp__pedagogy__report_assessment_progress",
+    ],
+    permissionMode: "bypassPermissions",
+    allowDangerouslySkipPermissions: true,
+    agents: agentDefinitions,
+    systemPrompt,
+    persistSession: true,
+  };
+
+  if (options.resume) {
+    queryOptions.resume = options.resume;
+  }
+
+  if (options.sessionId && !options.resume) {
+    queryOptions.sessionId = options.sessionId;
+  }
+
+  return query({ prompt: `Hi, I'm ${learnerName}. ${message}`, options: queryOptions });
 }

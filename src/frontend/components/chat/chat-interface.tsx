@@ -41,6 +41,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentAssistantRef = useRef<string | null>(null);
+  const streamingMessageIdRef = useRef<string | null>(null);
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const ttsQueueRef = useRef<string | null>(null);
   const ttsEnabledRef = useRef(false);
@@ -96,6 +97,27 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         setSessionId(msg.sessionId);
         break;
 
+      case "stream_delta": {
+        const streamId = streamingMessageIdRef.current;
+        if (streamId) {
+          // Append delta to existing streaming message
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === streamId ? { ...m, text: m.text + msg.text } : m
+            )
+          );
+        } else {
+          // Create a new streaming message
+          const id = `stream-${Date.now()}-${Math.random()}`;
+          streamingMessageIdRef.current = id;
+          setMessages((prev) => [
+            ...prev,
+            { id, role: "assistant", text: msg.text, timestamp: new Date() },
+          ]);
+        }
+        break;
+      }
+
       case "assistant": {
         // NOTE: Do NOT setIsThinking(false) here. The agent sends multiple
         // "assistant" messages during a turn (one per tool use). Only "result"
@@ -107,7 +129,27 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
           setActiveTools(msg.toolUses);
         }
 
-        if (msg.text.trim()) {
+        // Replace the streaming placeholder with the final complete message
+        const streamId = streamingMessageIdRef.current;
+        if (streamId && msg.text.trim()) {
+          streamingMessageIdRef.current = null;
+          const id = `assistant-${Date.now()}-${Math.random()}`;
+          currentAssistantRef.current = id;
+          if (ttsEnabledRef.current) {
+            ttsQueueRef.current = msg.text;
+          }
+          setMessages((prev) =>
+            prev
+              .filter((m) => m.id !== streamId)
+              .concat({
+                id,
+                role: "assistant",
+                text: msg.text,
+                timestamp: new Date(),
+                toolUses: msg.toolUses,
+              })
+          );
+        } else if (msg.text.trim()) {
           const id = `assistant-${Date.now()}-${Math.random()}`;
           currentAssistantRef.current = id;
           // Queue for TTS — only the last assistant message gets read aloud
@@ -125,18 +167,22 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             },
           ]);
         } else if (msg.toolUses && msg.toolUses.length > 0) {
-          // Tool use without text — add as a tool-only message
+          // Tool use without text — remove streaming placeholder and add tool-only message
+          if (streamId) streamingMessageIdRef.current = null;
           const id = `tool-${Date.now()}-${Math.random()}`;
-          setMessages((prev) => [
-            ...prev,
-            {
-              id,
-              role: "assistant",
-              text: "",
-              timestamp: new Date(),
-              toolUses: msg.toolUses,
-            },
-          ]);
+          setMessages((prev) => {
+            const filtered = streamId ? prev.filter((m) => m.id !== streamId) : prev;
+            return [
+              ...filtered,
+              {
+                id,
+                role: "assistant",
+                text: "",
+                timestamp: new Date(),
+                toolUses: msg.toolUses,
+              },
+            ];
+          });
         }
         break;
       }
@@ -146,6 +192,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         setActiveTools([]);
         setThinkingStartedAt(null);
         currentAssistantRef.current = null;
+        streamingMessageIdRef.current = null;
         // TTS: read back final assistant response if enabled
         // (handled via ttsQueueRef and speakRef so the callback doesn't need speak in deps)
         if (ttsQueueRef.current) {

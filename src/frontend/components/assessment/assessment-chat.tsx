@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import type { Components } from "react-markdown";
 import { useAssessmentChat } from "@/lib/hooks/use-assessment-chat";
 
 interface SkillArea {
@@ -12,40 +15,92 @@ interface SkillArea {
 interface AssessmentChatProps {
   code: string;
   learnerName: string;
+  skillAreas?: string[];
 }
 
-function getSkillAreas(covered: number): SkillArea[] {
-  const defaultAreas = [
-    "Foundations",
-    "Core concepts",
-    "Working with data",
-    "Analysis",
-    "Visualization",
-    "Advanced topics",
-  ];
+const markdownComponents: Components = {
+  // Keep paragraphs inline-friendly
+  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
 
-  return defaultAreas.map((name, i) => ({
-    name,
-    status: i < covered ? "covered" : i === covered ? "current" : "upcoming",
-  }));
+  // Code
+  pre: ({ children }) => <pre className="not-prose">{children}</pre>,
+  code: ({ className, children, ...props }) => {
+    const isBlock = className?.startsWith("language-");
+    if (isBlock) {
+      return (
+        <code className={`block font-mono text-[0.85em] ${className ?? ""}`} {...props}>
+          {children}
+        </code>
+      );
+    }
+    return <code {...props}>{children}</code>;
+  },
+
+  // Lists
+  ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+
+  // Links
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-accent-muted underline underline-offset-2 hover:text-accent"
+    >
+      {children}
+    </a>
+  ),
+
+  // Bold/italic (just let them pass through)
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em>{children}</em>,
+};
+
+function buildSkillAreas(
+  labels: string[],
+  coveredLabels: Map<string, string>,
+  isLoading: boolean,
+): SkillArea[] {
+  const coveredNames = new Set(coveredLabels.values());
+  // Track the most recently reported skill (last entry in the Map)
+  let lastReported: string | undefined;
+  for (const v of coveredLabels.values()) lastReported = v;
+
+  if (coveredNames.size === 0) {
+    // Agent hasn't reported yet — show all as upcoming
+    return labels.map((name) => ({ name, status: "upcoming" }));
+  }
+
+  return labels.map((name) => {
+    if (coveredNames.has(name)) {
+      // If this is the last-reported skill and we're still loading, show as current
+      if (isLoading && name === lastReported) return { name, status: "current" };
+      return { name, status: "covered" };
+    }
+    return { name, status: "upcoming" };
+  });
 }
 
 export default function AssessmentChat({
   code,
   learnerName,
+  skillAreas: skillAreaLabels,
 }: AssessmentChatProps) {
   const {
     messages,
     input,
     setInput,
     isLoading,
+    loadingDurationSec,
     isComplete,
-    progress,
     error,
     setError,
     sendMessage,
     messagesEndRef,
     inputRef,
+    coveredSkillIds,
+    coveredSkillLabels,
   } = useAssessmentChat({
     code,
     learnerName,
@@ -67,8 +122,13 @@ export default function AssessmentChat({
     }
   };
 
-  const { covered, total, percent: progressPercent } = progress;
-  const skillAreas = getSkillAreas(covered);
+  const labels = skillAreaLabels && skillAreaLabels.length > 0
+    ? skillAreaLabels
+    : ["Topic 1", "Topic 2", "Topic 3", "Topic 4", "Topic 5", "Topic 6"];
+  const total = labels.length;
+  const covered = coveredSkillLabels.size;
+  const progressPercent = total > 0 ? Math.round((covered / total) * 100) : 0;
+  const skillAreas = buildSkillAreas(labels, coveredSkillLabels, isLoading);
 
   return (
     <div className="flex flex-col h-screen bg-surface-0">
@@ -182,7 +242,18 @@ export default function AssessmentChat({
                   : "bg-surface-2 text-text-primary rounded-bl-md"
               }`}
             >
-              <p className="whitespace-pre-wrap">{msg.text}</p>
+              {msg.role === "user" ? (
+                <p className="whitespace-pre-wrap">{msg.text}</p>
+              ) : (
+                <div className="prose-chat">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -199,7 +270,13 @@ export default function AssessmentChat({
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:150ms]" />
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
                 </div>
-                <span className="text-xs text-text-tertiary">Thinking...</span>
+                <span className="text-xs text-text-tertiary">
+                  {loadingDurationSec > 20
+                    ? "Saving your results — almost done!"
+                    : loadingDurationSec > 8
+                      ? "Still working..."
+                      : "Thinking..."}
+                </span>
               </div>
             </div>
           )}
@@ -385,7 +462,7 @@ export default function AssessmentChat({
             <p className="text-xs text-text-tertiary text-center mt-2">
               {covered < 3
                 ? "You're doing great! Just tell me what comes to mind."
-                : covered < 5
+                : covered < total - 1
                   ? "Almost there! Just a couple more topics to go."
                   : "Last few questions — you've got this!"}
             </p>

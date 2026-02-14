@@ -6,7 +6,11 @@ import AssessmentChat from "@/components/assessment/assessment-chat";
 
 export default function AssessPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
-  const [session, setSession] = useState<{ code: string; name: string } | null>(null);
+  const [session, setSession] = useState<{
+    code: string;
+    name: string;
+    skillAreas?: string[];
+  } | null>(null);
 
   // If code is "enter", show the code entry form with no pre-fill
   // Otherwise, pre-fill with the URL code
@@ -16,10 +20,18 @@ export default function AssessPage({ params }: { params: Promise<{ code: string 
     return (
       <CodeEntry
         initialCode={initialCode}
-        onSubmit={(assessCode, name) => setSession({ code: assessCode, name })}
+        onSubmit={(assessCode, name, skillAreas) =>
+          setSession({ code: assessCode, name, skillAreas })
+        }
       />
     );
   }
 
-  return <AssessmentChat code={session.code} learnerName={session.name} />;
+  return (
+    <AssessmentChat
+      code={session.code}
+      learnerName={session.name}
+      skillAreas={session.skillAreas}
+    />
+  );
 }

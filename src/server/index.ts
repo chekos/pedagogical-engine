@@ -13,7 +13,7 @@ import { exportRouter } from "./exports/router.js";
 import { runSimulation } from "./tools/simulate-lesson.js";
 import { runTensionAnalysis } from "./tools/analyze-tensions.js";
 import { runTransferAnalysis } from "./tools/analyze-cross-domain-transfer.js";
-import { DATA_DIR, parseGroupMembers } from "./tools/shared.js";
+import { DATA_DIR, parseGroupMembers, loadGroupLearners } from "./tools/shared.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -72,6 +72,9 @@ server.on("upgrade", (request, socket, head) => {
   }
 });
 const sessionManager = new SessionManager();
+
+// In-memory map for assessment session persistence: "code:learnerName" → sessionId
+const assessmentSessions = new Map<string, string>();
 
 // ─── Export routes (PDF generation) ──────────────────────────────
 app.use("/api/export", exportRouter);
@@ -287,6 +290,45 @@ app.get("/api/domains/:slug", async (req, res) => {
   }
 });
 
+// ─── Group discovery ──────────────────────────────────────────────
+app.get("/api/groups", async (_req, res) => {
+  const groupsDir = path.join(DATA_DIR, "groups");
+  try {
+    const files = await fs.readdir(groupsDir);
+    const mdFiles = files.filter((f) => f.endsWith(".md"));
+
+    const groups = await Promise.all(
+      mdFiles.map(async (file) => {
+        const content = await fs.readFile(path.join(groupsDir, file), "utf-8");
+        const slug = file.replace(/\.md$/, "");
+
+        const nameMatch = content.match(/^# Group: (.+)$/m);
+        const domainMatch = content.match(/\| \*\*Domain\*\* \| ([^ |]+)/);
+        let members = parseGroupMembers(content);
+
+        // Fallback: scan learner profiles if group file has no members listed
+        if (members.length === 0) {
+          const scanned = await loadGroupLearners(slug);
+          members = scanned.map((l) => ({ id: l.id, name: l.name }));
+        }
+
+        return {
+          slug,
+          name: nameMatch?.[1]?.trim() ?? slug,
+          domain: domainMatch?.[1]?.trim() ?? "",
+          memberCount: members.length,
+          members: members.map((m) => ({ id: m.id, name: m.name })),
+        };
+      })
+    );
+
+    res.json({ groups, count: groups.length });
+  } catch (err) {
+    console.error("[groups] Error scanning groups:", err instanceof Error ? err.message : err);
+    res.status(500).json({ error: "Failed to scan groups directory" });
+  }
+});
+
 // ─── Assessment validation endpoint ───────────────────────────────
 app.get("/api/assess/:code", async (req, res) => {
   const { code } = req.params;
@@ -296,8 +338,32 @@ app.get("/api/assess/:code", async (req, res) => {
   }
   const assessmentPath = path.join(DATA_DIR, "assessments", `${code}.md`);
   try {
-    await fs.access(assessmentPath);
-    res.json({ valid: true, code });
+    const content = await fs.readFile(assessmentPath, "utf-8");
+
+    // Extract domain from assessment file
+    const domainMatch = content.match(/\| \*\*Domain\*\* \| ([^ |]+)/);
+    const domain = domainMatch?.[1]?.trim() ?? "";
+
+    // Load skill labels from domain skill graph
+    let skillAreas: string[] = [];
+    if (domain) {
+      try {
+        const skillsPath = path.join(DATA_DIR, "domains", domain, "skills.json");
+        const skillsRaw = await fs.readFile(skillsPath, "utf-8");
+        const { skills } = JSON.parse(skillsRaw);
+        skillAreas = (skills as Array<{ label: string }>).map(
+          (s) => s.label
+        );
+      } catch {
+        // No skill graph — leave empty
+      }
+    }
+
+    // Extract context if present
+    const contextMatch = content.match(/## Assessment Context\n\n([\s\S]*?)(?=\n##|\n$)/);
+    const context = contextMatch?.[1]?.trim() ?? null;
+
+    res.json({ valid: true, code, domain, skillAreas, context });
   } catch {
     res.status(404).json({ valid: false, error: `Assessment '${code}' not found` });
   }
@@ -305,7 +371,7 @@ app.get("/api/assess/:code", async (req, res) => {
 
 // ─── Assessment link generation (for share page) ────────────────
 app.post("/api/assess/generate", async (req, res) => {
-  const { groupName: rawGroup, domain: rawDomain, targetSkills, learnerIds } = req.body;
+  const { groupName: rawGroup, domain: rawDomain, targetSkills, learnerIds, context } = req.body;
 
   if (!rawGroup || !rawDomain) {
     res.status(400).json({ error: "Missing required fields: groupName, domain" });
@@ -326,6 +392,10 @@ app.post("/api/assess/generate", async (req, res) => {
   const code = nanoid(8).toUpperCase();
   const now = new Date();
 
+  const contextSection = context
+    ? `\n## Assessment Context\n\n${context}\n`
+    : "";
+
   const assessmentContent = `# Assessment Session: ${code}
 
 | Field | Value |
@@ -335,7 +405,7 @@ app.post("/api/assess/generate", async (req, res) => {
 | **Domain** | ${domain} |
 | **Created** | ${now.toISOString()} |
 | **Status** | active |
-
+${contextSection}
 ## Target Skills
 
 ${targetSkills && targetSkills.length > 0 ? targetSkills.map((s: string) => `- ${s}`).join("\n") : "_Full domain assessment_"}
@@ -375,7 +445,7 @@ _None yet._
 
 // ─── Batch assessment link generation ────────────────────────────
 app.post("/api/assess/generate-batch", async (req, res) => {
-  const { groupName: rawGroup, domain: rawDomain } = req.body;
+  const { groupName: rawGroup, domain: rawDomain, context } = req.body;
 
   if (!rawGroup || !rawDomain) {
     res.status(400).json({ error: "Missing required fields: groupName, domain" });
@@ -400,7 +470,11 @@ app.post("/api/assess/generate-batch", async (req, res) => {
     return;
   }
 
-  const members = parseGroupMembers(groupContent);
+  let members = parseGroupMembers(groupContent);
+  if (members.length === 0) {
+    const scanned = await loadGroupLearners(groupName);
+    members = scanned.map((l) => ({ id: l.id, name: l.name }));
+  }
   if (members.length === 0) {
     res.status(400).json({ error: "No members found in group" });
     return;
@@ -408,6 +482,10 @@ app.post("/api/assess/generate-batch", async (req, res) => {
 
   const assessmentsDir = path.join(DATA_DIR, "assessments");
   await fs.mkdir(assessmentsDir, { recursive: true });
+
+  const batchContextSection = context
+    ? `\n## Assessment Context\n\n${context}\n`
+    : "";
 
   const links = await Promise.all(members.map(async (member) => {
     const code = nanoid(8).toUpperCase();
@@ -423,7 +501,7 @@ app.post("/api/assess/generate-batch", async (req, res) => {
 | **Created** | ${now.toISOString()} |
 | **Status** | active |
 | **Learner** | ${member.id} |
-
+${batchContextSection}
 ## Target Skills
 
 _Full domain assessment_
@@ -474,7 +552,13 @@ app.get("/api/assess/status/:groupName/:domain", async (req, res) => {
     return;
   }
 
-  const members = parseGroupMembers(groupContent);
+  let members = parseGroupMembers(groupContent);
+
+  // Fallback: scan learner profiles if group file has no members listed
+  if (members.length === 0) {
+    const scanned = await loadGroupLearners(groupName);
+    members = scanned.map((l) => ({ id: l.id, name: l.name }));
+  }
 
   // Check each learner's assessment status (parallel)
   const learnersDir = path.join(DATA_DIR, "learners");
@@ -619,7 +703,11 @@ app.get("/api/assess/integrity/:groupName/:domain", async (req, res) => {
     return;
   }
 
-  const members = parseGroupMembers(groupContent);
+  let members = parseGroupMembers(groupContent);
+  if (members.length === 0) {
+    const scanned = await loadGroupLearners(groupName);
+    members = scanned.map((l) => ({ id: l.id, name: l.name }));
+  }
   const learnersDir = path.join(DATA_DIR, "learners");
 
   // Parse integrity data from each learner profile
@@ -739,31 +827,79 @@ app.post("/api/assess", async (req, res) => {
   }
 
   try {
-    const q = await createAssessmentQuery(code, learnerName, message);
+    // Build session key and look up existing session
+    const sessionKey = `${code}:${learnerName}`;
+    const existingSessionId = assessmentSessions.get(sessionKey);
+
+    const q = await createAssessmentQuery(code, learnerName, message, {
+      sessionId: existingSessionId ?? randomUUID(),
+      resume: existingSessionId,
+    });
     const messages: SDKMessage[] = [];
 
     for await (const msg of q) {
       messages.push(msg);
+      // Store session ID from the first message that carries one
+      if ("session_id" in msg && msg.session_id) {
+        assessmentSessions.set(sessionKey, msg.session_id as string);
+      }
     }
 
     // Extract the assistant's text response
     const assistantMessages = messages.filter((m) => m.type === "assistant");
     const resultMessages = messages.filter((m) => m.type === "result");
 
-    res.json({
-      messages: assistantMessages.map((m) => {
-        if (m.type === "assistant") {
-          const textBlocks = m.message.content.filter(
-            (b: { type: string }) => b.type === "text"
-          );
-          return {
-            type: "assistant",
-            text: textBlocks.map((b: { text: string }) => b.text).join("\n"),
-          };
+    // Detect completion: scan for assess_learner tool use in assistant messages
+    let assessmentComplete = false;
+    for (const m of assistantMessages) {
+      if (m.type === "assistant") {
+        const toolUseBlocks = m.message.content.filter(
+          (b: { type: string; name?: string }) =>
+            b.type === "tool_use" && b.name === "mcp__pedagogy__assess_learner"
+        );
+        if (toolUseBlocks.length > 0) {
+          assessmentComplete = true;
+          break;
         }
-        return m;
-      }),
+      }
+    }
+
+    // Extract covered skills from report_assessment_progress tool calls
+    const coveredSkills: Array<{ skillId: string; skillLabel: string }> = [];
+    for (const m of assistantMessages) {
+      if (m.type === "assistant") {
+        for (const b of m.message.content) {
+          if (
+            b.type === "tool_use" &&
+            b.name === "mcp__pedagogy__report_assessment_progress"
+          ) {
+            const inp = b.input as { skillId?: string; skillLabel?: string };
+            if (inp.skillId && inp.skillLabel) {
+              coveredSkills.push({ skillId: inp.skillId, skillLabel: inp.skillLabel });
+            }
+          }
+        }
+      }
+    }
+
+    const mappedMessages = assistantMessages.map((m) => {
+      if (m.type === "assistant") {
+        const textBlocks = m.message.content.filter(
+          (b: { type: string }) => b.type === "text"
+        );
+        return {
+          type: "assistant" as const,
+          text: textBlocks.map((b: { text: string }) => b.text).join("\n"),
+        };
+      }
+      return { type: m.type, text: "" };
+    });
+
+    res.json({
+      messages: mappedMessages.filter((m) => m.text.trim() !== ""),
       result: resultMessages[0] ?? null,
+      assessmentComplete,
+      coveredSkills,
     });
   } catch (err) {
     const error = err instanceof Error ? err.message : "Unknown error";
@@ -887,7 +1023,11 @@ app.get("/api/simulate/:lessonId", async (req, res) => {
         return;
       }
 
-      // Normalize group name to slug
+      // Normalize domain and group names to slugs
+      const domainSlug = effectiveDomain
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
       let groupSlug = effectiveGroup
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
@@ -910,7 +1050,7 @@ app.get("/api/simulate/:lessonId", async (req, res) => {
           if (!gf.endsWith(".md")) continue;
           const gc = await fs.readFile(path.join(DATA_DIR, "groups", gf), "utf-8");
           const domainMatch = gc.match(/\| \*\*Domain\*\* \| ([^ |]+)/);
-          if (domainMatch && domainMatch[1].trim() === effectiveDomain) {
+          if (domainMatch && domainMatch[1].trim() === domainSlug) {
             groupSlug = gf.replace(/\.md$/, "");
             found = true;
             break;
@@ -923,7 +1063,7 @@ app.get("/api/simulate/:lessonId", async (req, res) => {
       }
 
       try {
-        const result = await runSimulation(lessonId, effectiveDomain, groupSlug);
+        const result = await runSimulation(lessonId, domainSlug, groupSlug);
         res.json({ simulation: result });
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
@@ -1546,6 +1686,17 @@ wss.on("connection", (ws: WebSocket) => {
                   elapsed: msg.elapsed_time_seconds,
                 })
               );
+              break;
+            }
+
+            case "stream_event": {
+              const event = (msg as { event: { type: string; delta?: { type: string; text?: string } } }).event;
+              if (event.type === "content_block_delta" && event.delta?.type === "text_delta" && event.delta.text) {
+                ws.send(JSON.stringify({
+                  type: "stream_delta",
+                  text: event.delta.text,
+                }));
+              }
               break;
             }
           }
