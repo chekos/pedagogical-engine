@@ -14,7 +14,14 @@
   --color-text-secondary: var(--text-secondary);
   --color-text-tertiary: var(--text-tertiary);
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-heading: "Instrument Serif", Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", Menlo, monospace;
+  --color-bloom-remember: var(--bloom-remember);
+  --color-bloom-understand: var(--bloom-understand);
+  --color-bloom-apply: var(--bloom-apply);
+  --color-bloom-analyze: var(--bloom-analyze);
+  --color-bloom-evaluate: var(--bloom-evaluate);
+  --color-bloom-create: var(--bloom-create);
   --animate-fade-in: fadeIn 0.3s ease-out;
   --animate-slide-up: slideUp 0.3s ease-out;
   --animate-pulse-subtle: pulseSubtle 2s ease-in-out infinite;
@@ -111,17 +118,23 @@
 }
 
 :root {
-  --surface-0: #ffffff;
-  --surface-1: #f8f9fa;
-  --surface-2: #f0f1f3;
-  --surface-3: #e8e9ec;
-  --border: #d1d5db;
-  --border-subtle: #e5e7eb;
-  --accent: #6366f1;
-  --accent-muted: #818cf8;
+  --surface-0: #faf9f7;
+  --surface-1: #f5f3f0;
+  --surface-2: #edebe7;
+  --surface-3: #e5e3df;
+  --border: #d1cdc6;
+  --border-subtle: #e0ddd7;
+  --accent: #2d3047;
+  --accent-muted: #424767;
   --text-primary: #111827;
   --text-secondary: #4b5563;
   --text-tertiary: #9ca3af;
+  --bloom-remember: #94a3b8;
+  --bloom-understand: #60a5fa;
+  --bloom-apply: #34d399;
+  --bloom-analyze: #fbbf24;
+  --bloom-evaluate: #f97316;
+  --bloom-create: #f43f5e;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -132,11 +145,17 @@
     --surface-3: #232326;
     --border: #2e2e33;
     --border-subtle: #232326;
-    --accent: #818cf8;
-    --accent-muted: #6366f1;
+    --accent: #a8b0d3;
+    --accent-muted: #7c85ad;
     --text-primary: #f3f4f6;
     --text-secondary: #9ca3af;
     --text-tertiary: #6b7280;
+    --bloom-remember: #94a3b8;
+    --bloom-understand: #60a5fa;
+    --bloom-apply: #34d399;
+    --bloom-analyze: #fbbf24;
+    --bloom-evaluate: #f97316;
+    --bloom-create: #f43f5e;
   }
 }
 
@@ -149,6 +168,21 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global heading typography — Instrument Serif */
+h1, h2, h3 {
+  font-family: var(--font-heading);
+}
+
+/* Page transition fade-in */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-transition {
+  animation: pageFadeIn 0.3s ease-out;
 }
 
 /* Hide scrollbar for horizontal section rail */
