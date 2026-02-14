@@ -78,10 +78,10 @@ export default memo(function MessageBubble({ role, text, timestamp }: MessageBub
       className={`flex w-full animate-fade-in ${isUser ? "justify-end" : "justify-start"}`}
     >
       <div
-        className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 ${
+        className={`max-w-[90%] md:max-w-[85%] px-4 py-3 ${
           isUser
-            ? "bg-accent text-white rounded-br-md"
-            : "bg-surface-2 text-text-primary rounded-bl-md"
+            ? "bg-surface-1 rounded-2xl rounded-br-md text-text-primary"
+            : "border-l-[3px] border-accent/60 pl-4 text-text-primary"
         }`}
       >
         {isUser ? (
@@ -97,11 +97,7 @@ export default memo(function MessageBubble({ role, text, timestamp }: MessageBub
           </div>
         )}
         {timestamp && (
-          <p
-            className={`text-xs mt-1.5 ${
-              isUser ? "text-white/60" : "text-text-tertiary"
-            }`}
-          >
+          <p className="text-xs mt-1.5 text-text-tertiary">
             {timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </p>
         )}

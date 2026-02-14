@@ -345,25 +345,20 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
           </Link>
           <div className="w-px h-5 bg-border-subtle" />
           <div>
-            <h1 className="text-lg font-semibold text-text-primary">Teaching Workspace</h1>
-            <p className="text-xs text-text-tertiary mt-0.5">
-              Describe your teaching context and I&apos;ll help you plan
-            </p>
+            <h1 className="text-lg font-heading text-text-primary">Teaching Workspace</h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${connLabel.color}`} />
-          <span className="text-xs text-text-tertiary">{connLabel.text}</span>
-          {sessionId && (
-            <span className="text-xs text-text-tertiary font-mono ml-2 hidden md:inline">
-              {sessionId.slice(0, 8)}
-            </span>
-          )}
-        </div>
+        {/* Minimal connection indicator — no session ID */}
+        {status !== "connected" && (
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${connLabel.color}`} />
+            <span className="text-xs text-text-tertiary">{connLabel.text}</span>
+          </div>
+        )}
       </header>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4">
         {/* Connection error state */}
         {messages.length === 0 && (status === "error" || status === "disconnected") && (
           <div className="flex flex-col items-center justify-center h-full text-center">
@@ -381,77 +376,79 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         )}
 
         {messages.length === 0 && status === "connected" && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-semibold text-text-primary mb-2">Ready to plan</h2>
-            <p className="text-sm text-text-secondary max-w-sm">
-              Tell me about your teaching context — what you&apos;re teaching, who your students are,
-              and any constraints. I&apos;ll help you build an effective lesson plan.
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              {[
-                "I'm teaching a 90-minute Python workshop",
-                "I have a group of 12 beginners learning data analysis",
-                "Help me assess my students' skill levels",
-              ].map((suggestion) => (
-                <button
-                  key={suggestion}
-                  onClick={() => {
-                    setInput(suggestion);
-                    inputRef.current?.focus();
-                  }}
-                  className="text-xs px-3 py-1.5 rounded-full border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border transition-colors"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {messages.map((msg) => (
-          <div key={msg.id}>
-            {/* Text content */}
-            {msg.text && (
-              <MessageBubble role={msg.role} text={msg.text} timestamp={msg.timestamp} />
-            )}
-            {/* Tool uses */}
-            {msg.toolUses && msg.toolUses.length > 0 && (
-              <div className="mt-2 space-y-2 ml-0 md:ml-0">
-                {msg.toolUses.map((tool) => (
-                  <ToolResult key={tool.id} tool={tool} onSendMessage={sendProgrammaticMessage} />
+          <div className="flex flex-col items-center justify-center h-full animate-fade-in">
+            <div className="max-w-lg w-full px-4">
+              <h2 className="font-heading text-2xl md:text-3xl text-text-primary mb-3">
+                Let&apos;s build something for your students.
+              </h2>
+              <p className="text-sm text-text-secondary leading-relaxed mb-8">
+                Tell me what you&apos;re planning — who you&apos;re teaching, what you&apos;re covering,
+                what constraints you&apos;re working with — and I&apos;ll help you build something
+                grounded in what your students actually know.
+              </p>
+              <div className="space-y-3">
+                {[
+                  "I'm teaching a 90-minute Python workshop to a mixed group — some have coded before, most haven't.",
+                  "I have 12 students learning data analysis. Can we figure out what they already know?",
+                  "I need to plan a lesson on plotting with matplotlib, but I only have 45 minutes.",
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => {
+                      setInput(suggestion);
+                      inputRef.current?.focus();
+                    }}
+                    className="block w-full text-left border-l-2 border-accent/40 pl-4 py-2 text-sm italic text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
+                  >
+                    &ldquo;{suggestion}&rdquo;
+                  </button>
                 ))}
               </div>
-            )}
+            </div>
           </div>
-        ))}
-
-        {/* Progress indicator — persists throughout the entire agent turn */}
-        {isThinking && (
-          <ProgressIndicator
-            activeTools={activeTools}
-            startedAt={thinkingStartedAt}
-          />
         )}
 
-        <div ref={messagesEndRef} />
+        <div className="max-w-3xl mx-auto space-y-4">
+          {messages.map((msg) => (
+            <div key={msg.id}>
+              {/* Text content */}
+              {msg.text && (
+                <MessageBubble role={msg.role} text={msg.text} timestamp={msg.timestamp} />
+              )}
+              {/* Tool uses */}
+              {msg.toolUses && msg.toolUses.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {msg.toolUses.map((tool) => (
+                    <ToolResult key={tool.id} tool={tool} onSendMessage={sendProgrammaticMessage} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Progress indicator — persists throughout the entire agent turn */}
+          {isThinking && (
+            <ProgressIndicator
+              activeTools={activeTools}
+              startedAt={thinkingStartedAt}
+            />
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Input area */}
       <div className="border-t border-border-subtle p-4 md:px-6">
         {/* STT error banner */}
         {sttError && (
-          <div className="max-w-4xl mx-auto mb-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+          <div className="max-w-3xl mx-auto mb-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
             {sttError}
           </div>
         )}
         {/* Listening indicator */}
         {sttStatus === "listening" && (
-          <div className="max-w-4xl mx-auto mb-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+          <div className="max-w-3xl mx-auto mb-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse-subtle" />
             <span className="text-xs text-red-400 font-medium">Listening...</span>
             {transcript && (
@@ -459,15 +456,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             )}
           </div>
         )}
-        <div className="flex items-end gap-2 max-w-4xl mx-auto">
-          {/* Mic button */}
-          {sttSupported && (
-            <VoiceMicButton
-              status={sttStatus}
-              onClick={toggleListening}
-              disabled={status !== "connected" || isThinking}
-            />
-          )}
+        <div className="flex items-end gap-2 max-w-3xl mx-auto">
           <div className="flex-1 relative">
             <textarea
               ref={inputRef}
@@ -478,13 +467,23 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
                 status === "connected"
                   ? sttStatus === "listening"
                     ? "Listening... speak now"
-                    : "Type or tap the mic to speak..."
+                    : "What are you planning to teach?"
                   : "Waiting for connection..."
               }
               disabled={status !== "connected"}
               rows={1}
-              className="w-full resize-none rounded-xl border border-border bg-surface-1 px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent disabled:opacity-50 transition-all"
+              className="w-full resize-none rounded-xl border border-border bg-surface-1 pl-4 pr-12 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent disabled:opacity-50 transition-all"
             />
+            {/* Mic button inside input */}
+            {sttSupported && (
+              <div className="absolute right-2 bottom-1.5">
+                <VoiceMicButton
+                  status={sttStatus}
+                  onClick={toggleListening}
+                  disabled={status !== "connected" || isThinking}
+                />
+              </div>
+            )}
           </div>
           <button
             onClick={sendMessage}
@@ -498,7 +497,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         </div>
         <div className="flex items-center justify-center gap-4 mt-2">
           <p className="text-xs text-text-tertiary">
-            {sttSupported ? "Enter to send, mic to speak" : "Press Enter to send, Shift+Enter for new line"}
+            Press Enter to send
           </p>
           {ttsSupported && (
             <button
@@ -519,7 +518,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5v14a1 1 0 01-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
                 )}
               </svg>
-              {ttsEnabled ? "Voice on" : "Voice off"}
             </button>
           )}
         </div>

@@ -14,26 +14,28 @@ const LiveDependencyGraph = dynamic(
   { ssr: false }
 );
 
-// Map tool names to human-friendly labels and icons
-const TOOL_META: Record<string, { label: string; icon: string; color: string }> = {
-  "mcp__pedagogy__load_roster": { label: "Loading Roster", icon: "👥", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  "mcp__pedagogy__query_skill_graph": { label: "Querying Skill Graph", icon: "🔗", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
-  "mcp__pedagogy__assess_learner": { label: "Assessing Learner", icon: "📝", color: "bg-green-500/10 text-green-400 border-green-500/20" },
-  "mcp__pedagogy__generate_assessment_link": { label: "Creating Assessment Link", icon: "🔗", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
-  "mcp__pedagogy__check_assessment_status": { label: "Checking Assessment Status", icon: "📊", color: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" },
-  "mcp__pedagogy__query_group": { label: "Analyzing Group", icon: "📈", color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" },
-  "mcp__pedagogy__audit_prerequisites": { label: "Auditing Prerequisites", icon: "✅", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  "mcp__pedagogy__compose_lesson_plan": { label: "Composing Lesson Plan", icon: "📋", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  "Read": { label: "Reading File", icon: "📄", color: "bg-gray-500/10 text-gray-400 border-gray-500/20" },
-  "Write": { label: "Writing File", icon: "💾", color: "bg-gray-500/10 text-gray-400 border-gray-500/20" },
-  "Glob": { label: "Searching Files", icon: "🔍", color: "bg-gray-500/10 text-gray-400 border-gray-500/20" },
-  "Skill": { label: "Loading Skill", icon: "🧠", color: "bg-violet-500/10 text-violet-400 border-violet-500/20" },
-  "Task": { label: "Running Subagent", icon: "🤖", color: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
-  "AskUserQuestion": { label: "Question for You", icon: "❓", color: "bg-accent/10 text-accent border-accent/20" },
+// Map tool names to human-friendly labels and Bloom-level top border colors
+// Colors correspond to Bloom's taxonomy levels by tool category:
+//   remember (data loading) → understand (querying) → apply (assessment) → analyze (group) → evaluate (audit) → create (compose)
+const TOOL_META: Record<string, { label: string; bloomColor: string }> = {
+  "mcp__pedagogy__load_roster": { label: "Loading Roster", bloomColor: "var(--bloom-remember)" },
+  "mcp__pedagogy__query_skill_graph": { label: "Querying Skill Graph", bloomColor: "var(--bloom-understand)" },
+  "mcp__pedagogy__assess_learner": { label: "Assessing Learner", bloomColor: "var(--bloom-apply)" },
+  "mcp__pedagogy__generate_assessment_link": { label: "Creating Assessment Link", bloomColor: "var(--bloom-apply)" },
+  "mcp__pedagogy__check_assessment_status": { label: "Checking Assessment Status", bloomColor: "var(--bloom-understand)" },
+  "mcp__pedagogy__query_group": { label: "Analyzing Group", bloomColor: "var(--bloom-analyze)" },
+  "mcp__pedagogy__audit_prerequisites": { label: "Auditing Prerequisites", bloomColor: "var(--bloom-evaluate)" },
+  "mcp__pedagogy__compose_lesson_plan": { label: "Composing Lesson Plan", bloomColor: "var(--bloom-create)" },
+  "Read": { label: "Reading File", bloomColor: "var(--bloom-remember)" },
+  "Write": { label: "Writing File", bloomColor: "var(--bloom-remember)" },
+  "Glob": { label: "Searching Files", bloomColor: "var(--bloom-remember)" },
+  "Skill": { label: "Loading Skill", bloomColor: "var(--bloom-understand)" },
+  "Task": { label: "Running Subagent", bloomColor: "var(--bloom-create)" },
+  "AskUserQuestion": { label: "Question for You", bloomColor: "var(--accent)" },
 };
 
 function getToolMeta(name: string) {
-  return TOOL_META[name] || { label: name, icon: "⚙️", color: "bg-gray-500/10 text-gray-400 border-gray-500/20" };
+  return TOOL_META[name] || { label: name, bloomColor: "var(--bloom-remember)" };
 }
 
 // Detect if tool input looks like a lesson plan
@@ -203,23 +205,25 @@ export default memo(function ToolResult({ tool, isActive = false, onSendMessage 
   }
 
   return (
-    <div className={`animate-fade-in rounded-xl border ${meta.color} overflow-hidden`}>
+    <div
+      className="animate-slide-up rounded-xl bg-surface-1 overflow-hidden border border-border-subtle"
+      style={{ borderTopWidth: "3px", borderTopColor: meta.bloomColor }}
+    >
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors"
+        className="w-full flex items-center gap-3 px-5 py-3 hover:bg-surface-2/50 transition-colors"
       >
-        <span className="text-base">{meta.icon}</span>
-        <span className="text-sm font-medium flex-1 text-left">
+        <span className="text-sm font-medium text-text-primary flex-1 text-left">
           {meta.label}
           {isActive && (
             <span className="ml-2 inline-flex">
-              <span className="animate-pulse-subtle text-xs">working...</span>
+              <span className="animate-pulse-subtle text-xs text-text-tertiary">working...</span>
             </span>
           )}
         </span>
         <svg
-          className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-text-tertiary transition-transform ${expanded ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -230,7 +234,7 @@ export default memo(function ToolResult({ tool, isActive = false, onSendMessage 
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="px-4 pb-3 border-t border-current/10">
+        <div className="px-5 pb-4 border-t border-border-subtle">
           <div className="pt-3">
             {/* Rich rendering based on tool type */}
             {tool.name === "mcp__pedagogy__query_group" ? (
