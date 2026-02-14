@@ -1,219 +1,203 @@
 import { google, type slides_v1 } from "googleapis";
 import type { OAuth2Client } from "google-auth-library";
 
+// --- Public types: what the agent produces ---
+
+export interface SlideContent {
+  layout?: "content" | "section_header";
+  title: string;
+  bullets?: string[];
+  speakerNotes?: string;
+}
+
 interface CreateSlidesResult {
   presentationId: string;
   presentationUrl: string;
   slideCount: number;
 }
 
-interface LessonSection {
-  title: string;
-  content: string;
-  phase?: string;
-  duration?: string;
-}
-
-/** Parse lesson markdown into sections suitable for slides */
-function parseLessonSections(markdown: string): {
-  title: string;
-  subtitle: string;
-  sections: LessonSection[];
-} {
-  const lines = markdown.split("\n");
-  let title = "Lesson Plan";
-  let subtitle = "";
-  const sections: LessonSection[] = [];
-  let currentSection: LessonSection | null = null;
-
-  for (const line of lines) {
-    // Main title
-    const h1 = line.match(/^# (.+)$/);
-    if (h1) {
-      title = h1[1];
-      continue;
-    }
-
-    // Extract subtitle from metadata
-    const prepMatch = line.match(/\*\*Prepared for:\*\*\s*(.+)/);
-    if (prepMatch) {
-      subtitle = prepMatch[1].trim();
-      continue;
-    }
-
-    // H2 sections become slides
-    const h2 = line.match(/^## (.+)$/);
-    if (h2) {
-      if (currentSection) sections.push(currentSection);
-      currentSection = { title: h2[1], content: "" };
-      continue;
-    }
-
-    // H3 subsections fold into the current H2 section as content
-    const h3 = line.match(/^### (.+)$/);
-    if (h3) {
-      if (currentSection) {
-        currentSection.content += `\n${h3[1]}\n`;
-      }
-      continue;
-    }
-
-    // Timing markers
-    const timeMatch = line.match(/\*\*(\d+[–-]\d+ min)\*\*/);
-    if (timeMatch && currentSection) {
-      currentSection.duration = timeMatch[1];
-      continue;
-    }
-
-    // Phase markers
-    const phaseMatch = line.match(/\*\*Phase:\*\*\s*(.+)/);
-    if (phaseMatch && currentSection) {
-      currentSection.phase = phaseMatch[1].trim();
-      continue;
-    }
-
-    // Accumulate content
-    if (currentSection && line.trim()) {
-      // Strip markdown formatting for slide text
-      const clean = line
-        .replace(/\*\*(.+?)\*\*/g, "$1")
-        .replace(/^[-*] /, "- ")
-        .replace(/^\| .+/, ""); // Skip table rows
-      if (clean.trim()) {
-        currentSection.content += clean + "\n";
-      }
-    }
-  }
-
-  if (currentSection) sections.push(currentSection);
-
-  return { title, subtitle, sections };
-}
-
-/** Create a Google Slides presentation from a lesson plan */
+/** Create a Google Slides presentation from structured slide descriptions */
 export async function createPresentation(
   auth: OAuth2Client,
   title: string,
-  markdownContent: string
+  subtitle: string,
+  slides: SlideContent[]
 ): Promise<CreateSlidesResult> {
-  const slides = google.slides({ version: "v1", auth });
+  const api = google.slides({ version: "v1", auth });
 
   // Create empty presentation
-  const createRes = await slides.presentations.create({
+  const createRes = await api.presentations.create({
     requestBody: { title },
   });
-
   const presentationId = createRes.data.presentationId!;
-  const { title: lessonTitle, subtitle, sections } = parseLessonSections(markdownContent);
 
-  const requests: slides_v1.Schema$Request[] = [];
+  // --- Phase 1: Populate the default title slide ---
+  const titleRequests: slides_v1.Schema$Request[] = [];
+  const firstSlide = createRes.data.slides?.[0];
 
-  // Get the default first slide ID
-  const firstSlideId = createRes.data.slides?.[0]?.objectId;
+  const titleShape = firstSlide?.pageElements?.find(
+    (el) =>
+      el.shape?.placeholder?.type === "CENTERED_TITLE" ||
+      el.shape?.placeholder?.type === "TITLE"
+  );
+  const subtitleShape = firstSlide?.pageElements?.find(
+    (el) => el.shape?.placeholder?.type === "SUBTITLE"
+  );
 
-  // Update the title slide (the default first slide)
-  if (firstSlideId) {
-    // Find the title and subtitle placeholders
-    const titleShape = createRes.data.slides?.[0]?.pageElements?.find(
-      (el) => el.shape?.placeholder?.type === "CENTERED_TITLE" || el.shape?.placeholder?.type === "TITLE"
-    );
-    const subtitleShape = createRes.data.slides?.[0]?.pageElements?.find(
-      (el) => el.shape?.placeholder?.type === "SUBTITLE"
-    );
-
-    if (titleShape?.objectId) {
-      requests.push({
-        insertText: {
-          objectId: titleShape.objectId,
-          text: lessonTitle,
-        },
-      });
-    }
-    if (subtitleShape?.objectId && subtitle) {
-      requests.push({
-        insertText: {
-          objectId: subtitleShape.objectId,
-          text: subtitle,
-        },
-      });
-    }
+  if (titleShape?.objectId) {
+    titleRequests.push({
+      insertText: { objectId: titleShape.objectId, text: title },
+    });
   }
-
-  // Apply title slide text first
-  if (requests.length > 0) {
-    await slides.presentations.batchUpdate({
-      presentationId,
-      requestBody: { requests },
+  if (subtitleShape?.objectId && subtitle) {
+    titleRequests.push({
+      insertText: { objectId: subtitleShape.objectId, text: subtitle },
     });
   }
 
-  // Create content slides in a separate batch — first create all slides
-  const createRequests: slides_v1.Schema$Request[] = [];
-  for (let i = 0; i < sections.length; i++) {
+  if (titleRequests.length > 0) {
+    await api.presentations.batchUpdate({
+      presentationId,
+      requestBody: { requests: titleRequests },
+    });
+  }
+
+  // --- Phase 2: Create all content slides ---
+  const createSlideRequests: slides_v1.Schema$Request[] = [];
+
+  for (let i = 0; i < slides.length; i++) {
+    const slide = slides[i];
+    const layout =
+      slide.layout === "section_header" ? "SECTION_HEADER" : "TITLE_AND_BODY";
     const slideId = `slide_${i}`;
     const titleId = `title_${i}`;
-    const bodyId = `body_${i}`;
 
-    createRequests.push({
+    const placeholderIdMappings: slides_v1.Schema$LayoutPlaceholderIdMapping[] =
+      [
+        {
+          layoutPlaceholder: { type: "TITLE", index: 0 },
+          objectId: titleId,
+        },
+      ];
+
+    if (layout === "TITLE_AND_BODY") {
+      placeholderIdMappings.push({
+        layoutPlaceholder: { type: "BODY", index: 0 },
+        objectId: `body_${i}`,
+      });
+    }
+
+    createSlideRequests.push({
       createSlide: {
         objectId: slideId,
         insertionIndex: i + 1,
-        slideLayoutReference: { predefinedLayout: "TITLE_AND_BODY" },
-        placeholderIdMappings: [
-          { layoutPlaceholder: { type: "TITLE", index: 0 }, objectId: titleId },
-          { layoutPlaceholder: { type: "BODY", index: 0 }, objectId: bodyId },
-        ],
+        slideLayoutReference: { predefinedLayout: layout },
+        placeholderIdMappings,
       },
     });
   }
 
-  if (createRequests.length > 0) {
-    await slides.presentations.batchUpdate({
+  if (createSlideRequests.length > 0) {
+    await api.presentations.batchUpdate({
       presentationId,
-      requestBody: { requests: createRequests },
+      requestBody: { requests: createSlideRequests },
     });
   }
 
-  // Now insert text into the created slides
+  // --- Phase 3: Insert text and formatting ---
   const textRequests: slides_v1.Schema$Request[] = [];
-  for (let i = 0; i < sections.length; i++) {
-    const section = sections[i];
+
+  for (let i = 0; i < slides.length; i++) {
+    const slide = slides[i];
     const titleId = `title_${i}`;
     const bodyId = `body_${i}`;
-
-    // Section title with optional timing
-    let slideTitle = section.title;
-    if (section.duration) slideTitle += ` (${section.duration})`;
 
     textRequests.push({
       insertText: {
         objectId: titleId,
-        text: slideTitle,
+        text: slide.title,
+        insertionIndex: 0,
       },
     });
 
-    // Body content — trim to reasonable length for a slide
-    const bodyText = section.content.trim().slice(0, 500);
-    if (bodyText) {
+    if (
+      slide.layout !== "section_header" &&
+      slide.bullets &&
+      slide.bullets.length > 0
+    ) {
+      const bodyText = slide.bullets.join("\n");
+
       textRequests.push({
         insertText: {
           objectId: bodyId,
           text: bodyText,
+          insertionIndex: 0,
+        },
+      });
+
+      textRequests.push({
+        createParagraphBullets: {
+          objectId: bodyId,
+          textRange: { type: "ALL" },
+          bulletPreset: "BULLET_DISC_CIRCLE_SQUARE",
+        },
+      });
+
+      textRequests.push({
+        updateTextStyle: {
+          objectId: bodyId,
+          textRange: { type: "ALL" },
+          style: { fontSize: { magnitude: 16, unit: "PT" } },
+          fields: "fontSize",
         },
       });
     }
   }
 
   if (textRequests.length > 0) {
-    await slides.presentations.batchUpdate({
+    await api.presentations.batchUpdate({
       presentationId,
       requestBody: { requests: textRequests },
+    });
+  }
+
+  // --- Phase 4: Speaker notes (requires reading presentation back) ---
+  const fullPresentation = await api.presentations.get({ presentationId });
+  const notesRequests: slides_v1.Schema$Request[] = [];
+  const allSlides = fullPresentation.data.slides || [];
+
+  for (let i = 0; i < slides.length; i++) {
+    const slide = slides[i];
+    if (!slide.speakerNotes) continue;
+
+    const gSlide = allSlides[i + 1]; // +1 for title slide
+    if (!gSlide) continue;
+
+    const speakerNotesId =
+      gSlide.slideProperties?.notesPage?.notesProperties
+        ?.speakerNotesObjectId;
+
+    if (speakerNotesId) {
+      notesRequests.push({
+        insertText: {
+          objectId: speakerNotesId,
+          text: slide.speakerNotes,
+          insertionIndex: 0,
+        },
+      });
+    }
+  }
+
+  if (notesRequests.length > 0) {
+    await api.presentations.batchUpdate({
+      presentationId,
+      requestBody: { requests: notesRequests },
     });
   }
 
   return {
     presentationId,
     presentationUrl: `https://docs.google.com/presentation/d/${presentationId}/edit`,
-    slideCount: sections.length + 1, // +1 for title slide
+    slideCount: slides.length + 1,
   };
 }
