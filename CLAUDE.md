@@ -308,8 +308,9 @@ All persistent data lives in `agent-workspace/data/` — accessible to both the 
 
 ## Dev setup
 - `npm install` from root installs all workspaces
-- `npm run dev:server` — runs backend from project root (so `./data` resolves correctly)
+- `npm run dev:server` — runs backend from project root
 - `npm run dev:frontend` — runs Next.js on port 3001
+- `brew install --cask libreoffice` — needed for agent visual QA of created .docx/.pptx files (headless conversion to PDF/images)
 - Tailwind v4 config is CSS-native in `src/frontend/app/globals.css` (@theme inline) — no tailwind.config.ts
 
 ### Export system (src/server/exports/)

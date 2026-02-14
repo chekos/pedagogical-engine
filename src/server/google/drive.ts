@@ -1,6 +1,8 @@
 import { google } from "googleapis";
 import type { OAuth2Client } from "google-auth-library";
 import fs from "fs";
+import path from "path";
+import { AGENT_WORKSPACE } from "../tools/shared.js";
 
 interface DriveFile {
   id: string;
@@ -79,8 +81,13 @@ export async function uploadFile(
   name: string,
   convertToGoogle = true
 ): Promise<UploadResult> {
+  // Agent runs with cwd: agent-workspace/, so resolve relative paths against it
+  const resolvedPath = path.isAbsolute(filePath)
+    ? filePath
+    : path.resolve(AGENT_WORKSPACE, filePath);
+
   const drive = google.drive({ version: "v3", auth });
-  const ext = filePath.slice(filePath.lastIndexOf(".")).toLowerCase();
+  const ext = resolvedPath.slice(resolvedPath.lastIndexOf(".")).toLowerCase();
   const mimeType = OFFICE_MIME_TYPES[ext];
 
   const requestBody: { name: string; mimeType?: string } = { name };
@@ -93,7 +100,7 @@ export async function uploadFile(
     requestBody,
     media: {
       mimeType: mimeType || "application/octet-stream",
-      body: fs.createReadStream(filePath),
+      body: fs.createReadStream(resolvedPath),
     },
     fields: "id, name, mimeType, webViewLink",
   });

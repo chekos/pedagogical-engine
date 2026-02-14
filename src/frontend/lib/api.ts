@@ -66,6 +66,23 @@ export interface SessionContextMessage {
   };
 }
 
+export interface CreatedFile {
+  filePath: string;
+  title: string;
+  fileType: "doc" | "slides" | "sheet" | "pdf";
+  status: "local" | "uploaded";
+  url?: string;
+  fileId?: string;
+  toolUseId?: string;
+  downloadUrl?: string;
+}
+
+export interface FileCreatedMessage {
+  type: "file_created";
+  file: CreatedFile;
+  toolUseId?: string;
+}
+
 export type ServerMessage =
   | AssistantMessage
   | ResultMessage
@@ -74,7 +91,8 @@ export type ServerMessage =
   | ErrorMessage
   | ToolProgressMessage
   | StreamDeltaMessage
-  | SessionContextMessage;
+  | SessionContextMessage
+  | FileCreatedMessage;
 
 // ─── Configuration ─────────────────────────────────────────────
 

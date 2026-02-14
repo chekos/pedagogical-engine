@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChatClient, type ConnectionStatus, type ServerMessage, type ToolUse } from "@/lib/api";
+import { ChatClient, type ConnectionStatus, type ServerMessage, type ToolUse, type CreatedFile } from "@/lib/api";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useSpeechSynthesis } from "@/hooks/use-speech-synthesis";
 import MessageBubble from "./message-bubble";
@@ -54,6 +54,8 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
   // Session context sidebar
   const [sessionContext, setSessionContext] = useState<SessionContext>(EMPTY_SESSION_CONTEXT);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  // Created files tracking (keyed by filePath)
+  const [createdFiles, setCreatedFiles] = useState<Record<string, CreatedFile>>({});
   const toggleSidebar = useCallback(() => setSidebarCollapsed(prev => !prev), []);
   const serverProvidesContext = useRef(false);
 
@@ -325,6 +327,22 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         break;
       }
 
+      case "file_created": {
+        const file = msg.file;
+        const key = file.filePath || `upload-${Date.now()}`;
+        setCreatedFiles((prev) => {
+          if (file.status === "uploaded" && file.filePath) {
+            // Upgrade existing local entry
+            const existing = prev[file.filePath];
+            if (existing) {
+              return { ...prev, [file.filePath]: { ...existing, ...file, toolUseId: msg.toolUseId } };
+            }
+          }
+          return { ...prev, [key]: { ...file, toolUseId: msg.toolUseId } };
+        });
+        break;
+      }
+
       case "system":
         break;
 
@@ -519,7 +537,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
               {msg.toolUses && msg.toolUses.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {msg.toolUses.map((tool) => (
-                    <ToolResult key={tool.id} tool={tool} onSendMessage={sendProgrammaticMessage} creativeLabels={creativeLabels} />
+                    <ToolResult key={tool.id} tool={tool} onSendMessage={sendProgrammaticMessage} creativeLabels={creativeLabels} createdFiles={createdFiles} />
                   ))}
                 </div>
               )}
@@ -632,6 +650,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
           connectionStatus={status}
           collapsed={sidebarCollapsed}
           onToggle={toggleSidebar}
+          createdFiles={createdFiles}
         />
       </div>{/* end main content area */}
     </div>

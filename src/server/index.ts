@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 import fs from "fs/promises";
 import path from "path";
 import { nanoid } from "nanoid";
-import type { SDKMessage, PostToolUseFailureHookInput, HookInput } from "@anthropic-ai/claude-agent-sdk";
+import type { SDKMessage, PostToolUseFailureHookInput, PostToolUseHookInput, HookInput } from "@anthropic-ai/claude-agent-sdk";
 import { SessionManager } from "./sessions/manager.js";
 import { extractSessionContext, type SessionContext } from "./context-extractor.js";
 import { createEducatorQuery, createAssessmentQuery, createLiveCompanionQuery } from "./agent.js";
@@ -82,6 +82,47 @@ const assessmentSessions = new Map<string, string>();
 
 // ─── Export routes (PDF generation) ──────────────────────────────
 app.use("/api/export", exportRouter);
+
+// ─── File download (agent-workspace files) ──────────────────────
+const AGENT_WORKSPACE = path.resolve(
+  import.meta.dirname ?? process.cwd(),
+  import.meta.dirname ? "../.." : ".",
+  "agent-workspace"
+);
+
+const DOWNLOADABLE_EXTENSIONS = new Set([".docx", ".pptx", ".xlsx", ".pdf"]);
+
+app.get("/api/files/*", async (req, res) => {
+  // Extract the relative path after /api/files/
+  const relativePath = (req.params as Record<string, string>)[0];
+  if (!relativePath) {
+    res.status(400).json({ error: "No file path specified" });
+    return;
+  }
+
+  // Resolve and validate path is within agent-workspace
+  const resolvedPath = path.resolve(AGENT_WORKSPACE, relativePath);
+  if (!resolvedPath.startsWith(AGENT_WORKSPACE + path.sep) && resolvedPath !== AGENT_WORKSPACE) {
+    res.status(403).json({ error: "Access denied" });
+    return;
+  }
+
+  // Only serve known file types
+  const ext = path.extname(resolvedPath).toLowerCase();
+  if (!DOWNLOADABLE_EXTENSIONS.has(ext)) {
+    res.status(403).json({ error: "File type not allowed" });
+    return;
+  }
+
+  try {
+    await fs.access(resolvedPath);
+    const filename = path.basename(resolvedPath);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.sendFile(resolvedPath);
+  } catch {
+    res.status(404).json({ error: "File not found" });
+  }
+});
 
 // ─── Google OAuth routes ─────────────────────────────────────────
 app.use("/api/auth/google", googleAuthRouter);
@@ -1636,10 +1677,102 @@ wss.on("connection", (ws: WebSocket, req: import("http").IncomingMessage) => {
           return { continue: true };
         };
 
+        // Hook: detect file creation (Write/Bash) and Google upload (export tools)
+        const FILE_EXTENSIONS = /\.(?:docx|pptx|xlsx|pdf)$/i;
+        const EXT_TO_TYPE: Record<string, string> = {
+          ".docx": "doc", ".pptx": "slides", ".xlsx": "sheet", ".pdf": "pdf",
+        };
+        const BASH_FILE_REGEX = /(?:['"`]|[\s=])([^\s'"`:]+\.(?:docx|pptx|xlsx|pdf))(?:['"`\s]|$)/gi;
+        const EXPORT_TOOLS: Record<string, { fileType: string; idKey: string; urlKey: string }> = {
+          "mcp__pedagogy__export_lesson_to_docs": { fileType: "doc", idKey: "fileId", urlKey: "url" },
+          "mcp__pedagogy__export_lesson_to_slides": { fileType: "slides", idKey: "presentationId", urlKey: "presentationUrl" },
+          "mcp__pedagogy__export_assessments_to_sheets": { fileType: "sheet", idKey: "spreadsheetId", urlKey: "spreadsheetUrl" },
+        };
+
+        /** Convert a file path (absolute or relative to agent-workspace) to a download URL path */
+        const toDownloadUrl = (filePath: string): string => {
+          // If absolute, strip the agent-workspace prefix to get a relative path
+          const awPrefix = AGENT_WORKSPACE + path.sep;
+          const relativePath = filePath.startsWith(awPrefix)
+            ? filePath.slice(awPrefix.length)
+            : filePath.startsWith("/")
+              ? filePath // absolute but not in workspace — pass through (won't resolve)
+              : filePath; // already relative to agent-workspace
+          return `/api/files/${relativePath}`;
+        };
+
+        const postToolUseHook = async (hookInput: HookInput) => {
+          const input = hookInput as PostToolUseHookInput;
+          if (ws.readyState !== WebSocket.OPEN) return { continue: true };
+
+          // Stage 1: Detect local file creation from Write tool
+          if (input.tool_name === "Write") {
+            const filePath = (input.tool_input as { file_path?: string }).file_path || "";
+            if (FILE_EXTENSIONS.test(filePath)) {
+              const ext = path.extname(filePath).toLowerCase();
+              const title = path.basename(filePath, ext);
+              ws.send(JSON.stringify({
+                type: "file_created",
+                file: { filePath, title, fileType: EXT_TO_TYPE[ext], status: "local", downloadUrl: toDownloadUrl(filePath) },
+                toolUseId: input.tool_use_id,
+              }));
+            }
+          }
+
+          // Stage 1: Detect local file creation from Bash tool
+          if (input.tool_name === "Bash") {
+            const command = (input.tool_input as { command?: string }).command || "";
+            const matches = [...command.matchAll(BASH_FILE_REGEX)];
+            for (const match of matches) {
+              const filePath = match[1];
+              const ext = path.extname(filePath).toLowerCase();
+              const title = path.basename(filePath, ext);
+              ws.send(JSON.stringify({
+                type: "file_created",
+                file: { filePath, title, fileType: EXT_TO_TYPE[ext], status: "local", downloadUrl: toDownloadUrl(filePath) },
+                toolUseId: input.tool_use_id,
+              }));
+            }
+          }
+
+          // Stage 2: Detect Google upload from export tools
+          const exportMeta = EXPORT_TOOLS[input.tool_name];
+          if (exportMeta) {
+            try {
+              const toolInput = input.tool_input as { filePath?: string; title?: string };
+              const response = typeof input.tool_response === "string"
+                ? JSON.parse(input.tool_response)
+                : input.tool_response;
+              // MCP tool responses wrap in { content: [{ text: JSON.stringify(payload) }] }
+              const payload = JSON.parse(response?.content?.[0]?.text || "{}");
+
+              if (!payload.error) {
+                ws.send(JSON.stringify({
+                  type: "file_created",
+                  file: {
+                    filePath: toolInput.filePath || "",
+                    title: toolInput.title || payload.title || "",
+                    fileType: exportMeta.fileType,
+                    status: "uploaded",
+                    url: payload[exportMeta.urlKey],
+                    fileId: payload[exportMeta.idKey],
+                  },
+                  toolUseId: input.tool_use_id,
+                }));
+              }
+            } catch {
+              // Failed to parse export tool response — skip silently
+            }
+          }
+
+          return { continue: true };
+        };
+
         const q = await createEducatorQuery(parsed.message, {
           sessionId: session.id,
           resume: prevQuery ? session.id : undefined,
           hooks: {
+            PostToolUse: [{ hooks: [postToolUseHook] }],
             PostToolUseFailure: [{ hooks: [postToolUseFailureHook] }],
           },
         });

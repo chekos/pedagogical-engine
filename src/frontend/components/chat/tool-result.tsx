@@ -2,11 +2,12 @@
 
 import { useState, memo } from "react";
 import dynamic from "next/dynamic";
-import type { ToolUse } from "@/lib/api";
+import type { ToolUse, CreatedFile } from "@/lib/api";
 import LessonPlanView from "@/components/lesson-plan/lesson-plan-view";
 import GroupDashboard from "@/components/visualizations/group-dashboard";
 import AskUserQuestionCard from "./ask-user-question-card";
 import GoogleConnectCard from "./google-connect-card";
+import FileCard from "./file-card";
 import { getGroupDashboardData, getLiveGraphData, getLiveGraphDataWithGroupOverlay } from "@/lib/demo-data";
 
 // Dynamic import for ReactFlow component (client-side only)
@@ -197,6 +198,43 @@ function AssessmentStatusCard({ input }: { input: Record<string, unknown> }) {
   );
 }
 
+const FILE_EXT_REGEX = /\.(?:docx|pptx|xlsx|pdf)$/i;
+
+const GOOGLE_EXPORT_TOOLS = new Set([
+  "mcp__pedagogy__export_lesson_to_docs",
+  "mcp__pedagogy__export_lesson_to_slides",
+  "mcp__pedagogy__export_assessments_to_sheets",
+]);
+
+/** Check if this tool creates a local file with a known extension */
+function isFileCreationTool(tool: ToolUse): boolean {
+  if (tool.name === "Write" && typeof tool.input.file_path === "string") {
+    return FILE_EXT_REGEX.test(tool.input.file_path);
+  }
+  if (tool.name === "Bash" && typeof tool.input.command === "string") {
+    return FILE_EXT_REGEX.test(tool.input.command);
+  }
+  return false;
+}
+
+/** Check if this tool uploads to Google */
+function isGoogleExportTool(tool: ToolUse): boolean {
+  return GOOGLE_EXPORT_TOOLS.has(tool.name);
+}
+
+/** Find the matching CreatedFile for a tool use */
+function findCreatedFile(tool: ToolUse, createdFiles: Record<string, CreatedFile>): CreatedFile | undefined {
+  // For Write tool: match by file_path
+  if (tool.name === "Write" && typeof tool.input.file_path === "string") {
+    return createdFiles[tool.input.file_path];
+  }
+  // For export tools or Bash: match by toolUseId or scan all entries
+  for (const file of Object.values(createdFiles)) {
+    if (file.toolUseId === tool.id) return file;
+  }
+  return undefined;
+}
+
 // Detect if tool input looks like an AskUserQuestion
 function isAskUserQuestion(tool: ToolUse): boolean {
   return tool.name === "AskUserQuestion" && Array.isArray(tool.input.questions);
@@ -215,13 +253,22 @@ interface ToolResultProps {
   isActive?: boolean;
   onSendMessage?: (message: string) => void;
   creativeLabels?: Record<string, string>;
+  createdFiles?: Record<string, CreatedFile>;
 }
 
-export default memo(function ToolResult({ tool, isActive = false, onSendMessage, creativeLabels }: ToolResultProps) {
+export default memo(function ToolResult({ tool, isActive = false, onSendMessage, creativeLabels, createdFiles = {} }: ToolResultProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = getToolMeta(tool.name);
   // Use creative AI label if available, otherwise deterministic
   const displayLabel = creativeLabels?.[tool.name] || meta.label;
+
+  // Special rendering for file creation/upload — show inline file card
+  if ((isFileCreationTool(tool) || isGoogleExportTool(tool)) && Object.keys(createdFiles).length > 0) {
+    const file = findCreatedFile(tool, createdFiles);
+    if (file) {
+      return <FileCard file={file} />;
+    }
+  }
 
   // Special rendering for AskUserQuestion — always shown inline, not collapsible
   if (isAskUserQuestion(tool) && onSendMessage) {

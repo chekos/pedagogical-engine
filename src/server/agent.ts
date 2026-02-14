@@ -114,7 +114,14 @@ When an educator wants to export, share, or import from Google:
 2. If not connected, call request_google_connection with a reason explaining why access is needed.
 3. After connection, proceed with the requested Google action.
 Available Google tools: export_lesson_to_docs, export_lesson_to_slides, import_roster_from_sheets,
-export_assessments_to_sheets, list_drive_files, share_document, sync_with_classroom.`;
+export_assessments_to_sheets, list_drive_files, share_document, sync_with_classroom.
+
+File organization:
+When you create files (lesson plans, presentations, documents, spreadsheets), be organized:
+- Save created files in sensible subdirectories under data/exports/ — organize by type, date, or topic as makes sense.
+- Don't dump files at the workspace root. A teacher may request dozens of exports over time.
+- Keep a manifest at data/exports/manifest.md — append each created file with its path, type, title, creation date, and Google Drive URL if uploaded. Check this file when you need to find previously created files.
+- When you create or upload a file, always tell the educator what you created and where it is.`;
 
 export interface AgentQueryOptions {
   sessionId?: string;

@@ -1,7 +1,8 @@
 import fs from "fs/promises";
 import path from "path";
 
-export const DATA_DIR = process.env.DATA_DIR || "./agent-workspace/data";
+export const AGENT_WORKSPACE = process.env.AGENT_WORKSPACE || "./agent-workspace";
+export const DATA_DIR = process.env.DATA_DIR || `${AGENT_WORKSPACE}/data`;
 
 // Re-export BLOOM_ORDER from domain-utils for convenience
 export { BLOOM_ORDER } from "./domain-utils.js";

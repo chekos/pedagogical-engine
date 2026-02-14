@@ -16,5 +16,8 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
   }
 }

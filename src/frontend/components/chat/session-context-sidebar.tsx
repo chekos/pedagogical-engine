@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { ConnectionStatus } from "@/lib/api";
+import type { ConnectionStatus, CreatedFile } from "@/lib/api";
+import { FileCardCompact } from "./file-card";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
@@ -28,6 +29,7 @@ interface SessionContextSidebarProps {
   connectionStatus: ConnectionStatus;
   collapsed: boolean;
   onToggle: () => void;
+  createdFiles?: Record<string, CreatedFile>;
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
@@ -108,12 +110,14 @@ function GoogleStatusBadge() {
   );
 }
 
-function SidebarContent({ context }: { context: SessionContext }) {
+function SidebarContent({ context, createdFiles = {} }: { context: SessionContext; createdFiles?: Record<string, CreatedFile> }) {
+  const fileList = Object.values(createdFiles);
   const hasAnyContext =
     context.groupName ||
     context.domain ||
     context.constraints.length > 0 ||
-    context.skillsDiscussed.length > 0;
+    context.skillsDiscussed.length > 0 ||
+    fileList.length > 0;
 
   return (
     <>
@@ -202,6 +206,23 @@ function SidebarContent({ context }: { context: SessionContext }) {
         </div>
       )}
 
+      {/* Created Files */}
+      {fileList.length > 0 && (
+        <div>
+          <SectionHeading>
+            Created Files
+            <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-accent/15 text-accent">
+              {fileList.length}
+            </span>
+          </SectionHeading>
+          <div className="space-y-0.5">
+            {fileList.map((file) => (
+              <FileCardCompact key={file.filePath || file.title} file={file} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Google Workspace status */}
       <GoogleStatusBadge />
     </>
@@ -213,6 +234,7 @@ export default function SessionContextSidebar({
   connectionStatus,
   collapsed,
   onToggle,
+  createdFiles = {},
 }: SessionContextSidebarProps) {
   // Close on Escape key
   useEffect(() => {
@@ -258,7 +280,7 @@ export default function SessionContextSidebar({
               <span className="text-[10px] text-text-tertiary">{STATUS_LABEL[connectionStatus]}</span>
             </div>
           </div>
-          <SidebarContent context={context} />
+          <SidebarContent context={context} createdFiles={createdFiles} />
         </div>
       </div>
 
@@ -279,7 +301,7 @@ export default function SessionContextSidebar({
               <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[connectionStatus]}`} />
               <span className="text-[10px] text-text-tertiary">{STATUS_LABEL[connectionStatus]}</span>
             </div>
-            <SidebarContent context={context} />
+            <SidebarContent context={context} createdFiles={createdFiles} />
           </div>
         </div>
       )}
