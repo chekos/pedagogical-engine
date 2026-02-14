@@ -13,6 +13,7 @@ interface AssessmentLink {
   embedUrl: string;
   group: string;
   domain: string;
+  domainExists: boolean;
   created: string;
 }
 
@@ -238,6 +239,44 @@ export default function ShareAssessmentPage() {
             )}
           </div>
         </div>
+
+        {/* Domain Setup Nudge */}
+        {groupLink && !groupLink.domainExists && (
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 mb-8 animate-fade-in">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-amber-400">
+                  One more step: set up your skill domain
+                </h3>
+                <p className="text-sm text-text-secondary mt-1">
+                  Your assessment link is ready to share, but <strong className="text-text-primary">{groupLink.domain}</strong> doesn't have a skill graph yet. The engine needs to know what skills to assess — it takes about 5 minutes to set up through a quick conversation.
+                </p>
+                <p className="text-xs text-text-tertiary mt-2">
+                  Keep this tab open. The link below will work once the domain is set up.
+                </p>
+                <a
+                  href={`/teach?message=${encodeURIComponent(`I want to teach "${groupLink.domain.replace(/-/g, " ")}". Help me create the skill domain so I can assess my students.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-xl bg-amber-500/10 text-amber-400 text-sm font-medium border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                  Set up {groupLink.domain.replace(/-/g, " ")} with the teaching assistant
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Group Link Result */}
         {groupLink && (

@@ -25,7 +25,11 @@ const CONNECTION_LABELS: Record<ConnectionStatus, { text: string; color: string 
   error: { text: "Connection error", color: "bg-red-400" },
 };
 
-export default function ChatInterface() {
+interface ChatInterfaceProps {
+  initialMessage?: string;
+}
+
+export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
@@ -195,6 +199,15 @@ export default function ChatInterface() {
       }
     }
   }, []);
+
+  // Auto-send initial message once connected (e.g. from ?message= query param)
+  const initialMessageSent = useRef(false);
+  useEffect(() => {
+    if (initialMessage && status === "connected" && !initialMessageSent.current) {
+      initialMessageSent.current = true;
+      sendProgrammaticMessage(initialMessage);
+    }
+  }, [initialMessage, status, sendProgrammaticMessage]);
 
   useEffect(() => {
     const client = new ChatClient({

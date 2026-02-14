@@ -355,12 +355,20 @@ _None yet._
     "utf-8"
   );
 
+  // Check if the domain has a skill graph
+  let domainExists = false;
+  try {
+    await fs.access(path.join(DATA_DIR, "domains", domain, "skills.json"));
+    domainExists = true;
+  } catch {}
+
   res.json({
     code,
     url: `${FRONTEND_URL}/assess/${code}`,
     embedUrl: `${FRONTEND_URL}/assess/embed/${code}`,
     group: groupName,
     domain,
+    domainExists,
     created: now.toISOString(),
   });
 });
