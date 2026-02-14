@@ -51,6 +51,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
   // Session context sidebar
   const [sessionContext, setSessionContext] = useState<SessionContext>(EMPTY_SESSION_CONTEXT);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const toggleSidebar = useCallback(() => setSidebarCollapsed(prev => !prev), []);
 
   // Voice output (text-to-speech)
   const {
@@ -120,8 +121,14 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             if (typeof input.domain === "string") next.domain = input.domain;
             if (Array.isArray(input.members)) {
               const names = input.members
-                .map((m: unknown) => (typeof m === "string" ? m : (m as { name?: string })?.name))
-                .filter(Boolean) as string[];
+                .map((m: unknown) => {
+                  if (typeof m === "string") return m;
+                  if (typeof m === "object" && m !== null && "name" in m && typeof (m as Record<string, unknown>).name === "string") {
+                    return (m as Record<string, unknown>).name as string;
+                  }
+                  return undefined;
+                })
+                .filter((n): n is string => typeof n === "string");
               if (names.length > 0) {
                 next.learnerNames = [...new Set([...next.learnerNames, ...names])];
               }
@@ -144,7 +151,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
           case "mcp__pedagogy__assess_learner":
             if (typeof input.learnerId === "string") {
               next.learnerNames = [...new Set([...next.learnerNames, input.learnerId])];
-              next.learnersAssessed = next.learnersAssessed + 1;
             }
             if (typeof input.domain === "string") next.domain = input.domain;
             if (typeof input.skillId === "string") {
@@ -431,7 +437,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
           )}
           {/* Mobile sidebar toggle */}
           <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onClick={toggleSidebar}
             className="md:hidden p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-2 transition-colors"
             title="Session context"
           >
@@ -616,7 +622,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
           context={sessionContext}
           connectionStatus={status}
           collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggle={toggleSidebar}
         />
       </div>{/* end main content area */}
     </div>
