@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatClient, type ConnectionStatus, type ServerMessage, type ToolUse, type CreatedFile } from "@/lib/api";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useSpeechSynthesis } from "@/hooks/use-speech-synthesis";
+import { saveSessionState, loadSessionState, clearSessionState, pruneOldSessions } from "@/lib/session-storage";
 import MessageBubble from "./message-bubble";
 import ToolResult from "./tool-result";
 import ProgressIndicator from "./progress-indicator";
@@ -28,15 +29,18 @@ const CONNECTION_LABELS: Record<ConnectionStatus, { text: string; color: string 
 
 interface ChatInterfaceProps {
   initialMessage?: string;
+  resumeSessionId?: string;
 }
 
-export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
+export default function ChatInterface({ initialMessage, resumeSessionId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const [isThinking, setIsThinking] = useState(false);
   const [activeTools, setActiveTools] = useState<ToolUse[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(resumeSessionId ?? null);
+  const requestedSessionIdRef = useRef<string | undefined>(resumeSessionId);
+  const restoredRef = useRef(false);
   const [thinkingStartedAt, setThinkingStartedAt] = useState<number | null>(null);
   const clientRef = useRef<ChatClient | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -47,6 +51,23 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
   const ttsQueueRef = useRef<string | null>(null);
   const ttsEnabledRef = useRef(false);
   useEffect(() => { ttsEnabledRef.current = ttsEnabled; }, [ttsEnabled]);
+
+  // Restore session state from localStorage on mount
+  useEffect(() => {
+    if (resumeSessionId) {
+      const saved = loadSessionState(resumeSessionId);
+      if (saved) {
+        setMessages(saved.messages.map((m) => ({ ...m, timestamp: new Date(m.timestamp) })));
+        setCreativeLabels(saved.creativeLabels);
+        setCreatedFiles(saved.createdFiles);
+      }
+      restoredRef.current = true;
+    } else {
+      restoredRef.current = true;
+      pruneOldSessions(10);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // AI-generated creative tool labels (received from server on session init)
   const [creativeLabels, setCreativeLabels] = useState<Record<string, string>>({});
@@ -179,6 +200,16 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
     });
   }, []);
 
+  // Persist messages + creativeLabels + createdFiles to localStorage on change
+  useEffect(() => {
+    if (!sessionId || !restoredRef.current) return;
+    saveSessionState(sessionId, {
+      messages: messages.map((m) => ({ ...m, timestamp: m.timestamp.toISOString() })),
+      creativeLabels,
+      createdFiles,
+    });
+  }, [sessionId, messages, creativeLabels, createdFiles]);
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
@@ -189,12 +220,26 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
 
   const handleMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
-      case "session":
+      case "session": {
+        const requested = requestedSessionIdRef.current;
+        // If server gave us a different session than we asked for, our old session is stale
+        if (requested && msg.sessionId !== requested) {
+          clearSessionState(requested);
+          setMessages([]);
+          setCreativeLabels({});
+          setCreatedFiles({});
+        }
         setSessionId(msg.sessionId);
         if ("creativeLabels" in msg && msg.creativeLabels) {
           setCreativeLabels(msg.creativeLabels as Record<string, string>);
         }
+        // Update URL to reflect current session (and strip ?message= if present)
+        const url = new URL(window.location.href);
+        url.searchParams.set("session", msg.sessionId);
+        url.searchParams.delete("message");
+        window.history.replaceState({}, "", url.toString());
         break;
+      }
 
       case "stream_delta": {
         const streamId = streamingMessageIdRef.current;
@@ -363,7 +408,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
       onStatusChange: setStatus,
     });
     clientRef.current = client;
-    client.connect();
+    client.connect(resumeSessionId);
 
     return () => {
       client.disconnect();
@@ -414,11 +459,11 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
 
   const initialMessageSent = useRef(false);
   useEffect(() => {
-    if (initialMessage && status === "connected" && !initialMessageSent.current) {
+    if (initialMessage && !resumeSessionId && status === "connected" && !initialMessageSent.current) {
       initialMessageSent.current = true;
       sendProgrammaticMessage(initialMessage);
     }
-  }, [initialMessage, status, sendProgrammaticMessage]);
+  }, [initialMessage, resumeSessionId, status, sendProgrammaticMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
