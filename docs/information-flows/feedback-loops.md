@@ -4,31 +4,39 @@ The engine doesn't just plan lessons — it learns from every session. Three fee
 
 ## The three loops
 
+**Loop 1 — Teaching Wisdom** (domain-level, compounds over sessions):
+
 ```mermaid
-graph TD
-    subgraph "Loop 1: Teaching Wisdom"
-        L1[Teach a lesson] --> D1[Debrief]
-        D1 --> TN[Teaching Notes<br/>timing, confusion points,<br/>success patterns]
-        TN --> NL1[Next lesson uses wisdom<br/>cites evidence and adjusts timing]
-        NL1 --> L1
-    end
-
-    subgraph "Loop 2: Educator Calibration"
-        L2[Teach a lesson] --> D2[Debrief]
-        D2 --> EP[Educator Profile<br/>timing adjustments,<br/>style preferences]
-        EP --> NL2[Next lesson customized<br/>to educator's patterns]
-        NL2 --> L2
-    end
-
-    subgraph "Loop 3: Learner Growth"
-        A[Assessment] --> LP[Learner Profile<br/>skills + Bloom's levels]
-        LP --> LS[Lesson targets gaps]
-        LS --> RA[Re-assessment or<br/>next assessment]
-        RA --> LP
-    end
+graph LR
+    L1[Teach a lesson] --> D1[Debrief]
+    D1 --> TN[Teaching Notes<br/>timing, confusion points,<br/>success patterns]
+    TN --> NL1[Next lesson cites<br/>evidence and adjusts]
+    NL1 --> L1
 
     style TN fill:#d97706,color:#fff
+```
+
+**Loop 2 — Educator Calibration** (per-educator, adapts to teaching style):
+
+```mermaid
+graph LR
+    L2[Teach a lesson] --> D2[Debrief]
+    D2 --> EP[Educator Profile<br/>timing adjustments,<br/>style preferences]
+    EP --> NL2[Next lesson customized<br/>to educator]
+    NL2 --> L2
+
     style EP fill:#d97706,color:#fff
+```
+
+**Loop 3 — Learner Growth** (per-learner, tracks skill progression):
+
+```mermaid
+graph LR
+    A[Assessment] --> LP[Learner Profile<br/>skills + Bloom's levels]
+    LP --> LS[Lesson targets gaps]
+    LS --> RA[Re-assessment or<br/>next assessment]
+    RA --> LP
+
     style LP fill:#059669,color:#fff
 ```
 
