@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import ExportButton from "@/components/export-button";
 import { LoadingSpinner } from "@/components/ui/loading";
@@ -80,6 +81,9 @@ function LearnerTooltip({
 }
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams();
+  const domainFromUrl = searchParams.get("domain");
+
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
   const [selectedLearner, setSelectedLearner] = useState<string | null>(null);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
@@ -88,7 +92,7 @@ export default function DashboardPage() {
   // ─── Data state ──────────────────────────────────────────────
   const [domains, setDomains] = useState<DomainSummary[]>([]);
   const [groups, setGroups] = useState<GroupSummary[]>([]);
-  const [selectedDomain, setSelectedDomain] = useState<string>("");
+  const [selectedDomain, setSelectedDomain] = useState<string>(domainFromUrl ?? "");
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [domainDetail, setDomainDetail] = useState<DomainDetail | null>(null);
   const [groupStatus, setGroupStatus] = useState<GroupStatus | null>(null);
@@ -105,8 +109,10 @@ export default function DashboardPage() {
         if (cancelled) return;
         setDomains(d);
         setGroups(g);
-        // Default to first domain
-        if (d.length > 0) {
+        // Use domain from URL if valid, otherwise default to first
+        if (domainFromUrl && d.some((dom) => dom.slug === domainFromUrl)) {
+          setSelectedDomain(domainFromUrl);
+        } else if (d.length > 0 && !selectedDomain) {
           setSelectedDomain(d[0].slug);
         }
       } catch (err) {

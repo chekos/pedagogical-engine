@@ -363,7 +363,7 @@ function DomainCard({
 
             <div className="flex items-center gap-2">
               <Link
-                href={`/graph/${domain.slug}`}
+                href={`/dashboard?domain=${domain.slug}`}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border border-border text-text-primary hover:bg-surface-2 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

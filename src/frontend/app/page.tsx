@@ -148,7 +148,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <Link
-                href="/graph/python-data-analysis"
+                href="/dashboard?domain=python-data-analysis"
                 className="group rounded-xl border border-border-subtle bg-surface-0 p-6 hover:shadow-md transition-shadow"
               >
                 <div className="w-10 h-10 rounded-lg bg-bloom-evaluate/15 flex items-center justify-center mb-3">
