@@ -123,18 +123,18 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
                 .map((m: unknown) => (typeof m === "string" ? m : (m as { name?: string })?.name))
                 .filter(Boolean) as string[];
               if (names.length > 0) {
-                next.learnerNames = [...new Set([...prev.learnerNames, ...names])];
+                next.learnerNames = [...new Set([...next.learnerNames, ...names])];
               }
             }
             break;
           case "mcp__pedagogy__query_skill_graph":
             if (typeof input.domain === "string") next.domain = input.domain;
             if (typeof input.skillId === "string") {
-              next.skillsDiscussed = [...new Set([...prev.skillsDiscussed, input.skillId])];
+              next.skillsDiscussed = [...new Set([...next.skillsDiscussed, input.skillId])];
             }
             if (Array.isArray(input.skillIds)) {
               const ids = input.skillIds.filter((s: unknown): s is string => typeof s === "string");
-              next.skillsDiscussed = [...new Set([...prev.skillsDiscussed, ...ids])];
+              next.skillsDiscussed = [...new Set([...next.skillsDiscussed, ...ids])];
             }
             break;
           case "mcp__pedagogy__query_group":
@@ -143,12 +143,12 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             break;
           case "mcp__pedagogy__assess_learner":
             if (typeof input.learnerId === "string") {
-              next.learnerNames = [...new Set([...prev.learnerNames, input.learnerId])];
-              next.learnersAssessed = next.learnerNames.length;
+              next.learnerNames = [...new Set([...next.learnerNames, input.learnerId])];
+              next.learnersAssessed = next.learnersAssessed + 1;
             }
             if (typeof input.domain === "string") next.domain = input.domain;
             if (typeof input.skillId === "string") {
-              next.skillsDiscussed = [...new Set([...prev.skillsDiscussed, input.skillId])];
+              next.skillsDiscussed = [...new Set([...next.skillsDiscussed, input.skillId])];
             }
             break;
           case "mcp__pedagogy__generate_assessment_link":
@@ -162,12 +162,12 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             if (typeof input.domain === "string") next.domain = input.domain;
             if (typeof input.duration === "number") {
               const c = `${input.duration} minutes`;
-              if (!prev.constraints.includes(c)) next.constraints = [...prev.constraints, c];
+              if (!next.constraints.includes(c)) next.constraints = [...next.constraints, c];
             }
             if (typeof input.constraints === "string" && input.constraints.trim()) {
               const parts = input.constraints.split(/[,;]/).map((s: string) => s.trim()).filter(Boolean);
-              const newConstraints = parts.filter((p: string) => !prev.constraints.includes(p));
-              if (newConstraints.length > 0) next.constraints = [...prev.constraints, ...newConstraints];
+              const newConstraints = parts.filter((p: string) => !next.constraints.includes(p));
+              if (newConstraints.length > 0) next.constraints = [...next.constraints, ...newConstraints];
             }
             break;
         }

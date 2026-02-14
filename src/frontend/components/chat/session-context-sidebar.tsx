@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { ConnectionStatus } from "@/lib/api";
 
 export interface SessionContext {
@@ -61,6 +62,16 @@ export default function SessionContextSidebar({
   collapsed,
   onToggle,
 }: SessionContextSidebarProps) {
+  // Close on Escape key
+  useEffect(() => {
+    if (collapsed) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onToggle();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [collapsed, onToggle]);
+
   const hasAnyContext =
     context.groupName ||
     context.domain ||
@@ -73,8 +84,10 @@ export default function SessionContextSidebar({
       {/* Toggle button — always visible on the right edge */}
       <button
         onClick={onToggle}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-6 h-12 flex items-center justify-center bg-surface-1 border border-r-0 border-border-subtle rounded-l-lg hover:bg-surface-2 transition-colors md:flex hidden"
-        title={collapsed ? "Show session context" : "Hide session context"}
+        aria-label={collapsed ? "Show session context" : "Hide session context"}
+        className={`absolute top-1/2 -translate-y-1/2 z-20 w-6 h-12 items-center justify-center bg-surface-1 border border-r-0 border-border-subtle rounded-l-lg hover:bg-surface-2 transition-all duration-300 hidden md:flex ${
+          collapsed ? "right-0" : "right-[280px]"
+        }`}
       >
         <svg
           className={`w-3.5 h-3.5 text-text-tertiary transition-transform ${collapsed ? "" : "rotate-180"}`}
@@ -181,13 +194,13 @@ export default function SessionContextSidebar({
 
       {/* Mobile overlay */}
       {!collapsed && (
-        <div className="md:hidden fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/30" onClick={onToggle} />
+        <div className="md:hidden fixed inset-0 z-40" role="dialog" aria-label="Session context">
+          <div className="absolute inset-0 bg-black/30" onClick={onToggle} aria-hidden="true" />
           <div className="absolute right-0 top-0 h-full w-[280px] bg-surface-1 border-l border-border-subtle animate-slide-in-right overflow-y-auto px-4 py-5 space-y-5">
             {/* Close button */}
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-base text-text-primary">Session</h2>
-              <button onClick={onToggle} className="p-1 text-text-tertiary hover:text-text-primary">
+              <button onClick={onToggle} aria-label="Close session context" className="p-1 text-text-tertiary hover:text-text-primary">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
