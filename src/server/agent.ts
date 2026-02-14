@@ -14,6 +14,8 @@ import { agentDefinitions } from "./agents/index.js";
 // agent.ts is at src/server/ — go up 2 levels to project root
 const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(import.meta.dirname ?? process.cwd(), import.meta.dirname ? "../.." : ".");
 const DATA_DIR = process.env.DATA_DIR || path.join(PROJECT_ROOT, "data");
+// Agent workspace — separate from developer's .claude/skills/
+const AGENT_WORKSPACE = path.join(PROJECT_ROOT, "agent-workspace");
 
 const EDUCATOR_SYSTEM_PROMPT = `You are a pedagogical reasoning engine — an AI teaching partner that helps educators plan and deliver effective learning experiences. You think like an experienced teacher, not a content generator.
 
@@ -127,12 +129,13 @@ export async function createEducatorQuery(
 ): Promise<Query> {
   const queryOptions: Options = {
     model: "opus",
-    cwd: PROJECT_ROOT,
+    cwd: AGENT_WORKSPACE,
     settingSources: ["project"],
     mcpServers: {
       pedagogy: pedagogyServer,
     },
     allowedTools: [
+      "Bash",
       "Read",
       "Write",
       "Glob",
