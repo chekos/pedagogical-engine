@@ -171,24 +171,24 @@ export default function TransferPage() {
   const bloomOrder = ["evaluation", "synthesis", "analysis", "application", "comprehension", "knowledge"];
 
   return (
-    <div className="min-h-screen bg-[#06060a]">
+    <div className="min-h-screen bg-surface-0">
       <NavBar />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Setup Panel */}
-        <div className="rounded-xl border border-white/[0.06] bg-[#0a0a12] p-6 mb-8">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+        <div className="rounded-xl border border-border-subtle bg-surface-1 p-6 mb-8">
+          <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">
             Transfer Analysis Setup
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {/* Learner selector */}
             <div>
-              <label className="block text-[11px] text-gray-500 mb-1.5">Learner</label>
+              <label className="block text-[11px] text-text-secondary mb-1.5">Learner</label>
               <select
                 value={selectedLearner}
                 onChange={(e) => setSelectedLearner(e.target.value)}
-                className="w-full bg-[#12121a] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-indigo-500/50"
               >
                 <option value="">Select a learner...</option>
                 {learners.map((l) => (
@@ -201,11 +201,11 @@ export default function TransferPage() {
 
             {/* Source domain */}
             <div>
-              <label className="block text-[11px] text-gray-500 mb-1.5">Source Domain (has skills)</label>
+              <label className="block text-[11px] text-text-secondary mb-1.5">Source Domain (has skills)</label>
               <select
                 value={sourceDomain}
                 onChange={(e) => setSourceDomain(e.target.value)}
-                className="w-full bg-[#12121a] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-indigo-500/50"
               >
                 <option value="">Select source domain...</option>
                 {domains.map((d) => (
@@ -216,11 +216,11 @@ export default function TransferPage() {
 
             {/* Target domain */}
             <div>
-              <label className="block text-[11px] text-gray-500 mb-1.5">Target Domain (predict readiness)</label>
+              <label className="block text-[11px] text-text-secondary mb-1.5">Target Domain (predict readiness)</label>
               <select
                 value={targetDomain}
                 onChange={(e) => setTargetDomain(e.target.value)}
-                className="w-full bg-[#12121a] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-indigo-500/50"
               >
                 <option value="">Select target domain...</option>
                 {domains.filter((d) => d.slug !== sourceDomain).map((d) => (
@@ -234,7 +234,7 @@ export default function TransferPage() {
             <button
               onClick={runAnalysis}
               disabled={loading || !selectedLearner || !sourceDomain || !targetDomain}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 rounded-lg text-sm font-medium text-white transition-colors"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-surface-2 disabled:text-text-tertiary rounded-lg text-sm font-medium text-white transition-colors"
             >
               {loading ? "Analyzing..." : "Analyze Transfer"}
             </button>
@@ -286,8 +286,8 @@ export default function TransferPage() {
             </div>
 
             {/* Transfer bridges */}
-            <div className="rounded-xl border border-white/[0.06] bg-[#0a0a12] p-6">
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+            <div className="rounded-xl border border-border-subtle bg-surface-1 p-6">
+              <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">
                 Transfer Bridges ({transferData.transferCandidates.length} detected)
               </h2>
 
@@ -305,7 +305,7 @@ export default function TransferPage() {
                       <span className="text-xs font-medium capitalize" style={{ color: BLOOM_COLORS[level] }}>
                         {level}
                       </span>
-                      <span className="text-[10px] text-gray-600">
+                      <span className="text-[10px] text-text-tertiary">
                         ({candidates.length} transfer{candidates.length !== 1 ? "s" : ""})
                       </span>
                     </div>
@@ -320,7 +320,7 @@ export default function TransferPage() {
               })}
 
               {transferData.transferCandidates.length === 0 && (
-                <p className="text-sm text-gray-500 py-4">
+                <p className="text-sm text-text-secondary py-4">
                   No significant transfer detected between these domains for this learner.
                 </p>
               )}
@@ -337,14 +337,14 @@ export default function TransferPage() {
                   d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-white mb-2">Cross-Domain Transfer Analysis</h2>
-            <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+            <h2 className="text-lg font-semibold text-text-primary mb-2">Cross-Domain Transfer Analysis</h2>
+            <p className="text-sm text-text-secondary max-w-md mx-auto mb-6">
               Select a learner and two domains to analyze how skills transfer across domain boundaries.
               The engine identifies structurally similar skills using Bloom&apos;s taxonomy alignment and
               cognitive operation matching.
             </p>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p>Try: <strong className="text-gray-400">Maya Whitehawk</strong> (outdoor-ecology) transferring to python-data-analysis</p>
+            <div className="text-xs text-text-tertiary space-y-1">
+              <p>Try: <strong className="text-text-secondary">Maya Whitehawk</strong> (outdoor-ecology) transferring to python-data-analysis</p>
               <p>Her analysis and synthesis skills from ecology predict readiness for data analysis thinking.</p>
             </div>
           </div>
@@ -392,14 +392,14 @@ function ReadinessBanner({
             >
               {readiness.level} readiness
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-text-secondary">
               Score: {Math.round(readiness.score * 100)}%
             </span>
           </div>
-          <h3 className="text-sm font-semibold text-white mb-1">
+          <h3 className="text-sm font-semibold text-text-primary mb-1">
             {learnerName}: {formatDomain(sourceDomain)} → {formatDomain(targetDomain)}
           </h3>
-          <p className="text-xs text-gray-400 max-w-2xl">
+          <p className="text-xs text-text-secondary max-w-2xl">
             {readiness.level === "high" && `Strong cross-domain readiness detected. ${candidateCount} skills show transfer potential. The learner's cognitive frameworks will accelerate learning in ${formatDomain(targetDomain)}.`}
             {readiness.level === "moderate" && `Moderate readiness. Some thinking patterns transfer, particularly at higher Bloom's levels. Domain-specific content still needs full instruction.`}
             {readiness.level === "low" && `Limited transfer. The domains share some structural similarities but skills are too domain-specific for significant advantage.`}
@@ -419,8 +419,8 @@ function ReadinessBanner({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-center">
-      <div className="text-lg font-bold text-white">{value}</div>
-      <div className="text-[10px] text-gray-500 uppercase tracking-wider">{label}</div>
+      <div className="text-lg font-bold text-text-primary">{value}</div>
+      <div className="text-[10px] text-text-secondary uppercase tracking-wider">{label}</div>
     </div>
   );
 }
@@ -473,10 +473,10 @@ function DomainColumn({
   const bloomOrder = ["evaluation", "synthesis", "analysis", "application", "comprehension", "knowledge"];
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#0a0a12] p-5">
+    <div className="rounded-xl border border-border-subtle bg-surface-1 p-5">
       <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{title}</h3>
-        <span className="text-[10px] text-gray-600">({formatDomain(domain)})</span>
+        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">{title}</h3>
+        <span className="text-[10px] text-text-tertiary">({formatDomain(domain)})</span>
       </div>
 
       {bloomOrder.map((level) => {
@@ -515,7 +515,7 @@ function DomainColumn({
                         : "2px solid transparent",
                     }}
                   >
-                    <span className="text-gray-300 flex-1 truncate" title={skill.label}>
+                    <span className="text-text-primary flex-1 truncate" title={skill.label}>
                       {skill.label.length > 50 ? skill.label.substring(0, 50) + "..." : skill.label}
                     </span>
 
@@ -553,7 +553,7 @@ function TransferBridge({ candidate }: { candidate: TransferCandidate }) {
 
   return (
     <div
-      className="grid gap-3 p-3 rounded-lg border transition-all hover:border-white/[0.12]"
+      className="grid gap-3 p-3 rounded-lg border transition-all hover:border-border"
       style={{
         gridTemplateColumns: "1fr 50px 1fr 90px",
         backgroundColor: colors.bg,
@@ -562,7 +562,7 @@ function TransferBridge({ candidate }: { candidate: TransferCandidate }) {
     >
       {/* Source */}
       <div>
-        <div className="text-xs text-gray-300 leading-relaxed">
+        <div className="text-xs text-text-primary leading-relaxed">
           {candidate.sourceSkill.label}
         </div>
         <div className="flex items-center gap-1.5 mt-1">
@@ -575,7 +575,7 @@ function TransferBridge({ candidate }: { candidate: TransferCandidate }) {
           >
             {candidate.sourceSkill.bloom_level}
           </span>
-          <span className="text-[9px] text-gray-600">{formatDomain(candidate.sourceSkill.domain)}</span>
+          <span className="text-[9px] text-text-tertiary">{formatDomain(candidate.sourceSkill.domain)}</span>
         </div>
       </div>
 
@@ -591,11 +591,11 @@ function TransferBridge({ candidate }: { candidate: TransferCandidate }) {
 
       {/* Target */}
       <div className="text-right">
-        <div className="text-xs text-gray-300 leading-relaxed">
+        <div className="text-xs text-text-primary leading-relaxed">
           {candidate.targetSkill.label}
         </div>
         <div className="flex items-center justify-end gap-1.5 mt-1">
-          <span className="text-[9px] text-gray-600">{formatDomain(candidate.targetSkill.domain)}</span>
+          <span className="text-[9px] text-text-tertiary">{formatDomain(candidate.targetSkill.domain)}</span>
           <span
             className="text-[9px] px-1.5 py-0.5 rounded capitalize"
             style={{
@@ -610,7 +610,7 @@ function TransferBridge({ candidate }: { candidate: TransferCandidate }) {
 
       {/* Transfer type badge */}
       <div className="flex items-center justify-end">
-        <span className="text-[8px] px-1.5 py-0.5 rounded bg-white/[0.05] text-gray-500 uppercase tracking-wider">
+        <span className="text-[8px] px-1.5 py-0.5 rounded bg-surface-1 text-text-secondary uppercase tracking-wider">
           {candidate.transferType.replace("_", " ")}
         </span>
       </div>

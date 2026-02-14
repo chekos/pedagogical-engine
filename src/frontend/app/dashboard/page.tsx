@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import ExportButton from "@/components/export-button";
@@ -33,7 +33,7 @@ const GroupDashboard = dynamic(
 
 function GraphSkeleton() {
   return (
-    <div className="w-full h-[650px] rounded-xl border border-white/[0.06] bg-[#06060a] flex items-center justify-center">
+    <div className="w-full h-[650px] rounded-xl border border-border-subtle bg-surface-0 flex items-center justify-center">
       <LoadingSpinner message="Loading skill dependency graph..." />
     </div>
   );
@@ -51,15 +51,15 @@ function LearnerTooltip({
 }) {
   const unknown = totalSkills - learner.assessed - learner.inferred;
   return (
-    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2.5 rounded-lg bg-[#1a1a22] border border-white/[0.08] shadow-xl z-50 min-w-[180px] pointer-events-none">
-      <div className="text-xs font-semibold text-white mb-1.5">{learner.name}</div>
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2.5 rounded-lg bg-surface-3 border border-border shadow-xl z-50 min-w-[180px] pointer-events-none">
+      <div className="text-xs font-semibold text-text-primary mb-1.5">{learner.name}</div>
       <div className="flex items-center gap-2 text-[10px] mb-1.5">
         <span className="text-green-400 font-medium">{learner.assessed} assessed</span>
         <span className="text-yellow-400 font-medium">{learner.inferred} inferred</span>
-        <span className="text-gray-500">{unknown} unknown</span>
+        <span className="text-text-secondary">{unknown} unknown</span>
       </div>
       {/* Mini progress bar */}
-      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+      <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden">
         <div className="flex h-full">
           <div
             className="bg-green-500/70"
@@ -71,16 +71,16 @@ function LearnerTooltip({
           />
         </div>
       </div>
-      <div className="text-[10px] text-gray-500 mt-1">
-        avg confidence: <span className="text-white font-medium">{Math.round(learner.avgConf * 100)}%</span>
+      <div className="text-[10px] text-text-secondary mt-1">
+        avg confidence: <span className="text-text-primary font-medium">{Math.round(learner.avgConf * 100)}%</span>
       </div>
       {/* Arrow */}
-      <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1a1a22] border-r border-b border-white/[0.08] rotate-45 -mt-1" />
+      <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-surface-3 border-r border-b border-border rotate-45 -mt-1" />
     </div>
   );
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const domainFromUrl = searchParams.get("domain");
 
@@ -299,7 +299,7 @@ export default function DashboardPage() {
   // ─── Loading / error states ──────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#06060a]">
+      <div className="min-h-screen bg-surface-0">
         <NavBar />
         <div className="flex items-center justify-center h-[60vh]">
           <LoadingSpinner message="Loading domains and groups..." />
@@ -310,14 +310,14 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#06060a]">
+      <div className="min-h-screen bg-surface-0">
         <NavBar />
         <div className="flex items-center justify-center h-[60vh]">
           <div className="text-center">
             <p className="text-red-400 text-sm mb-2">Failed to load dashboard</p>
-            <p className="text-gray-600 text-xs">{error}</p>
-            <p className="text-gray-700 text-xs mt-4">
-              Make sure the backend is running: <code className="text-gray-500">npm run dev:server</code>
+            <p className="text-text-tertiary text-xs">{error}</p>
+            <p className="text-text-tertiary text-xs mt-4">
+              Make sure the backend is running: <code className="text-text-secondary">npm run dev:server</code>
             </p>
           </div>
         </div>
@@ -326,21 +326,21 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#06060a]">
+    <div className="min-h-screen bg-surface-0">
       <NavBar />
 
       {/* Page controls */}
-      <div className="border-b border-white/[0.04] bg-[#08080e]/90 backdrop-blur-xl">
+      <div className="border-b border-border-subtle bg-surface-0/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <h1 className="text-base font-heading text-white tracking-tight">Skill Analytics</h1>
-              <div className="w-px h-5 bg-white/[0.06]" />
+              <h1 className="text-base font-heading text-text-primary tracking-tight">Skill Analytics</h1>
+              <div className="w-px h-5 bg-border-subtle" />
               {/* Domain selector */}
               <select
                 value={selectedDomain}
                 onChange={handleDomainChange}
-                className="bg-[#12121a] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-indigo-500/50 [&>option]:bg-[#12121a] [&>option]:text-white"
+                className="bg-surface-2 border border-border rounded-lg px-2.5 py-1.5 text-[11px] text-text-primary focus:outline-none focus:border-indigo-500/50 [&>option]:bg-surface-2 [&>option]:text-text-primary"
               >
                 {domains.map((d) => (
                   <option key={d.slug} value={d.slug}>
@@ -352,7 +352,7 @@ export default function DashboardPage() {
               <select
                 value={selectedGroup}
                 onChange={handleGroupChange}
-                className="bg-[#12121a] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-indigo-500/50 [&>option]:bg-[#12121a] [&>option]:text-white"
+                className="bg-surface-2 border border-border rounded-lg px-2.5 py-1.5 text-[11px] text-text-primary focus:outline-none focus:border-indigo-500/50 [&>option]:bg-surface-2 [&>option]:text-text-primary"
               >
                 <option value="">No group</option>
                 {matchingGroups.map((g) => (
@@ -386,13 +386,13 @@ export default function DashboardPage() {
             </div>
 
             {/* View mode toggle */}
-            <div className="flex items-center gap-1 bg-white/[0.03] border border-white/[0.06] rounded-lg p-0.5">
+            <div className="flex items-center gap-1 bg-surface-1 border border-border-subtle rounded-lg p-0.5">
               <button
                 onClick={() => setViewMode("graph")}
                 className={`px-3.5 py-1.5 rounded-md text-[11px] font-medium transition-all ${
                   viewMode === "graph"
                     ? "bg-indigo-500/15 text-indigo-400 shadow-sm"
-                    : "text-gray-500 hover:text-gray-300"
+                    : "text-text-secondary hover:text-text-primary"
                 }`}
               >
                 <span className="flex items-center gap-1.5">
@@ -407,7 +407,7 @@ export default function DashboardPage() {
                 className={`px-3.5 py-1.5 rounded-md text-[11px] font-medium transition-all ${
                   viewMode === "dashboard"
                     ? "bg-indigo-500/15 text-indigo-400 shadow-sm"
-                    : "text-gray-500 hover:text-gray-300"
+                    : "text-text-secondary hover:text-text-primary"
                 }`}
               >
                 <span className="flex items-center gap-1.5">
@@ -433,7 +433,7 @@ export default function DashboardPage() {
             {learnerIds.length > 0 && (
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[10px] text-gray-600 uppercase tracking-[0.15em] font-semibold font-heading">
+                  <span className="text-[10px] text-text-tertiary uppercase tracking-[0.15em] font-semibold font-heading">
                     Learner View
                   </span>
                   <div className="flex gap-1.5 flex-wrap">
@@ -441,8 +441,8 @@ export default function DashboardPage() {
                       onClick={() => { setSelectedLearner(null); setIsAutoPlaying(false); }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         selectedLearner === null
-                          ? "bg-white/8 text-white border border-white/15"
-                          : "text-gray-600 border border-transparent hover:text-gray-400 hover:border-white/[0.06]"
+                          ? "bg-surface-2 text-text-primary border border-border"
+                          : "text-text-tertiary border border-transparent hover:text-text-secondary hover:border-border-subtle"
                       }`}
                     >
                       Overview
@@ -456,7 +456,7 @@ export default function DashboardPage() {
                           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                             selectedLearner === l.id
                               ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/25"
-                              : "text-gray-600 border border-transparent hover:text-gray-400 hover:border-white/[0.06]"
+                              : "text-text-tertiary border border-transparent hover:text-text-secondary hover:border-border-subtle"
                           }`}
                         >
                           <span className="flex items-center gap-1.5">
@@ -465,7 +465,7 @@ export default function DashboardPage() {
                             <span className={`text-[9px] px-1 py-0.5 rounded ${
                               selectedLearner === l.id
                                 ? "bg-indigo-500/20 text-indigo-300"
-                                : "bg-white/5 text-gray-600"
+                                : "bg-surface-2 text-text-tertiary"
                             }`}>
                               {l.assessed}/{totalSkills}
                             </span>
@@ -486,7 +486,7 @@ export default function DashboardPage() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     isAutoPlaying
                       ? "bg-green-500/15 text-green-400 border border-green-500/20"
-                      : "text-gray-600 border border-white/[0.06] hover:text-gray-400"
+                      : "text-text-tertiary border border-border-subtle hover:text-text-secondary"
                   }`}
                 >
                   {isAutoPlaying ? (
@@ -508,26 +508,26 @@ export default function DashboardPage() {
 
             {/* Learner stats bar (when a learner is selected) */}
             {learnerInfo && graphData.learnerName && (
-              <div className="flex items-center gap-4 px-4 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                <p className="text-xs font-semibold text-white">{graphData.learnerName}</p>
-                <div className="w-px h-4 bg-white/[0.06]" />
+              <div className="flex items-center gap-4 px-4 py-2.5 rounded-xl bg-surface-1 border border-border-subtle">
+                <p className="text-xs font-semibold text-text-primary">{graphData.learnerName}</p>
+                <div className="w-px h-4 bg-border-subtle" />
                 <div className="flex items-center gap-4 text-[11px]">
-                  <span className="text-gray-500">
+                  <span className="text-text-secondary">
                     <span className="font-semibold text-green-400">{learnerInfo.assessed}</span> assessed
                   </span>
-                  <span className="text-gray-500">
+                  <span className="text-text-secondary">
                     <span className="font-semibold text-yellow-400">{learnerInfo.inferred}</span> inferred
                   </span>
-                  <span className="text-gray-500">
-                    <span className="font-semibold text-gray-400">{learnerInfo.unknown}</span> unknown
+                  <span className="text-text-secondary">
+                    <span className="font-semibold text-text-secondary">{learnerInfo.unknown}</span> unknown
                   </span>
-                  <span className="text-gray-500">
-                    avg <span className="font-semibold text-white">{Math.round(learnerInfo.avgConf * 100)}%</span>
+                  <span className="text-text-secondary">
+                    avg <span className="font-semibold text-text-primary">{Math.round(learnerInfo.avgConf * 100)}%</span>
                   </span>
                 </div>
                 <div className="flex-1" />
                 {totalSkills > 0 && (
-                  <div className="h-1.5 w-32 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-32 bg-surface-2 rounded-full overflow-hidden">
                     <div className="flex h-full">
                       <div
                         className="bg-green-500/70 transition-all duration-500"
@@ -557,8 +557,8 @@ export default function DashboardPage() {
           ) : (
             <div className="flex items-center justify-center h-[400px]">
               <div className="text-center">
-                <p className="text-gray-500 text-sm">No group selected for this domain</p>
-                <p className="text-gray-700 text-xs mt-1">
+                <p className="text-text-secondary text-sm">No group selected for this domain</p>
+                <p className="text-text-tertiary text-xs mt-1">
                   Select a group from the dropdown above, or switch to the Dependency Graph view
                 </p>
               </div>
@@ -567,5 +567,20 @@ export default function DashboardPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-surface-0">
+        <NavBar />
+        <div className="flex items-center justify-center h-[60vh]">
+          <LoadingSpinner message="Loading dashboard..." />
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

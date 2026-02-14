@@ -69,9 +69,9 @@ function getNodeStyle(status: SkillStatus | undefined, bloomLevel: string) {
 
   if (!status || status.type === "unknown") {
     return {
-      background: "rgba(20, 20, 28, 0.9)",
+      background: "var(--surface-2)",
       border: `2px solid ${bloomColor}40`,
-      color: "#6b7280",
+      color: "var(--text-tertiary)",
       glow: "none",
     };
   }
@@ -81,7 +81,7 @@ function getNodeStyle(status: SkillStatus | undefined, bloomLevel: string) {
     return {
       background: `rgba(34, 197, 94, ${opacity * 0.12})`,
       border: `2px solid rgba(34, 197, 94, ${Math.max(0.5, opacity)})`,
-      color: "#f3f4f6",
+      color: "var(--text-primary)",
       glow: `0 0 ${10 + status.confidence * 14}px rgba(34, 197, 94, ${opacity * 0.35}), inset 0 0 ${6 + status.confidence * 6}px rgba(34, 197, 94, ${opacity * 0.08})`,
     };
   }
@@ -91,7 +91,7 @@ function getNodeStyle(status: SkillStatus | undefined, bloomLevel: string) {
   return {
     background: `rgba(251, 191, 36, ${opacity * 0.08})`,
     border: `2px dashed rgba(251, 191, 36, ${Math.max(0.4, opacity * 0.7)})`,
-    color: "#e5e7eb",
+    color: "var(--text-primary)",
     glow: `0 0 ${6 + status.confidence * 8}px rgba(251, 191, 36, ${opacity * 0.25})`,
   };
 }
@@ -132,7 +132,7 @@ function SkillNode({ data }: NodeProps) {
 
         {/* Confidence bar at bottom */}
         {confidence !== undefined && confidence > 0 && (
-          <div className="absolute bottom-0 left-1 right-1 h-[2px] rounded-full overflow-hidden bg-white/5">
+          <div className="absolute bottom-0 left-1 right-1 h-[2px] rounded-full overflow-hidden bg-surface-2">
             <div
               className="h-full rounded-full transition-all duration-1000 ease-out"
               style={{
@@ -163,17 +163,17 @@ function SkillNode({ data }: NodeProps) {
 
         {/* Hover tooltip */}
         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 hidden group-hover:block z-50 pointer-events-none">
-          <div className="bg-[#12121e] border border-white/10 rounded-xl px-3.5 py-2.5 shadow-2xl min-w-[220px] max-w-[300px]">
-            <p className="text-[11px] font-semibold text-white mb-1.5 leading-snug">{label}</p>
+          <div className="bg-surface-3 border border-border rounded-xl px-3.5 py-2.5 shadow-2xl min-w-[220px] max-w-[300px]">
+            <p className="text-[11px] font-semibold text-text-primary mb-1.5 leading-snug">{label}</p>
             <div className="flex items-center gap-2 mb-1">
               <span
                 className="inline-block w-2 h-2 rounded-full"
                 style={{ background: bloomColor, boxShadow: `0 0 4px ${bloomColor}60` }}
               />
-              <span className="text-[10px] text-gray-400">{BLOOM_LABELS[bloomLevel] || bloomLevel}</span>
+              <span className="text-[10px] text-text-secondary">{BLOOM_LABELS[bloomLevel] || bloomLevel}</span>
             </div>
             {hasStatus && (
-              <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-white/5">
+              <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-border-subtle">
                 <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-medium ${
                   status.type === "assessed"
                     ? "bg-green-500/15 text-green-400 border border-green-500/20"
@@ -181,13 +181,13 @@ function SkillNode({ data }: NodeProps) {
                 }`}>
                   {status.type}
                 </span>
-                <span className="text-[10px] text-gray-500 font-mono">
+                <span className="text-[10px] text-text-secondary font-mono">
                   {Math.round((confidence || 0) * 100)}%
                 </span>
               </div>
             )}
             {/* Arrow */}
-            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3 h-3 bg-[#12121e] border-b border-r border-white/10 rotate-45" />
+            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-3 h-3 bg-surface-3 border-b border-r border-border rotate-45" />
           </div>
         </div>
       </div>
@@ -371,14 +371,14 @@ function GraphInner({ data }: {
   }, [data.learnerStatuses]);
 
   return (
-    <div className="w-full h-full relative" style={{ background: "linear-gradient(180deg, #06060a 0%, #0a0a12 50%, #08080e 100%)" }}>
+    <div className="w-full h-full relative bg-surface-0">
       {/* Subtle grid pattern */}
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.03]"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            linear-gradient(var(--text-tertiary) 1px, transparent 1px),
+            linear-gradient(90deg, var(--text-tertiary) 1px, transparent 1px)
           `,
           backgroundSize: "40px 40px",
         }}
@@ -400,8 +400,8 @@ function GraphInner({ data }: {
       >
         {/* Bloom's Taxonomy legend */}
         <Panel position="top-left">
-          <div className="bg-[#0c0c16]/95 backdrop-blur-md border border-white/[0.06] rounded-xl p-3 shadow-2xl">
-            <p className="text-[9px] uppercase tracking-[0.15em] text-gray-600 font-semibold mb-2.5">
+          <div className="bg-surface-1/95 backdrop-blur-md border border-border-subtle rounded-xl p-3 shadow-2xl">
+            <p className="text-[9px] uppercase tracking-[0.15em] text-text-tertiary font-semibold mb-2.5">
               Bloom&apos;s Taxonomy
             </p>
             <div className="space-y-1">
@@ -411,7 +411,7 @@ function GraphInner({ data }: {
                     className="w-2 h-2 rounded-[3px] flex-shrink-0"
                     style={{ background: BLOOM_COLORS[level], boxShadow: `0 0 4px ${BLOOM_COLORS[level]}50` }}
                   />
-                  <span className="text-[10px] text-gray-500">{BLOOM_LABELS[level]}</span>
+                  <span className="text-[10px] text-text-secondary">{BLOOM_LABELS[level]}</span>
                 </div>
               ))}
             </div>
@@ -420,32 +420,32 @@ function GraphInner({ data }: {
 
         {/* Status legend + learner name */}
         <Panel position="top-right">
-          <div className="bg-[#0c0c16]/95 backdrop-blur-md border border-white/[0.06] rounded-xl p-3 shadow-2xl">
+          <div className="bg-surface-1/95 backdrop-blur-md border border-border-subtle rounded-xl p-3 shadow-2xl">
             {data.learnerName && (
-              <div className="mb-3 pb-2.5 border-b border-white/5">
-                <p className="text-[9px] uppercase tracking-[0.15em] text-gray-600 font-semibold mb-1">
+              <div className="mb-3 pb-2.5 border-b border-border-subtle">
+                <p className="text-[9px] uppercase tracking-[0.15em] text-text-tertiary font-semibold mb-1">
                   Learner
                 </p>
-                <p className="text-xs font-semibold text-white">
+                <p className="text-xs font-semibold text-text-primary">
                   {data.learnerName}
                 </p>
               </div>
             )}
-            <p className="text-[9px] uppercase tracking-[0.15em] text-gray-600 font-semibold mb-2.5">
+            <p className="text-[9px] uppercase tracking-[0.15em] text-text-tertiary font-semibold mb-2.5">
               Status
             </p>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-[3px] bg-green-500 flex-shrink-0" style={{ boxShadow: "0 0 6px rgba(34, 197, 94, 0.4)" }} />
-                <span className="text-[10px] text-gray-500">Assessed</span>
+                <span className="text-[10px] text-text-secondary">Assessed</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-[3px] bg-yellow-500 flex-shrink-0" style={{ boxShadow: "0 0 6px rgba(251, 191, 36, 0.3)" }} />
-                <span className="text-[10px] text-gray-500">Inferred</span>
+                <span className="text-[10px] text-text-secondary">Inferred</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-[3px] bg-gray-700 flex-shrink-0" />
-                <span className="text-[10px] text-gray-500">Unknown</span>
+                <span className="w-2 h-2 rounded-[3px] bg-surface-3 flex-shrink-0" />
+                <span className="text-[10px] text-text-secondary">Unknown</span>
               </div>
             </div>
           </div>
@@ -454,29 +454,29 @@ function GraphInner({ data }: {
         {/* Stats bar at bottom */}
         {stats && (
           <Panel position="bottom-center">
-            <div className="bg-[#0c0c16]/95 backdrop-blur-md border border-white/[0.06] rounded-xl px-5 py-2.5 shadow-2xl flex items-center gap-5">
+            <div className="bg-surface-1/95 backdrop-blur-md border border-border-subtle rounded-xl px-5 py-2.5 shadow-2xl flex items-center gap-5">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500" style={{ boxShadow: "0 0 4px rgba(34, 197, 94, 0.4)" }} />
-                <span className="text-[11px] text-gray-400">
+                <span className="text-[11px] text-text-secondary">
                   <span className="font-semibold text-green-400">{stats.assessed}</span> assessed
                 </span>
               </div>
-              <div className="w-px h-4 bg-white/5" />
+              <div className="w-px h-4 bg-border-subtle" />
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-yellow-500" style={{ boxShadow: "0 0 4px rgba(251, 191, 36, 0.3)" }} />
-                <span className="text-[11px] text-gray-400">
+                <span className="text-[11px] text-text-secondary">
                   <span className="font-semibold text-yellow-400">{stats.inferred}</span> inferred
                 </span>
               </div>
-              <div className="w-px h-4 bg-white/5" />
+              <div className="w-px h-4 bg-border-subtle" />
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-gray-700" />
-                <span className="text-[11px] text-gray-400">
-                  <span className="font-semibold text-gray-400">{stats.unknown}</span> unknown
+                <span className="w-2 h-2 rounded-full bg-surface-3" />
+                <span className="text-[11px] text-text-secondary">
+                  <span className="font-semibold text-text-secondary">{stats.unknown}</span> unknown
                 </span>
               </div>
-              <div className="w-px h-4 bg-white/5" />
-              <span className="text-[11px] font-semibold text-white">
+              <div className="w-px h-4 bg-border-subtle" />
+              <span className="text-[11px] font-semibold text-text-primary">
                 {Math.round(((stats.assessed + stats.inferred) / stats.total) * 100)}% mapped
               </span>
             </div>
@@ -500,7 +500,7 @@ export default function SkillDependencyGraph({
 }) {
   return (
     <div
-      className="w-full rounded-xl overflow-hidden border border-white/[0.06] shadow-2xl"
+      className="w-full rounded-xl overflow-hidden border border-border-subtle shadow-2xl"
       style={{ height }}
     >
       <ReactFlowProvider>

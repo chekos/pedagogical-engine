@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Tailwind v4 theme — maps runtime CSS variables to utility classes */
 @theme inline {
   --color-surface-0: var(--surface-0);
@@ -159,30 +161,24 @@
   --bloom-create: #f43f5e;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface-0: #0a0a0b;
-    --surface-1: #111113;
-    --surface-2: #1a1a1d;
-    --surface-3: #232326;
-    --border: #2e2e33;
-    --border-subtle: #232326;
-    --accent: #a8b0d3;
-    --accent-muted: #7c85ad;
-    --text-primary: #f3f4f6;
-    --text-secondary: #9ca3af;
-    --text-tertiary: #6b7280;
-    --bloom-remember: #94a3b8;
-    --bloom-understand: #60a5fa;
-    --bloom-apply: #34d399;
-    --bloom-analyze: #fbbf24;
-    --bloom-evaluate: #f97316;
-    --bloom-create: #f43f5e;
-  }
-}
-
-html {
-  color-scheme: light dark;
+:root.dark {
+  --surface-0: #0a0a0b;
+  --surface-1: #111113;
+  --surface-2: #1a1a1d;
+  --surface-3: #232326;
+  --border: #2e2e33;
+  --border-subtle: #232326;
+  --accent: #a8b0d3;
+  --accent-muted: #7c85ad;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-tertiary: #6b7280;
+  --bloom-remember: #94a3b8;
+  --bloom-understand: #60a5fa;
+  --bloom-apply: #34d399;
+  --bloom-analyze: #fbbf24;
+  --bloom-evaluate: #f97316;
+  --bloom-create: #f43f5e;
 }
 
 body {
