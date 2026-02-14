@@ -45,22 +45,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const ttsQueueRef = useRef<string | null>(null);
   const ttsEnabledRef = useRef(false);
-  // Keep ref in sync with state so the callback can read it
   useEffect(() => { ttsEnabledRef.current = ttsEnabled; }, [ttsEnabled]);
-
-  // Voice input (speech-to-text)
-  const {
-    isSupported: sttSupported,
-    status: sttStatus,
-    transcript,
-    toggleListening,
-    errorMessage: sttError,
-  } = useSpeechRecognition({
-    onFinalTranscript: (text) => {
-      // Populate textarea with recognized speech — user can review before sending
-      setInput((prev) => (prev ? prev + " " + text : text));
-    },
-  });
 
   // Voice output (text-to-speech)
   const {
@@ -70,18 +55,53 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
     stop: stopSpeaking,
   } = useSpeechSynthesis({ rate: 1.05 });
 
-  // Keep speak in a ref so handleMessage has a stable identity
   const speakRef = useRef(speak);
   useEffect(() => { speakRef.current = speak; }, [speak]);
+  const stopSpeakingRef = useRef(stopSpeaking);
+  useEffect(() => { stopSpeakingRef.current = stopSpeaking; }, [stopSpeaking]);
 
-  // Update input when transcript changes (interim results)
-  const lastTranscriptRef = useRef("");
+  // Voice input (speech-to-text) — 3-state redesign
+  const {
+    isSupported: sttSupported,
+    status: sttStatus,
+    transcript: sttTranscript,
+    interimTranscript: sttInterimTranscript,
+    startListening,
+    stopListening,
+    pauseListening,
+    resumeListening,
+    elapsedSeconds,
+    errorMessage: sttError,
+  } = useSpeechRecognition();
+
+  const isRecording = sttStatus === "listening" || sttStatus === "paused";
+
+  // Start recording: cancel any TTS first
+  const handleStartRecording = useCallback(() => {
+    stopSpeakingRef.current();
+    startListening();
+  }, [startListening]);
+
+  // Stop recording: finalize transcript into input field
+  const handleStopRecording = useCallback(() => {
+    stopListening();
+    // Use the accumulated transcript from the hook
+    // We read sttTranscript via a ref to avoid stale closures
+  }, [stopListening]);
+
+  // When recording stops (sttStatus goes from listening/paused to idle),
+  // populate input with the final accumulated transcript
+  const prevSttStatusRef = useRef(sttStatus);
   useEffect(() => {
-    if (transcript && transcript !== lastTranscriptRef.current && sttStatus === "listening") {
-      // Show interim transcript in the input as a preview
-      lastTranscriptRef.current = transcript;
+    const wasActive = prevSttStatusRef.current === "listening" || prevSttStatusRef.current === "paused";
+    const isNowIdle = sttStatus === "idle";
+    if (wasActive && isNowIdle && sttTranscript) {
+      setInput((prev) => (prev ? prev + " " + sttTranscript : sttTranscript));
+      // Focus the input so the user can review and send
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [transcript, sttStatus]);
+    prevSttStatusRef.current = sttStatus;
+  }, [sttStatus, sttTranscript]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -100,14 +120,12 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
       case "stream_delta": {
         const streamId = streamingMessageIdRef.current;
         if (streamId) {
-          // Append delta to existing streaming message
           setMessages((prev) =>
             prev.map((m) =>
               m.id === streamId ? { ...m, text: m.text + msg.text } : m
             )
           );
         } else {
-          // Create a new streaming message
           const id = `stream-${Date.now()}-${Math.random()}`;
           streamingMessageIdRef.current = id;
           setMessages((prev) => [
@@ -119,17 +137,10 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
       }
 
       case "assistant": {
-        // NOTE: Do NOT setIsThinking(false) here. The agent sends multiple
-        // "assistant" messages during a turn (one per tool use). Only "result"
-        // means the agent is truly done. Clearing here caused the progress
-        // indicator to vanish prematurely during long subagent operations.
-
-        // Track active tool uses
         if (msg.toolUses && msg.toolUses.length > 0) {
           setActiveTools(msg.toolUses);
         }
 
-        // Replace the streaming placeholder with the final complete message
         const streamId = streamingMessageIdRef.current;
         if (streamId && msg.text.trim()) {
           streamingMessageIdRef.current = null;
@@ -152,7 +163,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         } else if (msg.text.trim()) {
           const id = `assistant-${Date.now()}-${Math.random()}`;
           currentAssistantRef.current = id;
-          // Queue for TTS — only the last assistant message gets read aloud
           if (ttsEnabledRef.current) {
             ttsQueueRef.current = msg.text;
           }
@@ -167,7 +177,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             },
           ]);
         } else if (msg.toolUses && msg.toolUses.length > 0) {
-          // Tool use without text — remove streaming placeholder and add tool-only message
           if (streamId) streamingMessageIdRef.current = null;
           const id = `tool-${Date.now()}-${Math.random()}`;
           setMessages((prev) => {
@@ -193,13 +202,10 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         setThinkingStartedAt(null);
         currentAssistantRef.current = null;
         streamingMessageIdRef.current = null;
-        // TTS: read back final assistant response if enabled
-        // (handled via ttsQueueRef and speakRef so the callback doesn't need speak in deps)
         if (ttsQueueRef.current) {
           speakRef.current(ttsQueueRef.current);
           ttsQueueRef.current = null;
         }
-        // Surface error results to the user
         if (msg.subtype !== "success") {
           const errors = msg.errors ?? [];
           if (errors.length > 0) {
@@ -232,11 +238,9 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         break;
 
       case "system":
-        // System init — could show available tools/skills
         break;
 
       case "tool_progress": {
-        // Update active tools with the currently running tool for better progress display
         setActiveTools((prev) => {
           const existing = prev.find((t) => t.id === msg.toolUseId);
           if (existing) return prev;
@@ -279,13 +283,11 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
     setActiveTools([]);
     clientRef.current.send(trimmed);
 
-    // Reset textarea height
     if (inputRef.current) {
       inputRef.current.style.height = "auto";
     }
   }, [input]);
 
-  // Programmatic send (used by interactive tool cards like AskUserQuestion)
   const sendProgrammaticMessage = useCallback((text: string) => {
     if (!text.trim() || !clientRef.current?.isConnected) return;
 
@@ -304,7 +306,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
     clientRef.current.send(text);
   }, []);
 
-  // Auto-send initial message once connected (e.g. from ?message= query param)
   const initialMessageSent = useRef(false);
   useEffect(() => {
     if (initialMessage && status === "connected" && !initialMessageSent.current) {
@@ -322,7 +323,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-    // Auto-resize
     const el = e.target;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
@@ -348,7 +348,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             <h1 className="text-lg font-heading text-text-primary">Teaching Workspace</h1>
           </div>
         </div>
-        {/* Minimal connection indicator — no session ID */}
         {status !== "connected" && (
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${connLabel.color}`} />
@@ -359,7 +358,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
 
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4">
-        {/* Connection error state */}
         {messages.length === 0 && (status === "error" || status === "disconnected") && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
@@ -411,11 +409,9 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
         <div className="max-w-3xl mx-auto space-y-4">
           {messages.map((msg) => (
             <div key={msg.id}>
-              {/* Text content */}
               {msg.text && (
                 <MessageBubble role={msg.role} text={msg.text} timestamp={msg.timestamp} />
               )}
-              {/* Tool uses */}
               {msg.toolUses && msg.toolUses.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {msg.toolUses.map((tool) => (
@@ -426,7 +422,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             </div>
           ))}
 
-          {/* Progress indicator — persists throughout the entire agent turn */}
           {isThinking && (
             <ProgressIndicator
               activeTools={activeTools}
@@ -446,18 +441,22 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
             {sttError}
           </div>
         )}
-        {/* Listening indicator */}
-        {sttStatus === "listening" && (
-          <div className="max-w-3xl mx-auto mb-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse-subtle" />
-            <span className="text-xs text-red-400 font-medium">Listening...</span>
-            {transcript && (
-              <span className="text-xs text-text-secondary italic truncate">{transcript}</span>
-            )}
-          </div>
-        )}
         <div className="flex items-end gap-2 max-w-3xl mx-auto">
           <div className="flex-1 relative">
+            {/* When recording, show the recording bar above the textarea */}
+            {isRecording && sttSupported && (
+              <div className="mb-2">
+                <VoiceMicButton
+                  status={sttStatus}
+                  onClick={handleStartRecording}
+                  onPause={pauseListening}
+                  onResume={resumeListening}
+                  onStop={handleStopRecording}
+                  elapsedSeconds={elapsedSeconds}
+                  interimTranscript={sttInterimTranscript}
+                />
+              </div>
+            )}
             <textarea
               ref={inputRef}
               value={input}
@@ -465,21 +464,19 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
               onKeyDown={handleKeyDown}
               placeholder={
                 status === "connected"
-                  ? sttStatus === "listening"
-                    ? "Listening... speak now"
-                    : "What are you planning to teach?"
+                  ? "What are you planning to teach?"
                   : "Waiting for connection..."
               }
               disabled={status !== "connected"}
               rows={1}
               className="w-full resize-none rounded-xl border border-border bg-surface-1 pl-4 pr-12 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent disabled:opacity-50 transition-all"
             />
-            {/* Mic button inside input */}
-            {sttSupported && (
+            {/* Mic button inside input — only show when NOT recording */}
+            {sttSupported && !isRecording && (
               <div className="absolute right-2 bottom-1.5">
                 <VoiceMicButton
                   status={sttStatus}
-                  onClick={toggleListening}
+                  onClick={handleStartRecording}
                   disabled={status !== "connected" || isThinking}
                 />
               </div>
