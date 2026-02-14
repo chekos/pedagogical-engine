@@ -200,15 +200,6 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
     }
   }, []);
 
-  // Auto-send initial message once connected (e.g. from ?message= query param)
-  const initialMessageSent = useRef(false);
-  useEffect(() => {
-    if (initialMessage && status === "connected" && !initialMessageSent.current) {
-      initialMessageSent.current = true;
-      sendProgrammaticMessage(initialMessage);
-    }
-  }, [initialMessage, status, sendProgrammaticMessage]);
-
   useEffect(() => {
     const client = new ChatClient({
       onMessage: handleMessage,
@@ -265,6 +256,15 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
     setActiveTools([]);
     clientRef.current.send(text);
   }, []);
+
+  // Auto-send initial message once connected (e.g. from ?message= query param)
+  const initialMessageSent = useRef(false);
+  useEffect(() => {
+    if (initialMessage && status === "connected" && !initialMessageSent.current) {
+      initialMessageSent.current = true;
+      sendProgrammaticMessage(initialMessage);
+    }
+  }, [initialMessage, status, sendProgrammaticMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
