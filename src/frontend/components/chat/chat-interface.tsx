@@ -52,6 +52,7 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
   const [sessionContext, setSessionContext] = useState<SessionContext>(EMPTY_SESSION_CONTEXT);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const toggleSidebar = useCallback(() => setSidebarCollapsed(prev => !prev), []);
+  const serverProvidesContext = useRef(false);
 
   // Voice output (text-to-speech)
   const {
@@ -218,7 +219,9 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
       case "assistant": {
         if (msg.toolUses && msg.toolUses.length > 0) {
           setActiveTools(msg.toolUses);
-          extractContext(msg.toolUses);
+          if (!serverProvidesContext.current) {
+            extractContext(msg.toolUses);
+          }
         }
 
         const streamId = streamingMessageIdRef.current;
@@ -316,6 +319,14 @@ export default function ChatInterface({ initialMessage }: ChatInterfaceProps) {
           },
         ]);
         break;
+
+      case "session_context": {
+        serverProvidesContext.current = true;
+        if ("context" in msg && msg.context) {
+          setSessionContext(msg.context as SessionContext);
+        }
+        break;
+      }
 
       case "system":
         break;

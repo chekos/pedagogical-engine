@@ -54,6 +54,17 @@ export interface StreamDeltaMessage {
   text: string;
 }
 
+export interface SessionContextMessage {
+  type: "session_context";
+  context: {
+    groupName: string | null;
+    domain: string | null;
+    constraints: string[];
+    learnerNames: string[];
+    skillsDiscussed: string[];
+  };
+}
+
 export type ServerMessage =
   | AssistantMessage
   | ResultMessage
@@ -61,7 +72,8 @@ export type ServerMessage =
   | SessionMessage
   | ErrorMessage
   | ToolProgressMessage
-  | StreamDeltaMessage;
+  | StreamDeltaMessage
+  | SessionContextMessage;
 
 // ─── Configuration ─────────────────────────────────────────────
 
@@ -83,18 +95,27 @@ export class ChatClient {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private intentionalClose = false;
+  private _sessionId: string | null = null;
 
   constructor(options: ChatClientOptions) {
     this.options = options;
   }
 
-  connect(): void {
+  get sessionId(): string | null {
+    return this._sessionId;
+  }
+
+  connect(reconnectSessionId?: string): void {
     this.intentionalClose = false;
     this.options.onStatusChange("connecting");
 
+    const url = reconnectSessionId
+      ? `${WS_URL}/ws/chat?sessionId=${encodeURIComponent(reconnectSessionId)}`
+      : `${WS_URL}/ws/chat`;
+
     let socket: WebSocket;
     try {
-      socket = new WebSocket(`${WS_URL}/ws/chat`);
+      socket = new WebSocket(url);
     } catch {
       this.options.onStatusChange("error");
       this.scheduleReconnect();
@@ -111,6 +132,9 @@ export class ChatClient {
     socket.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data) as ServerMessage;
+        if (msg.type === "session" && "sessionId" in msg) {
+          this._sessionId = msg.sessionId;
+        }
         this.options.onMessage(msg);
       } catch {
         // Ignore malformed messages
@@ -165,7 +189,7 @@ export class ChatClient {
     this.reconnectAttempts++;
 
     this.reconnectTimer = setTimeout(() => {
-      this.connect();
+      this.connect(this._sessionId ?? undefined);
     }, delay);
   }
 }

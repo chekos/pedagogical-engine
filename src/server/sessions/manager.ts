@@ -1,10 +1,15 @@
 import type { Query, SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { WebSocket } from "ws";
+import { type SessionContext, EMPTY_SESSION_CONTEXT } from "../context-extractor.js";
 
 export interface Session {
   id: string;
   query: Query | null;
   createdAt: Date;
   lastActivity: Date;
+  context: SessionContext;
+  ws: WebSocket | null;
+  disconnectedAt: Date | null;
 }
 
 /**
@@ -20,6 +25,9 @@ export class SessionManager {
       query: null,
       createdAt: new Date(),
       lastActivity: new Date(),
+      context: { ...EMPTY_SESSION_CONTEXT, constraints: [], learnerNames: [], skillsDiscussed: [] },
+      ws: null,
+      disconnectedAt: null,
     };
     this.sessions.set(sessionId, session);
     return session;
@@ -44,6 +52,30 @@ export class SessionManager {
     }
   }
 
+  updateContext(sessionId: string, context: SessionContext): void {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      session.context = context;
+    }
+  }
+
+  setWs(sessionId: string, ws: WebSocket): void {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      session.ws = ws;
+      session.disconnectedAt = null;
+      session.lastActivity = new Date();
+    }
+  }
+
+  disconnect(sessionId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      session.ws = null;
+      session.disconnectedAt = new Date();
+    }
+  }
+
   remove(sessionId: string): void {
     const session = this.sessions.get(sessionId);
     if (session?.query) {
@@ -56,12 +88,22 @@ export class SessionManager {
     return [...this.sessions.values()];
   }
 
-  /** Clean up sessions older than maxAge (ms). Default 4 hours. */
-  cleanup(maxAge = 4 * 60 * 60 * 1000): number {
+  /**
+   * Clean up sessions older than maxAge (ms). Default 4 hours.
+   * Also removes disconnected sessions past the grace period (default 5 min).
+   */
+  cleanup(maxAge = 4 * 60 * 60 * 1000, disconnectGrace = 5 * 60 * 1000): number {
     const now = Date.now();
     let removed = 0;
     for (const [id, session] of this.sessions.entries()) {
+      // Remove sessions that exceeded the overall max age
       if (now - session.lastActivity.getTime() > maxAge) {
+        this.remove(id);
+        removed++;
+        continue;
+      }
+      // Remove disconnected sessions past the grace period
+      if (session.disconnectedAt && now - session.disconnectedAt.getTime() > disconnectGrace) {
         this.remove(id);
         removed++;
       }

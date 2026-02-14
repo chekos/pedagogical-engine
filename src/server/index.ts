@@ -7,6 +7,7 @@ import path from "path";
 import { nanoid } from "nanoid";
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { SessionManager } from "./sessions/manager.js";
+import { extractSessionContext } from "./context-extractor.js";
 import { createEducatorQuery, createAssessmentQuery, createLiveCompanionQuery } from "./agent.js";
 import { parseLesson, lessonIdFromPath } from "./lib/lesson-parser.js";
 import { exportRouter } from "./exports/router.js";
@@ -1549,12 +1550,19 @@ app.get("/api/transfer-learners", async (_req, res) => {
 });
 
 // ─── WebSocket handler for educator chat ─────────────────────────
-wss.on("connection", (ws: WebSocket) => {
-  const sessionId = randomUUID();
-  const session = sessionManager.create(sessionId);
+wss.on("connection", (ws: WebSocket, req: import("http").IncomingMessage) => {
+  // Check for reconnection: ?sessionId=... in the upgrade URL
+  const reqUrl = new URL(req.url ?? "", `http://localhost:${PORT}`);
+  const reconnectId = reqUrl.searchParams.get("sessionId");
+  const existingSession = reconnectId ? sessionManager.get(reconnectId) : undefined;
+  const isReconnect = !!(existingSession && existingSession.disconnectedAt !== null);
+
+  const sessionId = isReconnect ? existingSession!.id : randomUUID();
+  const session = isReconnect ? existingSession! : sessionManager.create(sessionId);
+  sessionManager.setWs(sessionId, ws);
   let processing = false;
 
-  console.log(`[ws] New educator session: ${sessionId}`);
+  console.log(`[ws] ${isReconnect ? "Reconnected" : "New"} educator session: ${sessionId}`);
 
   // Send session ID to client
   ws.send(
@@ -1563,6 +1571,11 @@ wss.on("connection", (ws: WebSocket) => {
       sessionId,
     })
   );
+
+  // On reconnect, replay the accumulated context so the sidebar repopulates
+  if (isReconnect) {
+    ws.send(JSON.stringify({ type: "session_context", context: session.context }));
+  }
 
   ws.on("message", async (data: Buffer) => {
     let parsed: { type: string; message?: string; sessionId?: string };
@@ -1636,6 +1649,19 @@ wss.on("connection", (ws: WebSocket) => {
                   sessionId: msg.session_id,
                 })
               );
+
+              // Extract and emit session context from tool_use blocks
+              if (toolUseBlocks.length > 0) {
+                const updatedContext = extractSessionContext(
+                  toolUseBlocks.map((b: { name: string; input: unknown }) => ({
+                    name: b.name,
+                    input: b.input as Record<string, unknown>,
+                  })),
+                  session.context,
+                );
+                sessionManager.updateContext(sessionId, updatedContext);
+                ws.send(JSON.stringify({ type: "session_context", context: updatedContext }));
+              }
               break;
             }
 
@@ -1714,8 +1740,8 @@ wss.on("connection", (ws: WebSocket) => {
   });
 
   ws.on("close", () => {
-    console.log(`[ws] Session disconnected: ${sessionId}`);
-    sessionManager.remove(sessionId);
+    console.log(`[ws] Session disconnected: ${sessionId} (kept for reconnection)`);
+    sessionManager.disconnect(sessionId);
   });
 
   ws.on("error", (err) => {
