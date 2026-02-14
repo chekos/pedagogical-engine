@@ -2,7 +2,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
-import { loadGraph, DATA_DIR, parseLearnerProfile, parseGroupMembers, toolResponse, type Skill, type SkillGraph } from "./shared.js";
+import { loadGraph, DATA_DIR, parseLearnerProfile, parseGroupMembers, loadGroupLearners, toolResponse, type Skill, type SkillGraph } from "./shared.js";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -96,9 +96,113 @@ interface SimulationResult {
 
 // ─── Helpers ────────────────────────────────────────────────────
 
+/** Use Opus 4.6 to analyze which skills each lesson section requires/teaches */
+async function analyzeSkillRequirements(
+  sections: ParsedSection[],
+  skills: Skill[],
+  lessonTitle: string,
+): Promise<Array<{ required: string[]; taught: string[] }>> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.warn("[simulate] No ANTHROPIC_API_KEY — falling back to keyword matching");
+    return sections.map((s) => extractSectionSkillsFallback(s.content, s.title, skills));
+  }
 
-/** Extract skills mentioned in a lesson section based on skill IDs and labels */
-function extractSectionSkills(
+  const skillList = skills
+    .map((s) => `- ${s.id} (${s.label}, Bloom's: ${s.bloom_level})`)
+    .join("\n");
+
+  const sectionList = sections
+    .map(
+      (s, i) =>
+        `### Section ${i}: ${s.title} [${s.startMin}-${s.endMin} min]\n${s.content.slice(0, 1500)}`
+    )
+    .join("\n\n");
+
+  const prompt = `You are a pedagogical skill analyst. Your job is to determine which skills from a skill graph are genuinely relevant to each section of a lesson plan.
+
+## Skill graph
+${skillList}
+
+## Lesson: ${lessonTitle}
+
+${sectionList}
+
+## Task
+For each section, identify:
+- **required**: Skills that are TRUE PREREQUISITES — the student must already have mastered these to engage with this section. A skill merely mentioned in passing is NOT a prerequisite. Only include skills the student genuinely needs before this section.
+- **taught**: Skills that are ACTIVELY BEING TAUGHT or practiced in this section.
+
+Important rules:
+- An introductory/opening section that sets context usually has NO required skills.
+- A closing/reflection section usually has NO required skills.
+- Be conservative — fewer, more accurate skills are better than many false positives.
+- Only use skill IDs from the list above. Do not invent new ones.
+- A skill being taught in an earlier section can be a prerequisite for a later section.
+
+## Output format
+Return ONLY a JSON array with exactly ${sections.length} objects (one per section, in order):
+\`\`\`json
+[
+  { "required": ["skill-id-1"], "taught": ["skill-id-2"] },
+  ...
+]
+\`\`\`
+
+Return ONLY the JSON array, no other text.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-opus-4-6",
+        max_tokens: 2048,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`[simulate] Anthropic API error ${response.status} — falling back to keyword matching`);
+      return sections.map((s) => extractSectionSkillsFallback(s.content, s.title, skills));
+    }
+
+    const data = await response.json();
+    const text: string = data.content?.[0]?.text || "";
+
+    // Extract JSON from response (may be wrapped in ```json ... ```)
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.warn("[simulate] Could not parse LLM JSON response — falling back to keyword matching");
+      return sections.map((s) => extractSectionSkillsFallback(s.content, s.title, skills));
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{ required: string[]; taught: string[] }>;
+
+    // Validate structure
+    if (!Array.isArray(parsed) || parsed.length !== sections.length) {
+      console.warn(`[simulate] LLM returned ${parsed.length} sections, expected ${sections.length} — falling back`);
+      return sections.map((s) => extractSectionSkillsFallback(s.content, s.title, skills));
+    }
+
+    // Validate skill IDs — filter out any that aren't in the actual graph
+    const validIds = new Set(skills.map((s) => s.id));
+    return parsed.map((entry) => ({
+      required: (entry.required || []).filter((id: string) => validIds.has(id)),
+      taught: (entry.taught || []).filter((id: string) => validIds.has(id)),
+    }));
+  } catch (err) {
+    console.warn("[simulate] LLM skill analysis failed — falling back to keyword matching:", err);
+    return sections.map((s) => extractSectionSkillsFallback(s.content, s.title, skills));
+  }
+}
+
+/** Fallback: extract skills via keyword matching (used when API is unavailable) */
+function extractSectionSkillsFallback(
   sectionContent: string,
   sectionTitle: string,
   allSkills: Skill[]
@@ -109,11 +213,8 @@ function extractSectionSkills(
 
   for (const skill of allSkills) {
     const idLower = skill.id.toLowerCase();
-    const labelLower = skill.label.toLowerCase();
 
-    // Check for explicit skill ID references (e.g., `select-filter-data`)
     if (text.includes(idLower) || text.includes("`" + idLower + "`")) {
-      // If "target skill" or "teaching" language present, it's being taught
       if (
         text.includes("target skill") ||
         text.includes("you-do") ||
@@ -125,10 +226,9 @@ function extractSectionSkills(
       required.add(skill.id);
     }
 
-    // Check for label fragments (e.g., "groupby", "filter", "select columns")
-    const keywords = extractKeywords(skill.id);
+    const keywords = idLower.split("-").filter((w) => w.length >= 4);
     for (const kw of keywords) {
-      if (kw.length >= 4 && text.includes(kw)) {
+      if (text.includes(kw)) {
         required.add(skill.id);
         break;
       }
@@ -136,13 +236,6 @@ function extractSectionSkills(
   }
 
   return { required: [...required], taught: [...taught] };
-}
-
-/** Extract meaningful keywords from a skill ID */
-function extractKeywords(skillId: string): string[] {
-  return skillId
-    .split("-")
-    .filter((w) => w.length >= 4);
 }
 
 /** Get learner's effective confidence for a skill (assessed > inferred > 0) */
@@ -354,10 +447,16 @@ async function runSimulation(
   // 1. Load skill graph
   const graph = await loadGraph(domain);
 
-  // 2. Load group members
+  // 2. Load group members (from group file, or scan learner profiles as fallback)
   const groupPath = path.join(DATA_DIR, "groups", `${groupName}.md`);
   const groupContent = await fs.readFile(groupPath, "utf-8");
-  const members = parseGroupMembers(groupContent);
+  let members = parseGroupMembers(groupContent);
+
+  // Fallback: if the group file has no members listed, scan learner profiles
+  if (members.length === 0) {
+    const scanned = await loadGroupLearners(groupName);
+    members = scanned.map((l) => ({ id: l.id, name: l.name }));
+  }
 
   if (members.length === 0) {
     throw new Error(`Group '${groupName}' has no individually profiled members. Simulation requires individual learner profiles (listed as '- Name (\`id\`)' in the group file).`);
@@ -406,13 +505,11 @@ async function runSimulation(
   const titleMatch = lessonContent.match(/^#\s+(?:Lesson Plan:\s*)?(.+)/m);
   const lessonTitle = titleMatch?.[1]?.trim() ?? lessonId;
 
-  // 5. Analyze each section
-  const sectionAnalysis = sections.map((section) => {
-    const { required, taught } = extractSectionSkills(
-      section.content,
-      section.title,
-      graph.skills
-    );
+  // 5. Analyze each section — use Opus 4.6 for skill-to-section mapping
+  const skillMappings = await analyzeSkillRequirements(sections, graph.skills, lessonTitle);
+
+  const sectionAnalysis = sections.map((section, i) => {
+    const { required, taught } = skillMappings[i];
 
     const learnerStatuses = learners.map((learner) =>
       assessReadiness(learner, required, taught)
