@@ -48,6 +48,15 @@ const BLOOM_COLORS: Record<string, string> = {
   evaluation: "#ef4444",
 };
 
+// Unique accent tints per domain — keyed by slug, with fallback
+const DOMAIN_ACCENTS: Record<string, { bg: string; text: string; border: string; tint: string }> = {
+  "python-data-analysis": { bg: "bg-blue-500/8", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/20", tint: "#3b82f6" },
+  "farm-science": { bg: "bg-emerald-500/8", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/20", tint: "#10b981" },
+  "outdoor-ecology": { bg: "bg-amber-500/8", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/20", tint: "#f59e0b" },
+  "culinary-fundamentals": { bg: "bg-rose-500/8", text: "text-rose-600 dark:text-rose-400", border: "border-rose-500/20", tint: "#f43f5e" },
+};
+const DEFAULT_ACCENT = { bg: "bg-accent/8", text: "text-accent", border: "border-accent/20", tint: "#2d3047" };
+
 const ICON_MAP: Record<string, React.ReactNode> = {
   "chart-bar": (
     <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -82,7 +91,7 @@ function BloomBar({ distribution }: { distribution: Record<string, number> }) {
   if (total === 0) return null;
 
   return (
-    <div className="flex h-2 rounded-full overflow-hidden bg-surface-3">
+    <div className="flex h-5 rounded-lg overflow-hidden bg-surface-3">
       {BLOOM_ORDER.map((level) => {
         const count = distribution[level] || 0;
         if (count === 0) return null;
@@ -90,13 +99,19 @@ function BloomBar({ distribution }: { distribution: Record<string, number> }) {
         return (
           <div
             key={level}
-            className="h-full transition-all duration-500"
+            className="h-full transition-all duration-500 flex items-center justify-center"
             style={{
               width: `${pct}%`,
               backgroundColor: BLOOM_COLORS[level],
             }}
             title={`${level}: ${count} skills`}
-          />
+          >
+            {pct > 12 && (
+              <span className="text-[9px] font-bold text-white/90 drop-shadow-sm">
+                {count}
+              </span>
+            )}
+          </div>
         );
       })}
     </div>
@@ -151,14 +166,18 @@ function DomainCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const accent = DOMAIN_ACCENTS[domain.slug] || DEFAULT_ACCENT;
+
   return (
     <div
       className={`group rounded-2xl border transition-all duration-300 ${
         domain.featured
-          ? "border-accent/30 bg-gradient-to-br from-surface-1 to-surface-0 shadow-lg shadow-accent/5"
+          ? `${accent.border} bg-surface-1 shadow-lg shadow-accent/5`
           : "border-border bg-surface-1 hover:border-border-subtle"
       }`}
     >
+      {/* Color accent top stripe */}
+      <div className="h-1 rounded-t-2xl" style={{ backgroundColor: accent.tint }} />
       <div className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
@@ -167,8 +186,8 @@ function DomainCard({
             <div
               className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{
-                backgroundColor: `${domain.color}15`,
-                color: domain.color,
+                backgroundColor: `${accent.tint}15`,
+                color: accent.tint,
               }}
             >
               {ICON_MAP[domain.icon] || ICON_MAP.book}
@@ -176,7 +195,7 @@ function DomainCard({
 
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-text-primary">
+                <h3 className="text-lg font-heading text-text-primary">
                   {domain.name}
                 </h3>
                 {domain.featured && (
@@ -210,7 +229,7 @@ function DomainCard({
 
         {/* Stats row */}
         <div className="mt-4 grid grid-cols-3 gap-3">
-          <div className="text-center p-2 rounded-lg bg-surface-0 border border-border-subtle">
+          <div className="text-center p-2 rounded-lg bg-surface-2/50 border border-border-subtle">
             <div className="text-lg font-bold text-text-primary">
               {domain.stats.skills}
             </div>
@@ -218,7 +237,7 @@ function DomainCard({
               Skills
             </div>
           </div>
-          <div className="text-center p-2 rounded-lg bg-surface-0 border border-border-subtle">
+          <div className="text-center p-2 rounded-lg bg-surface-2/50 border border-border-subtle">
             <div className="text-lg font-bold text-text-primary">
               {domain.stats.dependencies}
             </div>
@@ -226,7 +245,7 @@ function DomainCard({
               Dependencies
             </div>
           </div>
-          <div className="text-center p-2 rounded-lg bg-surface-0 border border-border-subtle">
+          <div className="text-center p-2 rounded-lg bg-surface-2/50 border border-border-subtle">
             <div className="text-lg font-bold text-text-primary">
               {domain.stats.bloomLevels}
             </div>
@@ -421,7 +440,7 @@ export default function DomainsPage() {
             Domain Marketplace
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-text-primary tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-heading text-text-primary tracking-tight">
             Any teacher. Any subject.
           </h1>
           <p className="mt-3 text-base text-text-secondary max-w-xl mx-auto">
@@ -522,7 +541,7 @@ export default function DomainsPage() {
         {/* How to create a domain plugin */}
         {!loading && !error && (
           <div className="mt-16 rounded-2xl border border-border-subtle bg-surface-1 p-8">
-            <h2 className="text-lg font-semibold text-text-primary mb-4">
+            <h2 className="text-xl font-heading text-text-primary mb-4">
               Create your own domain plugin
             </h2>
             <p className="text-sm text-text-secondary mb-6">

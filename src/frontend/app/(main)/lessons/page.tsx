@@ -29,9 +29,9 @@ export default function LessonsPage() {
   return (
     <div>
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-text-primary">Lesson Plans</h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Generated lesson plans with PDF export. Download lesson plans, prerequisites handouts, and more.
+          <h1 className="text-2xl font-bold text-text-primary" style={{ fontFamily: 'var(--font-heading)' }}>Lesson Plans</h1>
+          <p className="text-sm text-text-secondary mt-1 leading-relaxed">
+            Your teaching sessions — review, rehearse, or go live.
           </p>
         </div>
 
@@ -69,12 +69,12 @@ export default function LessonsPage() {
               >
                 <div className="flex-1 min-w-0">
                   <Link href={`/lessons/${lessonId}`} className="group">
-                    <h3 className="text-sm font-semibold text-text-primary truncate group-hover:text-accent transition-colors">
+                    <h3 className="text-sm font-semibold text-text-primary truncate group-hover:text-accent transition-colors" style={{ fontFamily: 'var(--font-heading)' }}>
                       {title || lessonId}
                     </h3>
                   </Link>
                   <p className="text-xs text-text-tertiary mt-0.5">
-                    {date} &middot; {lessonId}
+                    {date}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
