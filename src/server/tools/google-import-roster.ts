@@ -5,7 +5,7 @@ import path from "path";
 import { nanoid } from "nanoid";
 import { DATA_DIR, toolResponse } from "./shared.js";
 import { googleAuth } from "../google/auth.js";
-import { readSheet } from "../google/sheets.js";
+import { readSheet } from "../google/drive.js";
 
 function slugify(name: string): string {
   return name

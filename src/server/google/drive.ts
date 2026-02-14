@@ -108,6 +108,35 @@ export async function uploadFile(
   };
 }
 
+interface ReadSheetResult {
+  headers: string[];
+  rows: string[][];
+}
+
+/** Read data from a Google Sheet by spreadsheet ID */
+export async function readSheet(
+  auth: OAuth2Client,
+  spreadsheetId: string,
+  range?: string
+): Promise<ReadSheetResult> {
+  const sheets = google.sheets({ version: "v4", auth });
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: range || "A:ZZ",
+  });
+
+  const values = res.data.values || [];
+  if (values.length === 0) {
+    return { headers: [], rows: [] };
+  }
+
+  const headers = values[0].map(String);
+  const rows = values.slice(1).map((row) => row.map(String));
+
+  return { headers, rows };
+}
+
 /** Share a file with specific users */
 export async function shareFile(
   auth: OAuth2Client,

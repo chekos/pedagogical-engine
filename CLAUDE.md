@@ -12,10 +12,12 @@ an experienced teacher, not a content generator.
 - Leverage dependency inference to minimize redundant assessment.
 
 ## Architecture
-- Skills in .claude/skills/ encode your pedagogical methodology
-- Subagents in .claude/agents/ handle specialized reasoning branches
+- Developer skills in `.claude/skills/` assist developers working on this codebase
+- Agent skills in `agent-workspace/.claude/skills/` are what the in-app agent uses (pedagogical + Office export skills)
+- Agent subagents in `agent-workspace/.claude/agents/` handle specialized reasoning branches
 - 36 custom MCP tools in the pedagogy MCP server access data in data/
 - All persistent data lives in data/ as JSON and Markdown files
+- Agent workspace separation: the agent SDK runs with `cwd: agent-workspace/` so it picks up agent-specific skills, not developer skills
 
 ## What's built (as of Session 12 — Feb 14, 2026)
 
@@ -257,9 +259,16 @@ an experienced teacher, not a content generator.
 - Educator contribution: direct teaching note addition via add_teaching_note tool
 - Seed data: 24 teaching notes + 5 cross-skill patterns for python-data-analysis domain (simulating 23 sessions)
 
-### Pedagogical brain (.claude/skills/, .claude/agents/)
-- 4 SKILL.md files: interview-educator, assess-skills, compose-lesson, reason-dependencies
-- 3 subagent definitions: assessment-agent, roster-agent, lesson-agent
+### Agent workspace (agent-workspace/)
+- Dedicated workspace for the in-app agent (separate from developer tools in root `.claude/`)
+- `agent-workspace/.claude/skills/` — 10 skills:
+  - Pedagogical: interview-educator, assess-skills, compose-lesson, reason-dependencies, debrief-session, sequence-curriculum
+  - Office export: docx, pptx, xlsx, pdf (from anthropics/skills repo)
+- `agent-workspace/.claude/agents/` — 3 subagent definitions: assessment-agent, roster-agent, lesson-agent
+- The agent uses Office skills to create .docx/.pptx/.xlsx files, then uploads to Google Drive via export tools (auto-converts to native Google format)
+
+### Developer skills (.claude/skills/)
+- Skills for developers working on the codebase (not loaded by the in-app agent)
 - Reference files: Bloom's taxonomy patterns, inference rules, lesson plan template
 
 ### Demo data (data/)
@@ -325,12 +334,12 @@ an experienced teacher, not a content generator.
 - `GoogleAuthManager` singleton: OAuth2 client, token persistence, 60s cache, CSRF state validation
 - Tokens stored at `data/auth/google-tokens.json`, auto-refreshed and persisted
 - Express router at `/api/auth/google` with `/status`, `/start`, `/callback`, `/disconnect` endpoints
-- Google API wrappers:
-  - `docs.ts` — create formatted Docs from markdown (headings, bold, bullet lists)
-  - `sheets.ts` — read from and create Sheets with auto-formatting
-  - `slides.ts` — create presentations from lesson plans (one slide per section)
-  - `drive.ts` — list files and share with permissions
+- Google API wrappers (minimal — document creation handled by agent skills):
+  - `drive.ts` — list files, upload with Office→Google conversion, share with permissions, read sheets
   - `classroom.ts` — list courses and import students
+  - `auth.ts` — OAuth2 client management
+  - `router.ts` — Express routes for auth flow
+- AI-native export pattern: agent uses Office skills (docx, pptx, xlsx) to create files, then calls upload tools which auto-convert to native Google Docs/Slides/Sheets format
 - 9 MCP tools for Google operations (all check connection first, return error if not connected)
 - Agent system prompt instructs: check_google_connection → request_google_connection → proceed
 - Frontend: inline connect card in chat, onboarding wizard at `/onboarding`
