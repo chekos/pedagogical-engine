@@ -13,9 +13,9 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-tertiary: var(--text-tertiary);
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-heading: "Instrument Serif", Georgia, "Times New Roman", serif;
-  --font-mono: "JetBrains Mono", Menlo, monospace;
+  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-heading: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", Menlo, monospace;
   --color-bloom-remember: var(--bloom-remember);
   --color-bloom-understand: var(--bloom-understand);
   --color-bloom-apply: var(--bloom-apply);
@@ -186,7 +186,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Global heading typography — Instrument Serif */
+/* Global heading typography — Source Serif 4 */
 h1, h2, h3 {
   font-family: var(--font-heading);
 }
@@ -237,7 +237,7 @@ h1, h2, h3 {
 .prose-chat ul, .prose-chat ol { padding-left: 1.25rem; margin: 0.375rem 0; }
 .prose-chat li { margin: 0.125rem 0; line-height: 1.5; }
 .prose-chat code {
-  font-family: "JetBrains Mono", Menlo, monospace;
+  font-family: "IBM Plex Mono", Menlo, monospace;
   font-size: 0.875em;
   background: var(--surface-2);
   padding: 0.125rem 0.375rem;

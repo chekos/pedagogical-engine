@@ -1,0 +1,24 @@
+{
+  "name": "Spanish Literature",
+  "slug": "spanish-literature",
+  "version": "1.0.0",
+  "description": "Magical realism in Latin American literature, focused on Gabriel García Márquez. Designed for a one-hour introductory webinar for AP Spanish Literature high school students. Covers definition, historical context, key literary devices, genre comparison, and passage recognition.",
+  "author": "Pedagogical Engine Team",
+  "license": "MIT",
+  "tags": ["literature", "spanish", "magical-realism", "garcia-marquez", "ap-spanish", "latin-america"],
+  "audience": {
+    "level": "intermediate",
+    "ages": "15-18",
+    "setting": "one-hour introductory webinar for AP Spanish Literature students"
+  },
+  "stats": {
+    "skills": 7,
+    "dependencies": 7,
+    "bloomLevels": 3
+  },
+  "icon": "book-open",
+  "color": "#dc2626",
+  "featured": true,
+  "createdAt": "2026-02-14T00:00:00.000Z",
+  "updatedAt": "2026-02-14T00:00:00.000Z"
+}

@@ -278,7 +278,7 @@ function RadarChart({ data }: { data: GroupDashboardData }) {
               textAnchor="middle"
               dominantBaseline="middle"
               className="text-[9px] fill-gray-500"
-              style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+              style={{ fontFamily: "DM Sans, system-ui, sans-serif" }}
             >
               {BLOOM_LABELS[level]}
             </text>
