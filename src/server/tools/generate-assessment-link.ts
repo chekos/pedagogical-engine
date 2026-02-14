@@ -31,8 +31,20 @@ export const generateAssessmentLinkTool = tool(
       .describe(
         "Teacher-provided context for why this assessment is happening. E.g. 'Guest speaker preparing a presentation on magical realism for Mr. Sanchez's AP Spanish Lit class.' This context is shown to the assessment agent so it can tailor its conversation."
       ),
+    educatorId: z
+      .string()
+      .optional()
+      .describe(
+        "ID of the educator who created/requested this assessment. Links the assessment back to the educator's profile."
+      ),
+    lessonContext: z
+      .string()
+      .optional()
+      .describe(
+        "What lesson or event this assessment feeds into. E.g. 'Preparing for a 90-minute guest lecture on magical realism' or 'Pre-assessment for Week 3 data visualization unit'."
+      ),
   },
-  async ({ groupName, domain, targetSkills, learnerIds, context }) => {
+  async ({ groupName, domain, targetSkills, learnerIds, context, educatorId, lessonContext }) => {
     const assessmentsDir = path.join(DATA_DIR, "assessments");
     await fs.mkdir(assessmentsDir, { recursive: true });
 
@@ -45,6 +57,14 @@ export const generateAssessmentLinkTool = tool(
       ? `\n## Assessment Context\n\n${context}\n`
       : "";
 
+    const educatorSection = educatorId
+      ? `\n## Educator\n\n${educatorId}\n`
+      : "";
+
+    const lessonContextSection = lessonContext
+      ? `\n## Lesson Context\n\n${lessonContext}\n`
+      : "";
+
     const assessmentContent = `# Assessment Session: ${code}
 
 | Field | Value |
@@ -54,7 +74,7 @@ export const generateAssessmentLinkTool = tool(
 | **Domain** | ${domain} |
 | **Created** | ${now.toISOString()} |
 | **Status** | active |
-${contextSection}
+${contextSection}${educatorSection}${lessonContextSection}
 ## Target Skills
 
 ${targetSkills && targetSkills.length > 0 ? targetSkills.map((s) => `- ${s}`).join("\n") : "_Full domain assessment_"}

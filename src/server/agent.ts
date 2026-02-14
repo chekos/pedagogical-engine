@@ -29,6 +29,7 @@ Data conventions:
 - Groups: data/groups/{name}.md
 - Assessments: data/assessments/{code}.md
 - Lesson plans: data/lessons/{name}.md
+- Domain manifests: data/domains/{domain}/manifest.json (audience, tags, setting, description)
 
 Behavioral rules:
 - Always read the relevant skill before performing a task
@@ -77,7 +78,7 @@ When an educator says "I want to teach something new", "let me set up my subject
 2. Propose: Generate a skill graph with skills at appropriate Bloom's levels and dependency edges. Present it as a structured overview showing the skill hierarchy.
 3. Validate: Use the reason-dependencies skill to check the graph — no circular dependencies, reasonable inference chains, proper Bloom's progression. Warn about orphan skills, flat graphs, or unreachable nodes.
 4. Iterate: Let the educator add, remove, or modify skills and dependencies. Use update_domain for incremental changes.
-5. Save: Use create_domain to write the finalized domain to data/domains/{domain-name}/.
+5. Save: Use create_domain to write the finalized domain to data/domains/{domain-name}/. Pass name, tags, audience, icon, and color from the conversation context so the manifest.json is populated with rich metadata.
 
 After saving, suggest natural next steps — setting up a group, assessing students, or composing a lesson plan — so the educator knows what's possible and isn't left at a dead end.
 
@@ -265,7 +266,23 @@ export async function createAssessmentQuery(
     throw new Error(`Assessment session '${assessmentCode}' has already been completed.`);
   }
 
+  // Load domain manifest for audience/setting context
+  let domainManifest = "No manifest available";
+  const domainMatch = assessmentContext.match(/\| \*\*Domain\*\* \| (.+?) \|/);
+  if (domainMatch) {
+    const domain = domainMatch[1].trim();
+    const manifestPath = path.join(DATA_DIR, "domains", domain, "manifest.json");
+    try {
+      domainManifest = await fs.readFile(manifestPath, "utf-8");
+    } catch {
+      // No manifest — that's fine
+    }
+  }
+
   const systemPrompt = `You are conducting a friendly, conversational skill check for learner "${learnerName}" as part of assessment session ${assessmentCode}.
+
+Domain context:
+${domainManifest}
 
 Assessment context:
 ${assessmentContext}
@@ -275,12 +292,9 @@ Use the assess-skills and reason-dependencies skills for methodology. Query the 
 ## Tone & Approach
 You are warm, encouraging, and genuinely curious — like a friendly tutor, NOT an examiner. This is a conversation, not a test.
 
-**Opening:** Start with something like: "Hey ${learnerName}! Thanks for taking a few minutes for this. I'm just going to chat with you about what you already know so your instructor can plan the best session for you. There are no grades here — no wrong answers. Just tell me what you know, and if something's unfamiliar, that's totally fine! Ready?"
+**Opening:** Greet the learner warmly. Use the assessment context and domain context to frame why they're here — don't ask them to explain. If this is for a guest speaker's lecture, say so. If this is a routine pre-session check, say so. If the domain manifest describes the audience (age range, setting), use that to calibrate your tone. Keep it brief and reassuring — no grades, no wrong answers.
 
-**Context gathering (do this early):** In your first 1-2 questions, learn about the student's situation:
-- "Before we dive in — what kind of data do you work with, or what are you hoping to use these skills for?"
-- Use their answer to contextualize ALL subsequent questions. This is critical for assessment integrity.
-- If they say "I'm just learning" or have no context, use: "Let's imagine you're helping a friend who runs a small online shop..."
+**Context use:** The domain context and assessment context already tell you who this learner is and why they're here. Use that information to contextualize your questions from the start — don't re-ask what you already know. If the assessment has lesson context or educator context, incorporate that naturally. If the domain manifest describes a specific audience (e.g., ages 14-18, classroom setting), calibrate your language and examples accordingly.
 
 **During the assessment:**
 - Ask ONE question at a time, conversationally
