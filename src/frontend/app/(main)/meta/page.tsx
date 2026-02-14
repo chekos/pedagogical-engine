@@ -43,43 +43,56 @@ interface LessonSummary {
   decisionTypes: Record<string, number>;
 }
 
+// Each decision type uses a Bloom color as its left-border accent
 const DECISION_TYPE_META: Record<
   string,
-  { label: string; color: string; icon: string; description: string }
+  { label: string; borderColor: string; badgeBg: string; badgeText: string; icon: string; description: string }
 > = {
   ordering: {
     label: "Ordering",
-    color: "text-blue-400",
+    borderColor: "border-l-bloom-understand",
+    badgeBg: "bg-bloom-understand/10",
+    badgeText: "text-bloom-understand",
     icon: "↕",
     description: "Why activities appear in this sequence",
   },
   timing: {
     label: "Timing",
-    color: "text-amber-400",
+    borderColor: "border-l-bloom-analyze",
+    badgeBg: "bg-bloom-analyze/10",
+    badgeText: "text-bloom-analyze",
     icon: "⏱",
     description: "Why N minutes for this section",
   },
   pairing: {
     label: "Pairing",
-    color: "text-purple-400",
+    borderColor: "border-l-bloom-evaluate",
+    badgeBg: "bg-bloom-evaluate/10",
+    badgeText: "text-bloom-evaluate",
     icon: "👥",
     description: "Why these learners are paired (or solo)",
   },
   activity_choice: {
     label: "Activity Choice",
-    color: "text-emerald-400",
+    borderColor: "border-l-bloom-apply",
+    badgeBg: "bg-bloom-apply/10",
+    badgeText: "text-bloom-apply",
     icon: "🎯",
     description: "Why this type of activity was chosen",
   },
   content_depth: {
     label: "Content Depth",
-    color: "text-cyan-400",
+    borderColor: "border-l-bloom-remember",
+    badgeBg: "bg-bloom-remember/10",
+    badgeText: "text-bloom-remember",
     icon: "📝",
     description: "Why this level of detail in the plan",
   },
   contingency: {
     label: "Contingency",
-    color: "text-red-400",
+    borderColor: "border-l-bloom-create",
+    badgeBg: "bg-bloom-create/10",
+    badgeText: "text-bloom-create",
     icon: "🔄",
     description: "Why these backup plans were chosen",
   },
@@ -94,16 +107,12 @@ function EvidenceTag({
 }) {
   if (!items || items.length === 0) return null;
   const colors: Record<string, string> = {
-    skillGraph: "bg-blue-500/10 text-blue-300 border-blue-500/20",
-    learnerProfiles:
-      "bg-purple-500/10 text-purple-300 border-purple-500/20",
-    bloomsLevels:
-      "bg-amber-500/10 text-amber-300 border-amber-500/20",
-    constraints: "bg-red-500/10 text-red-300 border-red-500/20",
-    teachingWisdom:
-      "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
-    educatorProfile:
-      "bg-cyan-500/10 text-cyan-300 border-cyan-500/20",
+    skillGraph: "bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/20",
+    learnerProfiles: "bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20",
+    bloomsLevels: "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20",
+    constraints: "bg-red-500/10 text-red-600 dark:text-red-300 border-red-500/20",
+    teachingWisdom: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20",
+    educatorProfile: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-300 border-cyan-500/20",
   };
   const labels: Record<string, string> = {
     skillGraph: "Skill Graph",
@@ -146,13 +155,15 @@ function TraceCard({
 }) {
   const meta = DECISION_TYPE_META[trace.decisionType] || {
     label: trace.decisionType,
-    color: "text-text-secondary",
+    borderColor: "border-l-border",
+    badgeBg: "bg-surface-2",
+    badgeText: "text-text-secondary",
     icon: "•",
     description: "",
   };
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface-1 overflow-hidden animate-fade-in">
+    <div className={`rounded-xl border border-border-subtle bg-surface-1 overflow-hidden animate-fade-in border-l-4 ${meta.borderColor}`}>
       {/* Header — always visible */}
       <button
         onClick={onToggle}
@@ -163,7 +174,7 @@ function TraceCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span
-                className={`text-xs font-semibold uppercase tracking-wider ${meta.color}`}
+                className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${meta.badgeBg} ${meta.badgeText}`}
               >
                 {meta.label}
               </span>
@@ -176,8 +187,9 @@ function TraceCard({
             <h3 className="text-sm font-medium text-text-primary leading-snug">
               {trace.decision}
             </h3>
+            {/* One-line summary always visible when collapsed */}
             {!expanded && (
-              <p className="text-xs text-text-tertiary mt-1 line-clamp-2">
+              <p className="text-xs text-text-tertiary mt-1 line-clamp-1">
                 {trace.reasoning}
               </p>
             )}
@@ -273,7 +285,7 @@ function TraceCard({
                         {alt.option}
                       </div>
                       <div className="text-xs text-text-secondary leading-relaxed">
-                        <span className="text-red-400 font-medium">
+                        <span className="text-red-500 dark:text-red-400 font-medium">
                           Rejected:
                         </span>{" "}
                         {alt.whyRejected}
@@ -300,6 +312,39 @@ function TraceCard({
     </div>
   );
 }
+
+const PRINCIPLES = [
+  {
+    name: "Bloom's Taxonomy & Activity Ordering",
+    desc: "Group Bloom's level determines theory-first vs. practice-first sequencing",
+    color: "border-l-bloom-understand",
+  },
+  {
+    name: "Evidence-Based Timing",
+    desc: "Bloom's complexity + group readiness + teaching wisdom = calibrated timing",
+    color: "border-l-bloom-analyze",
+  },
+  {
+    name: "Skill-Complementary Pairing",
+    desc: "1 Bloom's level gap is ideal; 2+ means the advanced partner does all the work",
+    color: "border-l-bloom-evaluate",
+  },
+  {
+    name: "Session Energy Management",
+    desc: "Peak activity in the middle third; never end with a lecture",
+    color: "border-l-bloom-apply",
+  },
+  {
+    name: "Content Depth by Educator Expertise",
+    desc: "Expert gets bullets; novice gets the full script with anticipated questions",
+    color: "border-l-bloom-remember",
+  },
+  {
+    name: "Contingency as Pedagogical Design",
+    desc: "Scaffold down, extend up, analog fallback — matched to educator style",
+    color: "border-l-bloom-create",
+  },
+];
 
 export default function MetaPage() {
   const [lessons, setLessons] = useState<LessonSummary[]>([]);
@@ -415,7 +460,7 @@ export default function MetaPage() {
     <div>
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-text-primary">
+          <h1 className="text-2xl font-heading text-text-primary">
             The Why Behind the What
           </h1>
           <p className="text-sm text-text-secondary mt-1 max-w-2xl">
@@ -423,6 +468,33 @@ export default function MetaPage() {
             — the skill graph, learner profiles, constraints, and Bloom&apos;s
             taxonomy levels. Explore the reasoning behind any decision.
           </p>
+        </div>
+
+        {/* ═══ Pedagogical Principles — LEAD section ═══ */}
+        <div className="rounded-xl border border-border-subtle bg-surface-1 p-6 mb-8">
+          <h2 className="text-lg font-heading text-text-primary mb-1">
+            Pedagogical Principles at Work
+          </h2>
+          <p className="text-xs text-text-secondary mb-5">
+            The engine draws on these frameworks when making decisions.
+            Ask &quot;why?&quot; in the chat to hear the reasoning behind any
+            specific decision.
+          </p>
+          <div className="grid md:grid-cols-2 gap-3">
+            {PRINCIPLES.map((principle) => (
+              <div
+                key={principle.name}
+                className={`rounded-lg bg-surface-0 p-3 border-l-4 ${principle.color}`}
+              >
+                <div className="text-xs font-medium text-text-primary">
+                  {principle.name}
+                </div>
+                <div className="text-xs text-text-tertiary mt-0.5">
+                  {principle.desc}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Lesson selector */}
@@ -508,7 +580,10 @@ export default function MetaPage() {
               </div>
             </div>
 
-            {/* Stats row */}
+            {/* Decision type filter cards */}
+            <h3 className="text-sm font-heading text-text-primary mb-3">
+              Decision Types
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-8">
               {Object.entries(DECISION_TYPE_META).map(([key, meta]) => {
                 const count = typeCounts[key] || 0;
@@ -518,7 +593,7 @@ export default function MetaPage() {
                     onClick={() =>
                       setFilterType(filterType === key ? "all" : key)
                     }
-                    className={`rounded-xl border p-3 text-left transition-all ${
+                    className={`rounded-xl border p-3 text-left transition-all border-l-4 ${meta.borderColor} ${
                       filterType === key
                         ? "border-accent bg-accent/5"
                         : "border-border-subtle bg-surface-1 hover:border-border"
@@ -529,7 +604,7 @@ export default function MetaPage() {
                       {count}
                     </div>
                     <div
-                      className={`text-xs font-medium ${meta.color}`}
+                      className={`text-xs font-medium ${meta.badgeText}`}
                     >
                       {meta.label}
                     </div>
@@ -569,7 +644,10 @@ export default function MetaPage() {
               </div>
             </div>
 
-            {/* Trace cards */}
+            {/* Reasoning Traces */}
+            <h3 className="text-sm font-heading text-text-primary mb-3">
+              Reasoning Traces
+            </h3>
             <div className="space-y-3">
               {filteredTraces.map((trace) => (
                 <TraceCard
@@ -586,65 +664,13 @@ export default function MetaPage() {
                 No traces match the current filter.
               </div>
             )}
-
-            {/* Teaching principles reference */}
-            <div className="mt-12 rounded-xl border border-border-subtle bg-surface-1 p-6">
-              <h3 className="text-sm font-semibold text-text-primary mb-1">
-                Pedagogical Principles at Work
-              </h3>
-              <p className="text-xs text-text-secondary mb-4">
-                The engine draws on these frameworks when making decisions.
-                Ask &quot;why?&quot; in the chat to hear the reasoning behind any
-                specific decision.
-              </p>
-              <div className="grid md:grid-cols-2 gap-3">
-                {[
-                  {
-                    name: "Bloom's Taxonomy & Activity Ordering",
-                    desc: "Group Bloom's level determines theory-first vs. practice-first sequencing",
-                  },
-                  {
-                    name: "Evidence-Based Timing",
-                    desc: "Bloom's complexity + group readiness + teaching wisdom = calibrated timing",
-                  },
-                  {
-                    name: "Skill-Complementary Pairing",
-                    desc: "1 Bloom's level gap is ideal; 2+ means the advanced partner does all the work",
-                  },
-                  {
-                    name: "Session Energy Management",
-                    desc: "Peak activity in the middle third; never end with a lecture",
-                  },
-                  {
-                    name: "Content Depth by Educator Expertise",
-                    desc: "Expert gets bullets; novice gets the full script with anticipated questions",
-                  },
-                  {
-                    name: "Contingency as Pedagogical Design",
-                    desc: "Scaffold down, extend up, analog fallback — matched to educator style",
-                  },
-                ].map((principle) => (
-                  <div
-                    key={principle.name}
-                    className="rounded-lg bg-surface-0 p-3"
-                  >
-                    <div className="text-xs font-medium text-text-primary">
-                      {principle.name}
-                    </div>
-                    <div className="text-xs text-text-tertiary mt-0.5">
-                      {principle.desc}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </>
         )}
 
         {!loading && lessons.length === 0 && !error && (
           <div className="text-center py-20">
             <div className="text-4xl mb-4">🔍</div>
-            <h2 className="text-lg font-semibold text-text-primary mb-2">
+            <h2 className="text-lg font-heading text-text-primary mb-2">
               No reasoning traces yet
             </h2>
             <p className="text-sm text-text-secondary max-w-md mx-auto">

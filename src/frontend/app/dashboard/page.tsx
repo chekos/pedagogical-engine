@@ -40,10 +40,50 @@ function GraphSkeleton() {
 
 type ViewMode = "graph" | "dashboard";
 
+/** Mini skill summary for learner tab hover tooltip */
+function LearnerTooltip({
+  learner,
+  totalSkills,
+}: {
+  learner: { id: string; name: string; assessed: number; inferred: number; avgConf: number };
+  totalSkills: number;
+}) {
+  const unknown = totalSkills - learner.assessed - learner.inferred;
+  return (
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2.5 rounded-lg bg-[#1a1a22] border border-white/[0.08] shadow-xl z-50 min-w-[180px] pointer-events-none">
+      <div className="text-xs font-semibold text-white mb-1.5">{learner.name}</div>
+      <div className="flex items-center gap-2 text-[10px] mb-1.5">
+        <span className="text-green-400 font-medium">{learner.assessed} assessed</span>
+        <span className="text-yellow-400 font-medium">{learner.inferred} inferred</span>
+        <span className="text-gray-500">{unknown} unknown</span>
+      </div>
+      {/* Mini progress bar */}
+      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+        <div className="flex h-full">
+          <div
+            className="bg-green-500/70"
+            style={{ width: `${totalSkills > 0 ? (learner.assessed / totalSkills) * 100 : 0}%` }}
+          />
+          <div
+            className="bg-yellow-500/50"
+            style={{ width: `${totalSkills > 0 ? (learner.inferred / totalSkills) * 100 : 0}%` }}
+          />
+        </div>
+      </div>
+      <div className="text-[10px] text-gray-500 mt-1">
+        avg confidence: <span className="text-white font-medium">{Math.round(learner.avgConf * 100)}%</span>
+      </div>
+      {/* Arrow */}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1a1a22] border-r border-b border-white/[0.08] rotate-45 -mt-1" />
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
   const [selectedLearner, setSelectedLearner] = useState<string | null>(null);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [hoveredLearner, setHoveredLearner] = useState<string | null>(null);
 
   // ─── Data state ──────────────────────────────────────────────
   const [domains, setDomains] = useState<DomainSummary[]>([]);
@@ -133,13 +173,22 @@ export default function DashboardPage() {
     return () => { cancelled = true; };
   }, [selectedGroup, selectedDomain]);
 
-  // ─── Learner list from group status ──────────────────────────
+  // ─── Learner list from group status (with mini stats) ─────────
   const learnerIds = useMemo(() => {
-    if (!groupStatus) return [];
+    if (!groupStatus || !domainDetail) return [];
     return groupStatus.learners
       .filter((l) => l.skillCount > 0)
-      .map((l) => ({ id: l.id, name: l.name }));
-  }, [groupStatus]);
+      .map((l) => {
+        const skills = domainDetail.skills;
+        const assessed = Object.values(l.skills).filter((s) => s.type === "assessed").length;
+        const inferred = Object.values(l.skills).filter((s) => s.type === "inferred").length;
+        const assessedSkills = Object.values(l.skills).filter((s) => s.type === "assessed");
+        const avgConf = assessedSkills.length > 0
+          ? assessedSkills.reduce((sum, s) => sum + s.confidence, 0) / assessedSkills.length
+          : 0;
+        return { id: l.id, name: l.name, assessed, inferred, avgConf, totalSkills: skills.length };
+      });
+  }, [groupStatus, domainDetail]);
 
   // ─── Build SkillGraphData ────────────────────────────────────
   const graphData: SkillGraphData = useMemo(() => {
@@ -279,7 +328,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <h1 className="text-sm font-semibold text-white tracking-tight">Skill Analytics</h1>
+              <h1 className="text-base font-heading text-white tracking-tight">Skill Analytics</h1>
               <div className="w-px h-5 bg-white/[0.06]" />
               {/* Domain selector */}
               <select
@@ -378,13 +427,13 @@ export default function DashboardPage() {
             {learnerIds.length > 0 && (
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[10px] text-gray-600 uppercase tracking-[0.15em] font-semibold">
-                    Learner view
+                  <span className="text-[10px] text-gray-600 uppercase tracking-[0.15em] font-semibold font-heading">
+                    Learner View
                   </span>
                   <div className="flex gap-1.5 flex-wrap">
                     <button
                       onClick={() => { setSelectedLearner(null); setIsAutoPlaying(false); }}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         selectedLearner === null
                           ? "bg-white/8 text-white border border-white/15"
                           : "text-gray-600 border border-transparent hover:text-gray-400 hover:border-white/[0.06]"
@@ -393,25 +442,42 @@ export default function DashboardPage() {
                       Overview
                     </button>
                     {learnerIds.map((l) => (
-                      <button
-                        key={l.id}
-                        onClick={() => { setSelectedLearner(l.id); setIsAutoPlaying(false); }}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
-                          selectedLearner === l.id
-                            ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/25"
-                            : "text-gray-600 border border-transparent hover:text-gray-400 hover:border-white/[0.06]"
-                        }`}
-                      >
-                        {l.name.split(" ")[0]}
-                      </button>
+                      <div key={l.id} className="relative">
+                        <button
+                          onClick={() => { setSelectedLearner(l.id); setIsAutoPlaying(false); }}
+                          onMouseEnter={() => setHoveredLearner(l.id)}
+                          onMouseLeave={() => setHoveredLearner(null)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            selectedLearner === l.id
+                              ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/25"
+                              : "text-gray-600 border border-transparent hover:text-gray-400 hover:border-white/[0.06]"
+                          }`}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            {l.name.split(" ")[0]}
+                            {/* Mini assessed count badge */}
+                            <span className={`text-[9px] px-1 py-0.5 rounded ${
+                              selectedLearner === l.id
+                                ? "bg-indigo-500/20 text-indigo-300"
+                                : "bg-white/5 text-gray-600"
+                            }`}>
+                              {l.assessed}/{totalSkills}
+                            </span>
+                          </span>
+                        </button>
+                        {/* Hover tooltip with skill summary */}
+                        {hoveredLearner === l.id && (
+                          <LearnerTooltip learner={l} totalSkills={totalSkills} />
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Auto-play button for demo */}
+                {/* Watch all students button (renamed from Auto-cycle learners) */}
                 <button
                   onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     isAutoPlaying
                       ? "bg-green-500/15 text-green-400 border border-green-500/20"
                       : "text-gray-600 border border-white/[0.06] hover:text-gray-400"
@@ -420,14 +486,14 @@ export default function DashboardPage() {
                   {isAutoPlaying ? (
                     <>
                       <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                      Auto-cycling
+                      Watching
                     </>
                   ) : (
                     <>
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       </svg>
-                      Auto-cycle learners
+                      Watch all students
                     </>
                   )}
                 </button>
