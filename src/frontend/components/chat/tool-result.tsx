@@ -34,8 +34,39 @@ const TOOL_META: Record<string, { label: string; bloomColor: string }> = {
   "AskUserQuestion": { label: "Question for You", bloomColor: "var(--accent)" },
 };
 
-function getToolMeta(name: string) {
-  return TOOL_META[name] || { label: name, bloomColor: "var(--bloom-remember)" };
+/** Strip MCP prefix and convert snake_case to Title Case */
+function humanizeToolName(rawName: string): string {
+  const stripped = rawName.replace(/^mcp__pedagogy__/, "");
+  return stripped
+    .split("_")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/** Assign Bloom color by verb prefix */
+function categorizeTool(name: string): string {
+  const stripped = name.replace(/^mcp__pedagogy__/, "");
+  if (stripped.startsWith("load_") || stripped.startsWith("query_") || stripped.startsWith("check_"))
+    return "var(--bloom-understand)";
+  if (stripped.startsWith("analyze_"))
+    return "var(--bloom-analyze)";
+  if (stripped.startsWith("compose_") || stripped.startsWith("create_") || stripped.startsWith("store_") ||
+      stripped.startsWith("update_") || stripped.startsWith("add_"))
+    return "var(--bloom-create)";
+  if (stripped.startsWith("simulate_") || stripped.startsWith("audit_") || stripped.startsWith("explain_"))
+    return "var(--bloom-evaluate)";
+  if (stripped.startsWith("process_") || stripped.startsWith("advance_") || stripped.startsWith("report_") ||
+      stripped.startsWith("assess_") || stripped.startsWith("generate_"))
+    return "var(--bloom-apply)";
+  return "var(--bloom-remember)";
+}
+
+function getToolMeta(name: string): { label: string; bloomColor: string } {
+  if (TOOL_META[name]) return TOOL_META[name];
+  if (name.startsWith("mcp__pedagogy__")) {
+    return { label: humanizeToolName(name), bloomColor: categorizeTool(name) };
+  }
+  return { label: name, bloomColor: "var(--bloom-remember)" };
 }
 
 // Detect if tool input looks like a lesson plan
@@ -165,11 +196,14 @@ interface ToolResultProps {
   tool: ToolUse;
   isActive?: boolean;
   onSendMessage?: (message: string) => void;
+  creativeLabels?: Record<string, string>;
 }
 
-export default memo(function ToolResult({ tool, isActive = false, onSendMessage }: ToolResultProps) {
+export default memo(function ToolResult({ tool, isActive = false, onSendMessage, creativeLabels }: ToolResultProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = getToolMeta(tool.name);
+  // Use creative AI label if available, otherwise deterministic
+  const displayLabel = creativeLabels?.[tool.name] || meta.label;
 
   // Special rendering for AskUserQuestion — always shown inline, not collapsible
   if (isAskUserQuestion(tool) && onSendMessage) {
@@ -215,7 +249,7 @@ export default memo(function ToolResult({ tool, isActive = false, onSendMessage 
         className="w-full flex items-center gap-3 px-5 py-3 hover:bg-surface-2/50 transition-colors"
       >
         <span className="text-sm font-medium text-text-primary flex-1 text-left">
-          {meta.label}
+          {displayLabel}
           {isActive && (
             <span className="ml-2 inline-flex">
               <span className="animate-pulse-subtle text-xs text-text-tertiary">working...</span>
@@ -258,7 +292,7 @@ export default memo(function ToolResult({ tool, isActive = false, onSendMessage 
 })
 
 // Compact tool activity indicator shown while tools are running
-export function ToolActivityIndicator({ tools }: { tools: ToolUse[] }) {
+export function ToolActivityIndicator({ tools, creativeLabels }: { tools: ToolUse[]; creativeLabels?: Record<string, string> }) {
   if (tools.length === 0) return null;
 
   return (
@@ -269,7 +303,7 @@ export function ToolActivityIndicator({ tools }: { tools: ToolUse[] }) {
         <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
       </div>
       <span className="text-xs text-text-tertiary">
-        {tools.map((t) => getToolMeta(t.name).label).join(", ")}
+        {tools.map((t) => creativeLabels?.[t.name] || getToolMeta(t.name).label).join(", ")}
       </span>
     </div>
   );

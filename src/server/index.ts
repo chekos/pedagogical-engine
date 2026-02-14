@@ -5,9 +5,9 @@ import { randomUUID } from "crypto";
 import fs from "fs/promises";
 import path from "path";
 import { nanoid } from "nanoid";
-import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { SDKMessage, PostToolUseFailureHookInput, HookInput } from "@anthropic-ai/claude-agent-sdk";
 import { SessionManager } from "./sessions/manager.js";
-import { extractSessionContext } from "./context-extractor.js";
+import { extractSessionContext, type SessionContext } from "./context-extractor.js";
 import { createEducatorQuery, createAssessmentQuery, createLiveCompanionQuery } from "./agent.js";
 import { parseLesson, lessonIdFromPath } from "./lib/lesson-parser.js";
 import { exportRouter } from "./exports/router.js";
@@ -15,6 +15,7 @@ import { runSimulation } from "./tools/simulate-lesson.js";
 import { runTensionAnalysis } from "./tools/analyze-tensions.js";
 import { runTransferAnalysis } from "./tools/analyze-cross-domain-transfer.js";
 import { DATA_DIR, parseGroupMembers, loadGroupLearners } from "./tools/shared.js";
+import { warmToolLabels, getCreativeLabels } from "./tool-labels.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -1564,11 +1565,13 @@ wss.on("connection", (ws: WebSocket, req: import("http").IncomingMessage) => {
 
   console.log(`[ws] ${isReconnect ? "Reconnected" : "New"} educator session: ${sessionId}`);
 
-  // Send session ID to client
+  // Send session ID and creative tool labels to client
+  const creativeLabels = getCreativeLabels();
   ws.send(
     JSON.stringify({
       type: "session",
       sessionId,
+      ...(Object.keys(creativeLabels).length > 0 && { creativeLabels }),
     })
   );
 
@@ -1602,9 +1605,38 @@ wss.on("connection", (ws: WebSocket, req: import("http").IncomingMessage) => {
           try { prevQuery.close(); } catch { /* already finished */ }
         }
 
+        // Per-query state for result-based correction
+        const failedToolIds = new Set<string>();
+        let turnToolUses: Array<{ name: string; input: Record<string, unknown>; id: string }> = [];
+        let turnPreContext: SessionContext = { ...session.context };
+
+        // Hook: when a pedagogy tool fails, re-extract context excluding failed tools
+        const postToolUseFailureHook = async (hookInput: HookInput) => {
+          const input = hookInput as PostToolUseFailureHookInput;
+          if (!input.tool_name.startsWith("mcp__pedagogy__")) return { continue: true };
+
+          failedToolIds.add(input.tool_use_id);
+
+          // Re-extract context from scratch, excluding failed tools
+          const successfulUses = turnToolUses.filter(t => !failedToolIds.has(t.id));
+          const correctedContext = extractSessionContext(
+            successfulUses.map(t => ({ name: t.name, input: t.input })),
+            turnPreContext,
+          );
+          sessionManager.updateContext(sessionId, correctedContext);
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "session_context", context: correctedContext }));
+          }
+
+          return { continue: true };
+        };
+
         const q = await createEducatorQuery(parsed.message, {
           sessionId: session.id,
           resume: prevQuery ? session.id : undefined,
+          hooks: {
+            PostToolUseFailure: [{ hooks: [postToolUseFailureHook] }],
+          },
         });
 
         sessionManager.setQuery(sessionId, q);
@@ -1650,13 +1682,18 @@ wss.on("connection", (ws: WebSocket, req: import("http").IncomingMessage) => {
                 })
               );
 
-              // Extract and emit session context from tool_use blocks
+              // Extract and emit session context from tool_use blocks (optimistic)
               if (toolUseBlocks.length > 0) {
+                turnPreContext = { ...session.context }; // snapshot before optimistic update
+                const mapped = toolUseBlocks.map((b: { name: string; input: unknown; id: string }) => ({
+                  name: b.name,
+                  input: b.input as Record<string, unknown>,
+                  id: b.id,
+                }));
+                turnToolUses.push(...mapped);
+
                 const updatedContext = extractSessionContext(
-                  toolUseBlocks.map((b: { name: string; input: unknown }) => ({
-                    name: b.name,
-                    input: b.input as Record<string, unknown>,
-                  })),
+                  mapped.map((t: { name: string; input: Record<string, unknown> }) => ({ name: t.name, input: t.input })),
                   session.context,
                 );
                 sessionManager.updateContext(sessionId, updatedContext);
@@ -1666,6 +1703,11 @@ wss.on("connection", (ws: WebSocket, req: import("http").IncomingMessage) => {
             }
 
             case "result": {
+              // Clear per-turn state
+              turnToolUses = [];
+              failedToolIds.clear();
+              turnPreContext = { ...session.context };
+
               // Reset processing BEFORE sending the result to the client,
               // so the client can immediately send a follow-up message
               // without hitting the "still processing" guard.
@@ -1879,6 +1921,11 @@ function shutdown(signal: string) {
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
+
+// ─── Generate creative tool labels on startup ────────────────────
+warmToolLabels().catch(() => {
+  // Silently fall back — frontend has deterministic humanizers
+});
 
 // ─── Start server ────────────────────────────────────────────────
 server.listen(PORT, () => {

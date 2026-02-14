@@ -3,6 +3,8 @@ import {
   type Options,
   type SDKMessage,
   type Query,
+  type HookEvent,
+  type HookCallbackMatcher,
 } from "@anthropic-ai/claude-agent-sdk";
 import fs from "fs/promises";
 import path from "path";
@@ -107,6 +109,7 @@ When composing lesson plans, ALWAYS check for an educator profile first. If one 
 export interface AgentQueryOptions {
   sessionId?: string;
   resume?: string;
+  hooks?: Partial<Record<HookEvent, HookCallbackMatcher[]>>;
 }
 
 /** Create a new agent query for an educator conversation */
@@ -140,6 +143,10 @@ export async function createEducatorQuery(
     persistSession: true,
     includePartialMessages: true,
   };
+
+  if (options.hooks) {
+    queryOptions.hooks = options.hooks;
+  }
 
   if (options.resume) {
     queryOptions.resume = options.resume;

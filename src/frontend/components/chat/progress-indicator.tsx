@@ -20,11 +20,34 @@ const STAGE_LABELS: Record<string, string> = {
   Task: "Running subagent",
 };
 
-function getStageLabel(tools: ToolUse[]): string {
+function humanizeStageLabel(rawName: string): string {
+  const stripped = rawName.replace(/^mcp__pedagogy__/, "");
+  const words = stripped.split("_");
+  const verb = words[0];
+  const rest = words.slice(1).join(" ");
+
+  const gerunds: Record<string, string> = {
+    load: "Loading", query: "Querying", assess: "Assessing",
+    generate: "Generating", check: "Checking", audit: "Auditing",
+    compose: "Composing", create: "Creating", update: "Updating",
+    simulate: "Simulating", analyze: "Analyzing", explain: "Explaining",
+    store: "Storing", process: "Processing", advance: "Advancing",
+    add: "Adding", report: "Reporting",
+  };
+
+  const gerund = gerunds[verb] || (verb.charAt(0).toUpperCase() + verb.slice(1) + "ing");
+  return `${gerund} ${rest}`;
+}
+
+function getStageLabel(tools: ToolUse[], creativeLabels?: Record<string, string>): string {
   if (tools.length === 0) return "Thinking";
 
   const latest = tools[tools.length - 1];
-  return STAGE_LABELS[latest.name] || `Running ${latest.name}`;
+  // Priority: creative AI label → explicit → humanized fallback
+  if (creativeLabels?.[latest.name]) return creativeLabels[latest.name];
+  if (STAGE_LABELS[latest.name]) return STAGE_LABELS[latest.name];
+  if (latest.name.startsWith("mcp__pedagogy__")) return humanizeStageLabel(latest.name);
+  return `Running ${latest.name}`;
 }
 
 function formatElapsed(ms: number): string {
@@ -38,9 +61,10 @@ function formatElapsed(ms: number): string {
 interface ProgressIndicatorProps {
   activeTools: ToolUse[];
   startedAt: number | null;
+  creativeLabels?: Record<string, string>;
 }
 
-export default function ProgressIndicator({ activeTools, startedAt }: ProgressIndicatorProps) {
+export default function ProgressIndicator({ activeTools, startedAt, creativeLabels }: ProgressIndicatorProps) {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -58,7 +82,7 @@ export default function ProgressIndicator({ activeTools, startedAt }: ProgressIn
     return () => clearInterval(interval);
   }, [startedAt]);
 
-  const label = getStageLabel(activeTools);
+  const label = getStageLabel(activeTools, creativeLabels);
 
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 animate-fade-in">

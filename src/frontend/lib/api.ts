@@ -35,6 +35,7 @@ export interface SystemMessage {
 export interface SessionMessage {
   type: "session";
   sessionId: string;
+  creativeLabels?: Record<string, string>;
 }
 
 export interface ErrorMessage {
