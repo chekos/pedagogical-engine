@@ -13,7 +13,8 @@ teacher and stage director collaborating.
 ## Process
 
 1. Read the complete interview context from the group file (including affective context)
-2. Read all learner profiles for the group (including affective profiles)
+2. Read all learner profiles for the group (including affective profiles and
+   SOLO levels where available — look for `solo_demonstrated` on assessed skills)
 3. Load the skill graph for the relevant domain
 4. **Load educator profile** — call `load_educator_profile` with the educator's
    ID. If a profile exists, call `analyze_educator_context` with the educator ID,
@@ -42,6 +43,12 @@ teacher and stage director collaborating.
       for their patterns, contingency style matched to their preference
     - **Affective notes:** pairing rationale, confidence-aware staging, check-in guidance
     - **Teaching wisdom:** timing calibrations, confusion prevention, activity recommendations
+    - **SOLO-aware design:** if learner profiles have SOLO data, use the SOLO
+      distribution to drive activity type (integration vs. transfer vs. scaffolding)
+      and pairing (multistructural + relational is the best combo). Read the
+      compose-lesson skill's "Calibrate to SOLO distribution" section for details.
+      Tell the educator what you see: "3 of 5 learners are multistructural on
+      data cleaning — activities emphasize trade-offs over new functions."
     - **Optional growth nudge:** if the educator profile suggests trying a new
       activity type, include it with extra scaffolding and frame it as optional
 11. Write the lesson plan to `data/lessons/{name}.md`
