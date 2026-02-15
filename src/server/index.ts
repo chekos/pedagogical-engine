@@ -142,6 +142,118 @@ app.get("/api/status", (_req, res) => {
   });
 });
 
+// ─── User identity ──────────────────────────────────────────────
+app.get("/api/user", async (_req, res) => {
+  const userPath = path.join(DATA_DIR, "user.md");
+  try {
+    const content = await fs.readFile(userPath, "utf-8");
+    // Extract name from frontmatter or first heading
+    const nameMatch = content.match(/^(?:name|Name):\s*(.+)$/m) || content.match(/^#\s+(.+)$/m);
+    const name = nameMatch?.[1]?.trim() || null;
+    // Extract educator profile ID if referenced
+    const profileMatch = content.match(/(?:educator.profile|Educator Profile):\s*(.+)$/im);
+    const educatorProfileId = profileMatch?.[1]?.trim() || null;
+    res.json({ exists: true, name, educatorProfileId, content });
+  } catch {
+    res.json({ exists: false });
+  }
+});
+
+app.get("/api/user/greeting", async (_req, res) => {
+  const userPath = path.join(DATA_DIR, "user.md");
+  try {
+    const content = await fs.readFile(userPath, "utf-8");
+
+    // Gather context: recent lessons, domains, teaching wisdom
+    const contextParts: string[] = [`User profile:\n${content}`];
+
+    // Recent lessons (last 3)
+    const lessonsDir = path.join(DATA_DIR, "lessons");
+    try {
+      const lessonFiles = await fs.readdir(lessonsDir);
+      const recent = lessonFiles.filter(f => f.endsWith(".md")).slice(-3);
+      if (recent.length > 0) {
+        contextParts.push(`Recent lesson plans: ${recent.map(f => f.replace(".md", "")).join(", ")}`);
+      }
+    } catch { /* no lessons yet */ }
+
+    // Available domains
+    const domainsDir = path.join(DATA_DIR, "domains");
+    try {
+      const domainDirs = await fs.readdir(domainsDir);
+      if (domainDirs.length > 0) {
+        contextParts.push(`Available domains: ${domainDirs.join(", ")}`);
+      }
+    } catch { /* no domains */ }
+
+    // Recent debriefs (last debrief file)
+    const debriefsDir = path.join(DATA_DIR, "debriefs");
+    try {
+      const debriefFiles = await fs.readdir(debriefsDir);
+      const latest = debriefFiles.filter(f => f.endsWith(".md")).pop();
+      if (latest) {
+        const debriefContent = await fs.readFile(path.join(debriefsDir, latest), "utf-8");
+        const excerpt = debriefContent.slice(0, 300);
+        contextParts.push(`Most recent debrief (${latest.replace(".md", "")}):\n${excerpt}`);
+      }
+    } catch { /* no debriefs */ }
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      const nameMatch = content.match(/^(?:name|Name):\s*(.+)$/m);
+      const name = nameMatch?.[1]?.trim();
+      const h = new Date().getHours();
+      const tod = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+      res.json({ greeting: name ? `${tod}, ${name}.` : `${tod}.`, subtext: "What are we working on?" });
+      return;
+    }
+
+    const h = new Date().getHours();
+    const timeOfDay = h < 12 ? "morning" : h < 17 ? "afternoon" : "evening";
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 200,
+        messages: [{
+          role: "user",
+          content: `You are generating the welcome screen copy for a pedagogical reasoning engine — an AI teaching partner. The educator just opened the app. Generate a warm, brief greeting.
+
+Context:
+- Time of day: ${timeOfDay}
+${contextParts.join("\n\n")}
+
+Rules:
+- Return ONLY a JSON object with two fields: "greeting" (1 short sentence, include their name if available) and "subtext" (1-2 sentences referencing something specific from their context — a recent lesson, a domain they work with, a student group, or something from a debrief. Make it feel like a colleague who remembers what you were working on.)
+- Be warm and specific, not generic. Reference actual names and topics from the context.
+- Do NOT include time-of-day pleasantries in the subtext — that goes in the greeting.
+- Keep it concise. This is display copy, not a conversation.`,
+        }],
+      }),
+    });
+
+    if (!response.ok) throw new Error(`Haiku API error: ${response.status}`);
+    const data = await response.json();
+    const text: string = data.content?.[0]?.text || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      res.json({ greeting: parsed.greeting, subtext: parsed.subtext });
+    } else {
+      throw new Error("Could not parse greeting");
+    }
+  } catch {
+    // No user.md or generation failed — return null so frontend uses its default
+    res.json({ greeting: null, subtext: null });
+  }
+});
+
 // ─── AI-generated group names ───────────────────────────────────
 app.get("/api/generate-group-name", async (_req, res) => {
   try {

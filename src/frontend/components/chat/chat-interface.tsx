@@ -52,6 +52,34 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
   const ttsEnabledRef = useRef(false);
   useEffect(() => { ttsEnabledRef.current = ttsEnabled; }, [ttsEnabled]);
 
+  // User identity — check if user.md exists
+  const [userState, setUserState] = useState<{
+    loaded: boolean;
+    exists: boolean;
+    name: string | null;
+    greeting: string | null;
+    subtext: string | null;
+  }>({ loaded: false, exists: false, name: null, greeting: null, subtext: null });
+
+  useEffect(() => {
+    const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    fetch(`${API}/api/user`).then(r => r.json()).then(async (data) => {
+      if (data.exists) {
+        // Fetch personalized greeting
+        try {
+          const gr = await fetch(`${API}/api/user/greeting`).then(r => r.json());
+          setUserState({ loaded: true, exists: true, name: data.name, greeting: gr.greeting, subtext: gr.subtext });
+        } catch {
+          setUserState({ loaded: true, exists: true, name: data.name, greeting: null, subtext: null });
+        }
+      } else {
+        setUserState({ loaded: true, exists: false, name: null, greeting: null, subtext: null });
+      }
+    }).catch(() => {
+      setUserState({ loaded: true, exists: false, name: null, greeting: null, subtext: null });
+    });
+  }, []);
+
   // Restore session state from localStorage on mount
   useEffect(() => {
     if (resumeSessionId) {
@@ -496,7 +524,7 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
           </Link>
           <div className="w-px h-5 bg-border-subtle" />
           <div>
-            <h1 className="text-lg font-heading text-text-primary">Teaching Workspace</h1>
+            <h1 className="text-lg font-heading text-text-primary">Teach</h1>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -540,35 +568,87 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
           </div>
         )}
 
-        {messages.length === 0 && status === "connected" && (
+        {messages.length === 0 && status === "connected" && userState.loaded && (
           <div className="flex flex-col items-center justify-center h-full animate-fade-in">
             <div className="max-w-lg w-full px-4">
-              <h2 className="font-heading text-2xl md:text-3xl text-text-primary mb-3">
-                Let&apos;s build something for your students.
-              </h2>
-              <p className="text-sm text-text-secondary leading-relaxed mb-8">
-                Tell me what you&apos;re planning — who you&apos;re teaching, what you&apos;re covering,
-                what constraints you&apos;re working with — and I&apos;ll help you build something
-                grounded in what your students actually know.
-              </p>
-              <div className="space-y-3">
-                {[
-                  "I'm teaching a 90-minute Python workshop to a mixed group — some have coded before, most haven't.",
-                  "I have 12 students learning data analysis. Can we figure out what they already know?",
-                  "I need to plan a lesson on plotting with matplotlib, but I only have 45 minutes.",
-                ].map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    onClick={() => {
-                      setInput(suggestion);
-                      inputRef.current?.focus();
-                    }}
-                    className="block w-full text-left border-l-2 border-accent/40 pl-4 py-2 text-sm italic text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
-                  >
-                    &ldquo;{suggestion}&rdquo;
-                  </button>
-                ))}
-              </div>
+              {!userState.exists ? (
+                /* First-time user — onboarding welcome */
+                <>
+                  <h2 className="font-heading text-2xl md:text-3xl text-text-primary mb-4 leading-snug">
+                    Nice to meet you.
+                  </h2>
+                  <p className="text-base text-text-secondary leading-relaxed mb-6">
+                    I&apos;m your teaching partner&nbsp;&mdash; I help with lesson planning,
+                    skill assessment, curriculum design, and post-session debriefs.
+                    The more I know about how you teach, the better I get at this.
+                  </p>
+                  <p className="text-sm text-text-secondary leading-relaxed mb-10">
+                    Tell me a bit about yourself to get started&nbsp;&mdash; what do you
+                    teach, who are your students, whatever feels right.
+                  </p>
+                  <div className="space-y-3">
+                    {([
+                      { text: "I\u2019m new here \u2014 let me tell you about what I teach.", color: "border-bloom-understand" },
+                      { text: "I have a lesson coming up and need help planning it.", color: "border-bloom-apply" },
+                    ] as const).map(({ text, color }) => (
+                      <button
+                        key={text}
+                        onClick={() => {
+                          setInput(text);
+                          inputRef.current?.focus();
+                        }}
+                        className={`block w-full text-left border-l-2 ${color} pl-4 py-2.5 text-sm text-text-secondary hover:text-text-primary transition-colors`}
+                      >
+                        {text}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                /* Returning user — personalized greeting */
+                <>
+                  <p className="text-sm text-text-tertiary mb-1 tracking-wide">
+                    {userState.greeting
+                      ? "" /* Haiku greeting is self-contained */
+                      : (() => {
+                          const h = new Date().getHours();
+                          return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+                        })()
+                    }
+                  </p>
+                  <h2 className="font-heading text-2xl md:text-3xl text-text-primary mb-4 leading-snug">
+                    {userState.greeting || `What are we working on${userState.name ? `, ${userState.name}` : ""}?`}
+                  </h2>
+                  <p className="text-base text-text-secondary leading-relaxed mb-10">
+                    {userState.subtext || (
+                      <>
+                        I&apos;m here whenever you&apos;re ready. Tell me about your students,
+                        your subject, whatever constraints you&apos;re juggling&nbsp;&mdash;
+                        and we&apos;ll figure it out together.
+                      </>
+                    )}
+                  </p>
+                  <p className="text-xs text-text-tertiary uppercase tracking-widest mb-4">Or start from here</p>
+                  <div className="space-y-3">
+                    {([
+                      { text: "I\u2019m planning a lesson and I\u2019m not sure where to start.", color: "border-bloom-understand" },
+                      { text: "I have a group of students \u2014 can we figure out what they already know?", color: "border-bloom-apply" },
+                      { text: "I taught a session recently and want to debrief.", color: "border-bloom-evaluate" },
+                    ] as const).map(({ text, color }) => (
+                      <button
+                        key={text}
+                        onClick={() => {
+                          setInput(text);
+                          inputRef.current?.focus();
+                        }}
+                        className={`block w-full text-left border-l-2 ${color} pl-4 py-2.5 text-sm text-text-secondary hover:text-text-primary transition-colors`}
+                      >
+                        {text}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -632,7 +712,7 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
               onKeyDown={handleKeyDown}
               placeholder={
                 status === "connected"
-                  ? "What are you planning to teach?"
+                  ? "Tell me what you\u2019re thinking\u2026"
                   : "Waiting for connection..."
               }
               disabled={status !== "connected"}
