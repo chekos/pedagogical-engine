@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BLOOM_COLORS } from "@/lib/constants";
+import { BLOOM_COLORS, SOLO_COLORS } from "@/lib/constants";
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -14,7 +14,7 @@ interface Skill {
 interface LearnerSkillData {
   name: string;
   id: string;
-  skills: Record<string, { confidence: number; type: "assessed" | "inferred" }>;
+  skills: Record<string, { confidence: number; type: "assessed" | "inferred"; soloLevel?: string }>;
 }
 
 export interface GroupDashboardData {
@@ -27,6 +27,24 @@ export interface GroupDashboardData {
 // ─── Constants ──────────────────────────────────────────────────
 
 const BLOOM_LEVELS = ["knowledge", "comprehension", "application", "analysis", "synthesis", "evaluation"];
+
+const SOLO_LEVELS = ["prestructural", "unistructural", "multistructural", "relational", "extended_abstract"] as const;
+
+const SOLO_LABELS: Record<string, string> = {
+  prestructural: "Pre-structural",
+  unistructural: "Uni-structural",
+  multistructural: "Multi-structural",
+  relational: "Relational",
+  extended_abstract: "Extended Abstract",
+};
+
+const SOLO_DESCRIPTIONS: Record<string, string> = {
+  prestructural: "No understanding of the task",
+  unistructural: "Addresses one relevant aspect",
+  multistructural: "Addresses several aspects but unconnected",
+  relational: "Integrates parts into a coherent whole",
+  extended_abstract: "Generalizes and transfers to new contexts",
+};
 
 const BLOOM_LABELS: Record<string, string> = {
   knowledge: "Know",
@@ -697,9 +715,375 @@ function LearnerSummaryCards({ data }: { data: GroupDashboardData }) {
   );
 }
 
+// ─── SOLO Distribution ──────────────────────────────────────────
+
+function SoloDistribution({ data }: { data: GroupDashboardData }) {
+  // Aggregate SOLO data across all learners and skills
+  const soloStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const byLearner: Record<string, Record<string, number>> = {};
+    const bySkill: Record<string, Record<string, string[]>> = {};
+    let total = 0;
+
+    for (const level of SOLO_LEVELS) {
+      counts[level] = 0;
+    }
+
+    for (const learner of data.learners) {
+      byLearner[learner.name] = {};
+      for (const level of SOLO_LEVELS) {
+        byLearner[learner.name][level] = 0;
+      }
+
+      for (const [skillId, skillData] of Object.entries(learner.skills)) {
+        if (skillData.soloLevel) {
+          counts[skillData.soloLevel] = (counts[skillData.soloLevel] || 0) + 1;
+          byLearner[learner.name][skillData.soloLevel] = (byLearner[learner.name][skillData.soloLevel] || 0) + 1;
+          total++;
+
+          if (!bySkill[skillId]) bySkill[skillId] = {};
+          if (!bySkill[skillId][skillData.soloLevel]) bySkill[skillId][skillData.soloLevel] = [];
+          bySkill[skillId][skillData.soloLevel].push(learner.name);
+        }
+      }
+    }
+
+    return { counts, byLearner, bySkill, total };
+  }, [data]);
+
+  // Generate structural note (mirrors backend logic)
+  const structuralNote = useMemo(() => {
+    if (soloStats.total === 0) return null;
+    const total = soloStats.total;
+    const relAndAbove = (soloStats.counts.relational || 0) + (soloStats.counts.extended_abstract || 0);
+    const multi = soloStats.counts.multistructural || 0;
+    const preAndUni = (soloStats.counts.prestructural || 0) + (soloStats.counts.unistructural || 0);
+
+    if (relAndAbove / total >= 0.6) {
+      return {
+        text: "Group understanding is structurally deep — most responses show integrated reasoning. Ready for transfer and generalization activities.",
+        level: "deep" as const,
+      };
+    } else if (multi / total >= 0.5) {
+      return {
+        text: "Group understanding is structurally thin — learners know the parts but haven't connected them. Emphasize integration activities over introducing more content.",
+        level: "thin" as const,
+      };
+    } else if (preAndUni / total >= 0.5) {
+      return {
+        text: "Group understanding is structurally shallow — most responses address single aspects. Focus on building vocabulary and guided exercises.",
+        level: "shallow" as const,
+      };
+    }
+    return {
+      text: "Mixed structural levels across the group — consider differentiated activities that let each learner work at their structural edge.",
+      level: "mixed" as const,
+    };
+  }, [soloStats]);
+
+  if (soloStats.total === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-sm text-gray-500">No SOLO taxonomy data available yet</p>
+        <p className="text-xs text-gray-600 mt-1">
+          SOLO levels are recorded during assessment — run assessments to see structural complexity data
+        </p>
+      </div>
+    );
+  }
+
+  const maxCount = Math.max(...Object.values(soloStats.counts), 1);
+
+  // Skills sorted by bloom level for the heatmap
+  const skillsWithSolo = data.skills.filter((s) => soloStats.bySkill[s.id]);
+  const sortedSoloSkills = [...skillsWithSolo].sort((a, b) => {
+    const aIdx = BLOOM_LEVELS.indexOf(a.bloom_level);
+    const bIdx = BLOOM_LEVELS.indexOf(b.bloom_level);
+    return aIdx - bIdx;
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Structural note */}
+      {structuralNote && (
+        <div className={`px-4 py-3 rounded-lg border ${
+          structuralNote.level === "deep"
+            ? "bg-green-500/[0.06] border-green-500/15"
+            : structuralNote.level === "thin"
+            ? "bg-amber-500/[0.06] border-amber-500/15"
+            : structuralNote.level === "shallow"
+            ? "bg-red-500/[0.06] border-red-500/15"
+            : "bg-indigo-500/[0.06] border-indigo-500/15"
+        }`}>
+          <div className="flex items-start gap-3">
+            <span className="text-sm mt-0.5">
+              {structuralNote.level === "deep" ? "🟢" : structuralNote.level === "thin" ? "🟡" : structuralNote.level === "shallow" ? "🔴" : "🔵"}
+            </span>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1">
+                Structural assessment
+              </p>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                {structuralNote.text}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Group distribution bar chart */}
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold mb-4">
+            Group SOLO distribution
+          </p>
+          <div className="space-y-2.5">
+            {SOLO_LEVELS.map((level) => {
+              const count = soloStats.counts[level] || 0;
+              const pct = soloStats.total > 0 ? Math.round((count / soloStats.total) * 100) : 0;
+              return (
+                <div key={level} className="group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-28 text-right">
+                      <span className="text-[11px] text-gray-400">
+                        {SOLO_LABELS[level]}
+                      </span>
+                    </div>
+                    <div className="flex-1 h-7 bg-white/[0.03] rounded-md overflow-hidden relative">
+                      <div
+                        className="h-full rounded-md transition-all duration-700"
+                        style={{
+                          width: `${Math.max(2, (count / maxCount) * 100)}%`,
+                          background: `linear-gradient(90deg, ${SOLO_COLORS[level]}40, ${SOLO_COLORS[level]}80)`,
+                          boxShadow: `0 0 12px ${SOLO_COLORS[level]}30`,
+                        }}
+                      />
+                      <div className="absolute inset-0 flex items-center px-2">
+                        <span className="text-[10px] font-mono text-white/70">
+                          {count} ({pct}%)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="ml-[124px] mt-0.5 h-0 group-hover:h-4 overflow-hidden transition-all duration-200">
+                    <span className="text-[9px] text-gray-600 italic">
+                      {SOLO_DESCRIPTIONS[level]}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 text-right">
+            <span className="text-[10px] text-gray-600">
+              {soloStats.total} total observations
+            </span>
+          </div>
+        </div>
+
+        {/* Per-learner SOLO breakdown */}
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold mb-4">
+            Per-learner structural profile
+          </p>
+          <div className="space-y-3">
+            {data.learners.map((learner) => {
+              const learnerCounts = soloStats.byLearner[learner.name];
+              if (!learnerCounts) return null;
+              const learnerTotal = Object.values(learnerCounts).reduce((a, b) => a + b, 0);
+              if (learnerTotal === 0) return null;
+
+              // Find dominant level
+              const dominant = SOLO_LEVELS.reduce((best, level) =>
+                (learnerCounts[level] || 0) > (learnerCounts[best] || 0) ? level : best
+              , SOLO_LEVELS[0]);
+
+              return (
+                <div key={learner.id} className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-white">{learner.name}</span>
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full"
+                      style={{
+                        background: `${SOLO_COLORS[dominant]}20`,
+                        color: SOLO_COLORS[dominant],
+                      }}
+                    >
+                      {SOLO_LABELS[dominant]}
+                    </span>
+                  </div>
+                  {/* Stacked bar */}
+                  <div className="h-3 flex rounded-full overflow-hidden bg-white/[0.03]">
+                    {SOLO_LEVELS.map((level) => {
+                      const count = learnerCounts[level] || 0;
+                      if (count === 0) return null;
+                      const width = (count / learnerTotal) * 100;
+                      return (
+                        <div
+                          key={level}
+                          className="h-full transition-all duration-500"
+                          style={{
+                            width: `${width}%`,
+                            background: SOLO_COLORS[level],
+                            opacity: 0.7,
+                          }}
+                          title={`${SOLO_LABELS[level]}: ${count} (${Math.round(width)}%)`}
+                        />
+                      );
+                    })}
+                  </div>
+                  {/* Mini legend */}
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    {SOLO_LEVELS.map((level) => {
+                      const count = learnerCounts[level] || 0;
+                      if (count === 0) return null;
+                      return (
+                        <div key={level} className="flex items-center gap-1">
+                          <span
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ background: SOLO_COLORS[level] }}
+                          />
+                          <span className="text-[9px] text-gray-500">
+                            {count}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Per-skill SOLO heatmap */}
+      {sortedSoloSkills.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold mb-3">
+            Skill × Learner structural complexity
+          </p>
+          <div className="overflow-x-auto">
+            <div className="min-w-[600px]">
+              {/* Header row */}
+              <div className="flex gap-1 mb-2 pl-[140px]">
+                {data.learners.map((learner) => (
+                  <div key={learner.id} className="flex-1 min-w-[50px]">
+                    <p className="text-[9px] text-gray-500 text-center truncate px-1" title={learner.name}>
+                      {learner.name.split(" ")[0]}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Heatmap rows */}
+              <div className="space-y-0.5">
+                {sortedSoloSkills.map((skill, i) => {
+                  const prevBloom = i > 0 ? sortedSoloSkills[i - 1].bloom_level : null;
+                  const showSeparator = prevBloom !== null && prevBloom !== skill.bloom_level;
+
+                  return (
+                    <div key={skill.id}>
+                      {(showSeparator || i === 0) && (
+                        <div className="flex items-center gap-2 py-1.5 pl-2">
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ background: BLOOM_COLORS[skill.bloom_level] }}
+                          />
+                          <span className="text-[9px] uppercase tracking-widest text-gray-600 font-medium">
+                            {skill.bloom_level}
+                          </span>
+                          <div className="flex-1 h-px bg-white/5" />
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <div className="w-[136px] flex-shrink-0 pr-2">
+                          <p
+                            className="text-[10px] text-gray-400 text-right truncate"
+                            title={skill.label}
+                          >
+                            {skill.label.replace(/^Can /, "").replace(/^can /, "")}
+                          </p>
+                        </div>
+                        {data.learners.map((learner) => {
+                          const skillData = learner.skills[skill.id];
+                          const soloLevel = skillData?.soloLevel;
+
+                          if (!soloLevel) {
+                            return (
+                              <div
+                                key={learner.id}
+                                className="flex-1 min-w-[50px] h-8 rounded-sm bg-white/[0.02] border border-white/[0.04] flex items-center justify-center"
+                              >
+                                <span className="text-[9px] text-gray-700">--</span>
+                              </div>
+                            );
+                          }
+
+                          const color = SOLO_COLORS[soloLevel] || "#666";
+                          const levelIdx = SOLO_LEVELS.indexOf(soloLevel as typeof SOLO_LEVELS[number]);
+                          const alpha = 0.15 + (levelIdx / (SOLO_LEVELS.length - 1)) * 0.55;
+
+                          return (
+                            <div
+                              key={learner.id}
+                              className="flex-1 min-w-[50px] h-8 rounded-sm transition-all duration-300 cursor-pointer hover:scale-105 hover:z-10 relative group/cell"
+                              style={{
+                                background: `${color}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`,
+                                border: `1px solid ${color}40`,
+                              }}
+                            >
+                              <span className="absolute inset-0 flex items-center justify-center text-[8px] font-medium" style={{ color: `${color}cc` }}>
+                                {SOLO_LABELS[soloLevel]?.split("-")[0]?.replace("structural", "").trim() || soloLevel.charAt(0).toUpperCase()}
+                              </span>
+                              {/* Tooltip */}
+                              <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none opacity-0 group-hover/cell:opacity-100 transition-opacity">
+                                <div className="bg-[#1a1a2e] border border-white/10 rounded-lg px-3 py-2 shadow-xl min-w-[160px]">
+                                  <p className="text-[10px] text-gray-400">{learner.name}</p>
+                                  <p className="text-xs font-medium text-white mt-0.5">{skill.label.replace(/^Can /, "").replace(/^can /, "")}</p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span
+                                      className="w-2 h-2 rounded-full"
+                                      style={{ background: color }}
+                                    />
+                                    <span className="text-[10px]" style={{ color }}>
+                                      {SOLO_LABELS[soloLevel]}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-white/5">
+                {SOLO_LEVELS.map((level) => (
+                  <div key={level} className="flex items-center gap-1.5">
+                    <span
+                      className="w-3 h-3 rounded-sm"
+                      style={{ background: `${SOLO_COLORS[level]}60` }}
+                    />
+                    <span className="text-[9px] text-gray-500">{SOLO_LABELS[level]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ─────────────────────────────────────────────
 
-type TabId = "heatmap" | "bloom" | "gaps" | "learners";
+type TabId = "heatmap" | "bloom" | "solo" | "gaps" | "learners";
 
 export default function GroupDashboard({ data }: { data: GroupDashboardData }) {
   const [activeTab, setActiveTab] = useState<TabId>("heatmap");
@@ -716,6 +1100,7 @@ export default function GroupDashboard({ data }: { data: GroupDashboardData }) {
   const tabs: { id: TabId; label: string; icon: string }[] = [
     { id: "heatmap", label: "Skill Heatmap", icon: "grid" },
     { id: "bloom", label: "Bloom's Distribution", icon: "bar" },
+    { id: "solo", label: "SOLO Taxonomy", icon: "layers" },
     { id: "gaps", label: "Common Gaps", icon: "alert" },
     { id: "learners", label: "Learner Overview", icon: "users" },
   ];
@@ -888,6 +1273,10 @@ export default function GroupDashboard({ data }: { data: GroupDashboardData }) {
 
         {activeTab === "bloom" && (
           <BloomDistribution data={data} />
+        )}
+
+        {activeTab === "solo" && (
+          <SoloDistribution data={data} />
         )}
 
         {activeTab === "gaps" && (

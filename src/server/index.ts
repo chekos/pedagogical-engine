@@ -732,16 +732,26 @@ app.get("/api/assess/status/:groupName/:domain", async (req, res) => {
         content.includes("## Assessed Skills") &&
         !content.includes("_No skills assessed yet._");
 
-      const skills: Record<string, { confidence: number; type: string }> = {};
+      const skills: Record<string, { confidence: number; type: string; soloLevel?: string }> = {};
 
       if (hasAssessedSkills) {
-        // Parse assessed skills
+        // Parse assessed skills (including SOLO sub-bullets)
         const assessedSection = content.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
-        const skillLines = assessedSection.split("\n").filter((l) => l.startsWith("- ") && l.includes(":"));
-        for (const line of skillLines) {
-          const skillMatch = line.match(/- ([^:]+): ([\d.]+) confidence/);
+        const allLines = assessedSection.split("\n");
+        for (let li = 0; li < allLines.length; li++) {
+          const line = allLines[li];
+          const skillMatch = line.match(/^- ([^:]+): ([\d.]+) confidence/);
           if (skillMatch) {
-            skills[skillMatch[1]] = { confidence: parseFloat(skillMatch[2]), type: "assessed" };
+            const entry: { confidence: number; type: string; soloLevel?: string } = {
+              confidence: parseFloat(skillMatch[2]),
+              type: "assessed",
+            };
+            // Look ahead for solo_demonstrated on indented sub-bullets
+            for (let lj = li + 1; lj < allLines.length && allLines[lj].match(/^\s+-/); lj++) {
+              const soloMatch = allLines[lj].match(/solo_demonstrated:\s*(\w+)/);
+              if (soloMatch) entry.soloLevel = soloMatch[1];
+            }
+            skills[skillMatch[1]] = entry;
           }
         }
 

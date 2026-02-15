@@ -104,7 +104,7 @@ an experienced teacher, not a content generator.
   - Embed code generation integrated into share page (/assess/share)
 - Skill analytics dashboard (/dashboard) — two views:
   - Dependency graph: interactive React Flow DAG with learner overlay, auto-cycle demo mode
-  - Group dashboard: heatmap, Bloom's radar chart, common gaps analysis, pairing suggestions, learner summary cards
+  - Group dashboard: heatmap, Bloom's radar chart, SOLO taxonomy distribution (group overview, per-learner profiles, skill×learner heatmap), common gaps analysis, pairing suggestions, learner summary cards
 - Teaching wisdom dashboard (/wisdom) — accumulated teaching insights per domain
   - Stats overview: sessions analyzed, total notes, patterns detected, avg confidence
   - Flywheel effect callout showing how sessions compound into better plans
@@ -356,6 +356,6 @@ All persistent data lives in `agent-workspace/data/` — accessible to both the 
 - 4 domains (python-data-analysis, farm-science, outdoor-ecology, culinary-fundamentals) — extensible to more
 - Assessment flow requires the backend server running (no offline mode)
 - Dashboard fetches live data from the backend API (`/api/domains`, `/api/groups`, `/api/assess/status`)
-- The group dashboard shows Bloom's taxonomy heatmaps but does not yet visualize SOLO taxonomy data — the backend already returns `soloSummary` and per-skill `soloDistribution` from `query_group`, but the frontend group dashboard component doesn't consume or display it yet
+- The group dashboard shows both Bloom's taxonomy (heatmaps, radar) and SOLO taxonomy (group distribution, per-learner structural profiles, skill×learner SOLO heatmap) visualizations
 - No persistent storage beyond filesystem — sessions lost on server restart
 - No authentication — assessment codes are the only access control

@@ -12,17 +12,40 @@
 ## Assessed Skills
 
 - open-terminal: 0.90 confidence — demonstrated at application level
+  - solo_demonstrated: relational
+  - Evidence: 15 years of Excel CLI work; integrates terminal into broader workflow
 - navigate-directories: 0.80 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Knows several navigation commands but sometimes confused by nested paths
 - install-python: 0.75 confidence — demonstrated at knowledge level
+  - solo_demonstrated: unistructural
+  - Evidence: Can follow installation steps but doesn't understand version management
 - run-python-script: 0.80 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Runs scripts and understands output but doesn't connect to debugging
 - python-variables-types: 0.75 confidence — demonstrated at comprehension level
+  - solo_demonstrated: multistructural
+  - Evidence: Identifies types correctly but doesn't connect type choice to operations
 - python-control-flow: 0.70 confidence — demonstrated at application level
-- python-functions: 0.55 confidence — demonstrated at comprehension level (understands concept but struggles writing from scratch)
+  - solo_demonstrated: multistructural
+  - Evidence: Writes if/for separately but struggles combining them
+- python-functions: 0.55 confidence — demonstrated at comprehension level
+  - solo_demonstrated: unistructural
+  - Evidence: Understands the concept of functions but can't write them from scratch
 - install-packages: 0.70 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
 - import-pandas: 0.65 confidence — demonstrated at application level
+  - solo_demonstrated: unistructural
+  - Evidence: Can import but doesn't understand what pandas gives beyond Excel
 - inspect-dataframe: 0.70 confidence — demonstrated at comprehension level
-- select-filter-data: 0.50 confidence — demonstrated at knowledge level (knows syntax exists, hasn't internalized it)
+  - solo_demonstrated: multistructural
+  - Evidence: Knows head() and describe() but applies them mechanically, not diagnostically
+- select-filter-data: 0.50 confidence — demonstrated at knowledge level
+  - solo_demonstrated: unistructural
+  - Evidence: Knows filtering syntax exists but hasn't internalized the pattern
 - basic-plotting: 0.60 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Creates plots following examples but doesn't choose chart types purposefully
 
 ## Inferred Skills
 

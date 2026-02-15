@@ -12,23 +12,57 @@
 ## Assessed Skills
 
 - open-terminal: 0.95 confidence — demonstrated at application level
+  - solo_demonstrated: relational
+  - Evidence: Integrates terminal commands with broader development workflow; chains commands fluently
 - navigate-directories: 0.90 confidence — demonstrated at application level
+  - solo_demonstrated: relational
+  - Evidence: Navigates project structures purposefully, understands relative/absolute paths in context
 - install-python: 0.85 confidence — demonstrated at application level
+  - solo_demonstrated: relational
+  - Evidence: Understands environment management, not just installation steps
 - run-python-script: 0.90 confidence — demonstrated at application level
+  - solo_demonstrated: relational
+  - Evidence: Connects script execution to debugging workflow and module imports
 - python-variables-types: 0.90 confidence — demonstrated at comprehension level
+  - solo_demonstrated: relational
+  - Evidence: Explains type interactions and when to use each; connects to data processing choices
 - python-control-flow: 0.85 confidence — demonstrated at application level
+  - solo_demonstrated: relational
+  - Evidence: Writes nested control structures that reflect data analysis logic
 - python-functions: 0.80 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Creates functions with appropriate parameters but doesn't always design for reusability
 - install-packages: 0.85 confidence — demonstrated at application level
+  - solo_demonstrated: relational
 - use-jupyter: 0.90 confidence — demonstrated at application level
+  - solo_demonstrated: relational
+  - Evidence: Uses Jupyter as an integrated analysis environment, not just a code runner
 - import-pandas: 0.90 confidence — demonstrated at application level
+  - solo_demonstrated: relational
 - inspect-dataframe: 0.85 confidence — demonstrated at comprehension level
+  - solo_demonstrated: relational
+  - Evidence: Combines head/info/describe to form a coherent picture of the data
 - select-filter-data: 0.80 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Uses multiple selection methods but doesn't always choose the most appropriate one
 - handle-missing-data: 0.75 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Knows fillna, dropna, and isna but hasn't developed a strategy for choosing between them
 - pandas-groupby: 0.80 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Can group and aggregate but struggles with multi-level groupby and transform
 - basic-plotting: 0.75 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Creates individual plot types but doesn't connect visualization choices to data characteristics
 - interpret-distributions: 0.70 confidence — demonstrated at analysis level
+  - solo_demonstrated: multistructural
+  - Evidence: Identifies distribution features (skew, outliers) separately but doesn't synthesize findings
 - identify-data-quality-issues: 0.65 confidence — demonstrated at analysis level
+  - solo_demonstrated: multistructural
+  - Evidence: Lists issues but doesn't prioritize or explain downstream impact
 - exploratory-data-analysis: 0.60 confidence — demonstrated at analysis level
+  - solo_demonstrated: multistructural
+  - Evidence: Follows EDA steps individually without a coherent analytical narrative
 
 ## Inferred Skills
 

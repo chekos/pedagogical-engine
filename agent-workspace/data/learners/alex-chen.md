@@ -12,11 +12,23 @@
 ## Assessed Skills
 
 - open-terminal: 0.70 confidence — demonstrated at knowledge level
-- navigate-directories: 0.50 confidence — demonstrated at knowledge level (knows cd exists, gets confused by paths)
+  - solo_demonstrated: unistructural
+  - Evidence: Can open terminal and type commands but treats each command as isolated
+- navigate-directories: 0.50 confidence — demonstrated at knowledge level
+  - solo_demonstrated: prestructural
+  - Evidence: Knows cd exists but gets confused by paths; no mental model of file system hierarchy
 - install-python: 0.60 confidence — demonstrated at knowledge level
+  - solo_demonstrated: unistructural
+  - Evidence: Followed installation steps but doesn't understand what was installed or why
 - run-python-script: 0.55 confidence — demonstrated at knowledge level
-- python-variables-types: 0.45 confidence — demonstrated at knowledge level (can identify types but can't declare correctly without reference)
-- python-control-flow: 0.30 confidence — demonstrated at knowledge level (recognizes if/for but can't write them)
+  - solo_demonstrated: unistructural
+  - Evidence: Can run a script by name but doesn't understand the relationship between file and execution
+- python-variables-types: 0.45 confidence — demonstrated at knowledge level
+  - solo_demonstrated: prestructural
+  - Evidence: Can identify types when shown but can't declare variables correctly without reference
+- python-control-flow: 0.30 confidence — demonstrated at knowledge level
+  - solo_demonstrated: prestructural
+  - Evidence: Recognizes if/for keywords but can't write them; no understanding of flow logic
 
 ## Inferred Skills
 

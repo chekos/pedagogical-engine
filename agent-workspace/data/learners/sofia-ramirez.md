@@ -12,18 +12,40 @@
 ## Assessed Skills
 
 - open-terminal: 0.90 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Uses terminal commands but treats them as separate tools, not an integrated workflow
 - navigate-directories: 0.80 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
 - install-python: 0.80 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
 - run-python-script: 0.85 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Runs scripts reliably but doesn't connect execution to debugging or testing
 - python-variables-types: 0.80 confidence — demonstrated at comprehension level
+  - solo_demonstrated: multistructural
+  - Evidence: Knows several types and their uses but doesn't explain interactions between them
 - python-control-flow: 0.75 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
+  - Evidence: Writes loops and conditionals but as separate constructs
 - python-functions: 0.65 confidence — demonstrated at application level
+  - solo_demonstrated: unistructural
+  - Evidence: Can write simple functions but doesn't see when to extract code into functions
 - install-packages: 0.75 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
 - import-pandas: 0.70 confidence — demonstrated at application level
+  - solo_demonstrated: multistructural
 - inspect-dataframe: 0.75 confidence — demonstrated at comprehension level
-- handle-missing-data: 0.60 confidence — demonstrated at knowledge level (knows about NaN, hasn't practiced cleanup)
+  - solo_demonstrated: multistructural
+  - Evidence: Uses inspection methods but doesn't synthesize findings into data understanding
+- handle-missing-data: 0.60 confidence — demonstrated at knowledge level
+  - solo_demonstrated: unistructural
+  - Evidence: Knows about NaN but hasn't practiced cleanup strategies
 - basic-plotting: 0.70 confidence — demonstrated at application level
+  - solo_demonstrated: relational
+  - Evidence: Tableau background means she connects visualization choices to data stories naturally
 - interpret-distributions: 0.55 confidence — demonstrated at comprehension level
+  - solo_demonstrated: relational
+  - Evidence: Strong visual intuition from Tableau; connects distribution shape to data meaning
 
 ## Inferred Skills
 

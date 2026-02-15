@@ -239,7 +239,11 @@ function DashboardContent() {
         skills: Object.fromEntries(
           Object.entries(l.skills).map(([skillId, s]) => [
             skillId,
-            { confidence: s.confidence, type: s.type as "assessed" | "inferred" },
+            {
+              confidence: s.confidence,
+              type: s.type as "assessed" | "inferred",
+              ...(s.soloLevel ? { soloLevel: s.soloLevel } : {}),
+            },
           ])
         ),
       })),

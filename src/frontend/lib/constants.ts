@@ -15,3 +15,11 @@ export const BLOOM_COLORS: Record<string, string> = {
   synthesis: "#a78bfa",
   evaluation: "#f43f5e",
 };
+
+export const SOLO_COLORS: Record<string, string> = {
+  prestructural: "#ef4444",     // red — no understanding
+  unistructural: "#f97316",     // orange — one aspect
+  multistructural: "#fbbf24",   // amber — multiple aspects, unconnected
+  relational: "#34d399",        // green — integrated understanding
+  extended_abstract: "#818cf8", // indigo — generalization and transfer
+};

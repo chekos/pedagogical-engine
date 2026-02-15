@@ -590,7 +590,7 @@ export interface GroupStatus {
     name: string;
     status: "completed" | "not_started" | "in_progress";
     skillCount: number;
-    skills: Record<string, { confidence: number; type: string }>;
+    skills: Record<string, { confidence: number; type: string; soloLevel?: string }>;
   }>;
   skillNames: string[];
 }
