@@ -520,3 +520,46 @@ The full chain of emergent behavior during slide creation:
 **No tool, no skill, no instruction existed for any of steps 3-9.** The agent composed this entire workflow from first principles because it had the right primitives: filesystem access, a shell, and the ability to reason about quality.
 
 This is what "primitives over features" means in practice.
+
+## Undocumented Capabilities Found
+
+### From Strategy (a): Tool Implementation Deep Scan — 2026-02-14
+
+1. **Path Traversal Protection** — `src/server/tools/shared.ts:safePath()`
+   Resolves paths and verifies they stay within the expected base directory, preventing `../` attacks. All filesystem-touching tools use this.
+
+2. **Domain Graph Limits** — `src/server/tools/domain-utils.ts`
+   Hard limits: MAX_SKILLS=500, MAX_EDGES=2000 per domain. Enforced via Zod schema validation in create/update domain tools.
+
+3. **Full Graph Validation Suite** — `src/server/tools/domain-utils.ts:validateDomain()`
+   Six validation checks run on every domain create/update: (a) duplicate skill IDs, (b) dangling edge references, (c) self-loops, (d) circular dependency detection via DFS with stack-based path tracking, (e) Bloom's level regression warnings (prerequisite at higher Bloom's than dependent), (f) graph flatness detection (all skills at same Bloom's level).
+
+4. **Orphan & Unreachable Skill Detection** — `src/server/tools/domain-utils.ts`
+   Finds skills with no connections (orphans) and skills unreachable from any root via BFS. Reported as warnings during domain validation.
+
+5. **Domain Manifest System** — `src/server/tools/domain-utils.ts:buildManifest()`
+   Every domain gets a `manifest.json` with: display name, slug, version, description, author, license, tags, audience metadata (level/ages/setting), icon, color for UI theming, featured flag, and auto-computed stats. Existing manifests preserve all fields on update, only refreshing stats + timestamp.
+
+6. **Three Edge Types** — `src/server/tools/domain-utils.ts:EdgeSchema`
+   Dependencies support three types: `prerequisite` (default), `corequisite`, and `recommended`. Only prerequisites are used for BFS traversal and inference; corequisites and recommended are metadata for the agent.
+
+7. **Max-Confidence Path Inference** — `src/server/tools/query-skill-graph.ts:inferFromDemonstration()`
+   When multiple paths exist between skills, the inference engine uses the max-confidence path (not first-found). Returns full inference path for transparency.
+
+8. **Assessment Code Generation via nanoid** — `src/server/tools/generate-assessment-link.ts`
+   Assessment codes are 8-character uppercase nanoid strings. Assessment sessions support optional `context`, `educatorId`, and `lessonContext` fields that get passed to the assessment agent for tailored conversation.
+
+9. **Observational Evidence Discounting in Debriefs** — `src/server/tools/process-debrief.ts`
+   Profile updates from debriefs are tagged as `observational` with confidence changes capped at ±0.3 (vs assessment evidence). Six observation types: struggled, succeeded, helped_others, disengaged, breakthrough, other.
+
+10. **Assessment Integrity Scoring Model** — `src/server/tools/analyze-assessment-integrity.ts`
+    Weighted formula: `(avgDepth/3 × 0.4) + (consistencyScore × 0.35) + (engagementScore × 0.25)`. Per-skill modifiers include bonuses for: personal context usage (+0.05), chained reasoning (+0.05), self-correction (+0.10), appropriate uncertainty (+0.05). Inconsistency penalties: minor (-0.1), notable (-0.2), significant (-0.35), floored at 0.3.
+
+11. **Cross-Domain Transfer Confidence Model Details** — `src/server/tools/analyze-cross-domain-transfer.ts`
+    Skill "generality" computed as `0.4 × depthScore + 0.6 × bloomScore` where depthScore = transitive prerequisites / (graph size × 0.5). Skills with generality < 0.2 are excluded from transfer. Cognitive operation keyword matching boosts transfer by 1.3×. Both-high-order skills boost by 1.2×. Bloom's distance multipliers: exact=1.0, adjacent=0.6, two_apart=0.3, distant=0.0.
+
+12. **Canonical Learner Profile Parser** — `src/server/tools/shared.ts:parseLearnerProfile()`
+    Single canonical parser for markdown learner profiles used across all tools. Parses assessed skills, inferred skills, and affective profiles (confidence + social dynamics) from structured markdown.
+
+13. **report_assessment_progress Tool** — `src/server/tools/report-assessment-progress.ts`
+    A lightweight signaling tool that the assessment agent calls during skill transitions. Returns only `{ acknowledged: true }` — its real purpose is to trigger frontend progress UI updates via the tool result stream.
