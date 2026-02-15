@@ -812,3 +812,26 @@ This is what "primitives over features" means in practice.
 
 92. **XML-Level Document Editing with Tracked Changes** — `agent-workspace/.claude/skills/docx/SKILL.md`
     Three-step workflow: unpack (extract + pretty-print + merge adjacent runs + convert smart quotes to XML entities) → edit XML directly (tracked changes, comments via `scripts/comment.py` with parent/reply threading) → pack (validate with auto-repair for durableId overflow and missing xml:space, condense XML). Supports rejecting another author's insertions and restoring their deletions.
+
+### Strategy L: Config Files, Env Vars, Setup Scripts (2026-02-15)
+
+57. **Docker Containerization with Alpine** — `Dockerfile`
+    Production-ready Dockerfile using `node:22-alpine`. Installs `@anthropic-ai/claude-code` globally, uses npm workspace install, builds server only (frontend is separate deployment). Exposes port 3000 and runs compiled JS directly. Minimal image — Alpine base keeps it small.
+
+58. **Next.js Standalone Output Mode** — `src/frontend/next.config.ts`
+    Frontend configured with `output: "standalone"` — generates a self-contained deployment bundle that doesn't need `node_modules`. Optimized for Docker/serverless deployment where you copy just the `.next/standalone` folder.
+
+59. **Unified Dev Server with File Watching** — `package.json` scripts
+    `npm run dev` starts both server and frontend concurrently via `&`. Server uses `tsx watch --env-file=.env` for hot-reload with automatic env file loading (no dotenv dependency needed). TypeScript execution without build step during development.
+
+60. **CORS Restricted to Frontend Origin** — `src/server/index.ts:45-55`
+    Custom CORS middleware (not using `cors` package) restricts `Access-Control-Allow-Origin` to `FRONTEND_URL` env var. Not wildcard — only the configured frontend can call the API. Supports preflight OPTIONS with explicit method and header allowlists.
+
+61. **Configurable Data Directory** — `.env.example`
+    `DATA_DIR` env var (defaults to `./data`) makes the persistent storage location configurable. Allows mounting external volumes in Docker or pointing to different directories per environment without code changes.
+
+62. **Embeddable Assessment Links** — `src/server/index.ts:597-598, 688-689`
+    Assessment link generation produces both a regular URL (`/assess/{code}`) and an embed URL (`/assess/embed/{code}`). The embed variant enables iframe integration — educators can embed assessments directly in their LMS or website. URL base comes from `FRONTEND_URL` env var.
+
+63. **WebSocket Per-Message Deflate Disabled** — `src/server/index.ts:57-58`
+    Both WebSocket servers (`wss` for educator chat, `wssLive` for live teaching) explicitly set `perMessageDeflate: false`. This is a deliberate performance choice — compression adds CPU overhead and latency that matters for real-time chat. Better for streaming agent responses where messages arrive in small chunks.
