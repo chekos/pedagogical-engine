@@ -4,6 +4,25 @@ import fs from "fs/promises";
 import path from "path";
 import { DATA_DIR, parseLearnerProfile, loadGroupLearners, toolResponse, type SkillEntry } from "./shared.js";
 
+/** Generate a human-readable note about the group's structural understanding */
+function generateStructuralNote(
+  soloSummary: Record<string, number>,
+  total: number
+): string {
+  const relAndAbove = (soloSummary["relational"] || 0) + (soloSummary["extended_abstract"] || 0);
+  const multistructural = soloSummary["multistructural"] || 0;
+  const preAndUni = (soloSummary["prestructural"] || 0) + (soloSummary["unistructural"] || 0);
+
+  if (relAndAbove / total >= 0.6) {
+    return "Group understanding is structurally deep — most responses show integrated reasoning. Ready for transfer and generalization activities.";
+  } else if (multistructural / total >= 0.5) {
+    return "Group understanding is structurally thin — learners know the parts but haven't connected them. Emphasize integration activities (trade-offs, compare-and-contrast) over introducing more content.";
+  } else if (preAndUni / total >= 0.5) {
+    return "Group understanding is structurally shallow — most responses address single aspects. Focus on building vocabulary and guided exercises before attempting integration.";
+  }
+  return "Mixed structural levels across the group — consider differentiated activities.";
+}
+
 export const queryGroupTool = tool(
   "query_group",
   "Aggregate skill distributions across group members, identify common gaps, and suggest pairings.",
@@ -46,7 +65,9 @@ export const queryGroupTool = tool(
       });
     }
 
-    // Aggregate skill distributions
+    // Aggregate skill distributions (including SOLO levels)
+    const soloLevels = ["prestructural", "unistructural", "multistructural", "relational", "extended_abstract"] as const;
+
     const skillDistribution: Record<
       string,
       {
@@ -55,6 +76,7 @@ export const queryGroupTool = tool(
         confidences: number[];
         learnersWithSkill: string[];
         learnersMissing: string[];
+        soloDistribution?: Record<string, string[]>;
       }
     > = {};
 
@@ -65,7 +87,10 @@ export const queryGroupTool = tool(
         confidences: [] as number[],
         learnersWithSkill: [] as string[],
         learnersMissing: [] as string[],
-      };
+      } as typeof skillDistribution[string];
+
+      // Track SOLO levels for this skill
+      const soloByLevel: Record<string, string[]> = {};
 
       for (const learner of learners) {
         const skill = learner.skills.find((s) => s.skillId === skillId);
@@ -73,6 +98,14 @@ export const queryGroupTool = tool(
           entry.assessed++;
           entry.confidences.push(skill.confidence);
           entry.learnersWithSkill.push(learner.name);
+
+          // Track SOLO level if available
+          if (skill.soloDemonstrated) {
+            if (!soloByLevel[skill.soloDemonstrated]) {
+              soloByLevel[skill.soloDemonstrated] = [];
+            }
+            soloByLevel[skill.soloDemonstrated].push(learner.name);
+          }
         } else {
           entry.learnersMissing.push(learner.name);
         }
@@ -86,6 +119,11 @@ export const queryGroupTool = tool(
                 100
             ) / 100
           : 0;
+
+      // Only include SOLO distribution if at least one learner has SOLO data
+      if (Object.keys(soloByLevel).length > 0) {
+        entry.soloDistribution = soloByLevel;
+      }
 
       skillDistribution[skillId] = entry;
     }
@@ -234,6 +272,27 @@ export const queryGroupTool = tool(
       return aAvoided - bAvoided;
     });
 
+    // Aggregate group-level SOLO summary (across all skills with SOLO data)
+    const soloSummary: Record<string, number> = {};
+    let totalSoloEntries = 0;
+    for (const dist of Object.values(skillDistribution)) {
+      if (dist.soloDistribution) {
+        for (const [level, names] of Object.entries(dist.soloDistribution)) {
+          soloSummary[level] = (soloSummary[level] || 0) + names.length;
+          totalSoloEntries += names.length;
+        }
+      }
+    }
+
+    // Only include SOLO summary if there's data
+    const soloGroupSummary = totalSoloEntries > 0
+      ? {
+          totalObservations: totalSoloEntries,
+          distribution: soloSummary,
+          structuralNote: generateStructuralNote(soloSummary, totalSoloEntries),
+        }
+      : undefined;
+
     return toolResponse({
       group: groupName,
       domain,
@@ -249,6 +308,7 @@ export const queryGroupTool = tool(
       commonGaps: commonGaps.slice(0, 10),
       groupStrengths: groupStrengths.slice(0, 10),
       pairingSuggestions: pairingSuggestions.slice(0, 8),
+      ...(soloGroupSummary ? { soloSummary: soloGroupSummary } : {}),
       skillDistribution,
     });
   }
