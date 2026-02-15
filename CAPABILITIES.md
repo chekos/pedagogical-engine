@@ -464,3 +464,41 @@ Items found in other docs that CLAUDE.md doesn't fully cover:
 | Cross-skill patterns seeded | 5 |
 | Reasoning traces seeded | 8 |
 | Build time | 1 week |
+
+## 13. Emergence: The Platform Gets Smarter When Models Do
+
+The most important capability isn't a tool or a feature — it's **emergence**.
+
+The engine is designed as a set of primitives (skills, dependencies, learner profiles, groups, constraints) + powerful tools (37 MCP tools, Office skills, filesystem access). What happens when you give those primitives to Opus 4.6 is *more than the sum of the parts*.
+
+### The Slides Example
+
+When asked to create presentation slides for an AP Spanish Literature lesson on Magical Realism, the agent:
+
+1. Created the slides using the pptx skill
+2. **Autonomously initiated Visual QA** — exported slides to PDF to visually inspect them
+3. Iterated on the design based on what it saw
+4. Made the slides **visually on-theme with Magical Realism** — the topic itself influenced the aesthetic choices
+5. No tool was built for "make slides match the pedagogical theme." The agent *reasoned* its way there.
+
+### What This Means
+
+- **The platform is a capability amplifier, not a capability ceiling.** As models improve, every tool in the system becomes more powerful — without changing a line of code.
+- **Behaviors we didn't design for emerge naturally.** Visual QA, thematic design choices, cross-referencing learner profiles during lesson simulation — these aren't hardcoded workflows. They're emergent from giving a reasoning model the right primitives.
+- **The 37 tools are a floor, not a ceiling.** The agent combines them in ways we haven't imagined yet. Every model generation unlocks new combinations.
+- **This is the Agent SDK thesis in action.** Claude Code works for Mars rovers and knitting machines because the primitives are right. The Pedagogical Engine works for AP Spanish Lit slides and outdoor ecology field trips for the same reason.
+
+### Designed for Emergence
+
+Key architectural choices that enable emergence:
+
+| Choice | Why it enables emergence |
+|--------|------------------------|
+| Filesystem as working memory | Agent can create, read, and iterate on artifacts without us predicting what artifacts it'll need |
+| Skills as progressive disclosure | Agent loads reasoning patterns on-demand, combining them in novel ways |
+| Markdown for human-readable data | Agent can read and reason about its own outputs naturally |
+| No hardcoded workflows | The agent decides the order of operations based on context |
+| Office export skills (docx/pptx/xlsx/pdf) | Agent can create *any* document type and visually QA its own work |
+| Subagents with isolated context | Agent can delegate and parallelize reasoning branches we didn't anticipate |
+
+**The question isn't "what can this engine do?" — it's "what will it do next?"**
