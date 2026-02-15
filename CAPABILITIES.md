@@ -771,3 +771,44 @@ This is what "primitives over features" means in practice.
 
 79. **PDF Lesson List API Endpoint** — `src/server/exports/router.tsx:GET /api/export/lessons`
     Returns all available lesson plan IDs (`.md` files in lessons directory). Enables frontend to populate lesson selection dropdowns for export without hardcoding lesson names.
+
+### From Strategy (j): Agent Skill Reasoning Patterns Deep Scan — 2026-02-15
+
+80. **Affective Probing in Educator Interview** — `agent-workspace/.claude/skills/interview-educator/SKILL.md`
+    The interview skill includes specific affective dimension questions woven into the conversation: anxiety/confidence about the subject, negative past experiences, interpersonal dynamics (who works well together, who shouldn't be paired), motivation type (voluntary vs mandatory), dominance/disengagement patterns. These shape downstream pairing, activity stakes, and stage direction.
+
+81. **"Test High, Infer Low" Adaptive Branching Algorithm** — `agent-workspace/.claude/skills/assess-skills/SKILL.md`
+    Complete decision tree for assessment: start at highest-reach skill, branch on pass (infer all prerequisites, move to next branch) or fail (drill down dependency chain). Four explicit stopping conditions: all targets assessed/inferred, skill boundary mapped, educator has enough info, time constraints. Includes confidence calibration table from integrity signals (depth × consistency → multiplier: high/high=1.0×, high/inconsistent=0.7×, minimal/consistent=0.8×, minimal/inconsistent=0.5×).
+
+82. **Bloom's-Level Demonstration Rubric** — `agent-workspace/.claude/skills/assess-skills/SKILL.md`
+    Specific criteria for what constitutes "demonstrating" a skill at each Bloom's level: Knowledge/Comprehension=correct explanation, Application=successfully performs task, Analysis=identifies components/causes, Synthesis=novel working solution combining multiple skills, Evaluation=reasoned judgment with evidence. Partial demonstration (needs help) → confidence 0.4-0.6 with notes on what they could/couldn't do.
+
+83. **"Two Plans, Same Group" Educator Differentiation Pattern** — `agent-workspace/.claude/skills/compose-lesson/SKILL.md`
+    Described as "the money shot": identical group + topic + constraints produces different lesson plans for different educators. Dr. Chen gets structured explanations and worked examples; Marcus gets pair programming and guided discussion. Both achieve the same learning objectives. Educator profile drives: activity type weighting, content scaffolding depth (expert=brief bullets, novice=full talking points), timing pre-calibration, contingency style (improvisers=open-ended, structuralists=specific alternatives).
+
+84. **"Teaching Wisdom Applied" Transparency Section** — `agent-workspace/.claude/skills/compose-lesson/SKILL.md`
+    Every lesson plan includes a section citing which accumulated teaching notes influenced which decisions, with session counts: "Based on experience from [N] previous sessions, I've [specific adjustment]." Also includes "Educator Profile Applied" section listing customizations. Full provenance chain for every plan decision.
+
+85. **5-Stage Conversational Debrief Methodology** — `agent-workspace/.claude/skills/debrief-session/SKILL.md`
+    Structured post-session reflection: (1) Overall check (open-ended, frame-adaptive), (2) Section-by-section walkthrough with timing/engagement/contingency sub-questions, (3) Student-level observations mapped to profile updates, (4) Unplanned moments (often most valuable data), (5) Educator reflection ("what would you change?"). Adaptive pacing: brief answers → move on, stories → let them tell it. Tone: teaching coach, never evaluator.
+
+86. **Three-Tier Observation Specificity Confidence Model** — `agent-workspace/.claude/skills/debrief-session/SKILL.md`
+    Debrief confidence calibrated by recall specificity: high ("Marcus got stuck on line 14 because groupby returns GroupBy object") → ±0.2-0.3 change; medium ("Marcus struggled with groupby") → ±0.1-0.15; low ("I think some students had trouble") → ±0.05-0.1 applied to whole group. Multiple observations across debriefs accumulate.
+
+87. **Pace Estimation Table for Curriculum Design** — `agent-workspace/.claude/skills/sequence-curriculum/SKILL.md`
+    Concrete time-per-skill estimates: 12-15 min (60-min session) / 15-20 min (90-min) when most have prerequisites; 18-22 / 22-28 min for mixed groups; 25-30 / 30-40 min when most lack prerequisites. Multipliers: hands-on skills 1.5×, accessibility accommodations +10-15% buffer, first session +5-10 min for orientation.
+
+88. **Cross-Session Connectors (Opening Review + Closing Preview)** — `agent-workspace/.claude/skills/sequence-curriculum/SKILL.md`
+    Every session except the first opens with a 5-min connector to previous session (quick recall check, extend to 8 min if most can't recall). Every session except the last closes with a 2-min preview of next session + optional low-stakes practice suggestion. Specific stage-direction templates provided.
+
+89. **Inference Confidence Floor at 0.3** — `agent-workspace/.claude/skills/reason-dependencies/SKILL.md`
+    Multi-hop dependency inference stops when confidence drops below 0.3 threshold — below this, the skill must be directly assessed. Complements the 0.85 decay per hop; the floor prevents long chains from producing meaninglessly low confidences.
+
+90. **LibreOffice Sandboxed Auto-Configuration Pipeline** — `agent-workspace/.claude/skills/docx/SKILL.md, xlsx/SKILL.md, pptx/SKILL.md`
+    All Office skills use `scripts/office/soffice.py` which auto-configures LibreOffice for sandboxed environments. Additional utility scripts: `scripts/accept_changes.py` (accept tracked changes in docx), `scripts/recalc.py` (recalculate Excel formulas with error scanning — returns JSON with error locations), `scripts/office/validate.py` (docx validation), `scripts/office/unpack.py` / `scripts/office/pack.py` (XML editing pipeline with auto-repair).
+
+91. **Presentation Design System with Anti-AI Detection Rules** — `agent-workspace/.claude/skills/pptx/SKILL.md`
+    Complete visual design system: 10 named color palettes (Midnight Executive, Forest & Moss, Coral Energy, etc.), typography pairings, spacing rules (0.5" min margins), and explicit anti-patterns: "NEVER use accent lines under titles — hallmark of AI-generated slides." Mandatory visual QA loop using subagents ("even for 2-3 slides — you've been staring at the code and will see what you expect"). Includes "Design Ideas" checklist for every slide.
+
+92. **XML-Level Document Editing with Tracked Changes** — `agent-workspace/.claude/skills/docx/SKILL.md`
+    Three-step workflow: unpack (extract + pretty-print + merge adjacent runs + convert smart quotes to XML entities) → edit XML directly (tracked changes, comments via `scripts/comment.py` with parent/reply threading) → pack (validate with auto-repair for durableId overflow and missing xml:space, condense XML). Supports rejecting another author's insertions and restoring their deletions.
