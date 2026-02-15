@@ -628,3 +628,38 @@ This is what "primitives over features" means in practice.
 
 34. **Google OAuth Token Persistence** — `src/server/index.ts startup`
     Google OAuth tokens are loaded from disk on server startup (`googleAuth.loadTokens()`), so educators don't need to re-authenticate after server restarts.
+
+### From Strategy (c): Agent Configuration Deep Scan — 2026-02-14
+
+35. **4th Subagent: Curriculum Agent** — `src/server/agents/curriculum-agent.ts`
+    Undocumented subagent using Opus model. Designs multi-session curricula with spiral revisitation (skills appear 3× at increasing Bloom's depth), spaced repetition (review extends if session gap > 3 days), dependency-first ordering, and pace calibration based on group skill levels. Has access to `compose_curriculum`, `advance_curriculum`, and `compose_lesson_plan` tools. CAPABILITIES.md lists only 3 subagents — there are actually 4.
+
+36. **Live Companion Model & Tool Restrictions** — `src/server/agent.ts:createLiveCompanionQuery()`
+    Live teaching companion uses Sonnet (not Opus) for fast responses and is restricted to read-only tools: `Read`, `Glob`, `query_skill_graph`, `query_group`, `analyze_affective_context`. Auto-extracts group profile from lesson metadata. System prompt enforces extreme brevity ("reading on a phone while teaching").
+
+37. **Standalone Assessment Query with 5 Integrity Strategies** — `src/server/agent.ts:createAssessmentQuery()`
+    Assessment sessions run as independent agent queries (not subagent delegation) with an elaborate system prompt embedding 5 anti-gaming question design strategies: contextual synthesis, chained reasoning, explain-to-teach, error diagnosis, and transfer probes. Also includes silent pattern tracking instructions (response depth 1-3, consistency, engagement quality).
+
+38. **User Identity System (data/user.md)** — `src/server/agent.ts:EDUCATOR_SYSTEM_PROMPT`
+    On every new session, the main agent checks for `data/user.md`. If missing, conducts a first-meeting interview ("two colleagues meeting over coffee") and creates both the user file and an educator profile. If present, reads silently and uses the educator's name/context naturally without announcing it.
+
+39. **Export File Organization & Manifest** — `src/server/agent.ts:EDUCATOR_SYSTEM_PROMPT`
+    Agent is instructed to save exports in organized subdirectories under `data/exports/` and maintain a manifest at `data/exports/manifest.md` logging every created file with path, type, title, date, and Google Drive URL. Prevents workspace clutter from dozens of exports.
+
+40. **Assessment Completion Guard** — `src/server/agent.ts:createAssessmentQuery()`
+    Before starting an assessment, checks if the session markdown contains `| **Status** | completed |` and throws an error if so. Prevents learners from re-taking completed assessments.
+
+41. **Domain Manifest Context in Assessments** — `src/server/agent.ts:createAssessmentQuery()`
+    Assessment queries load the domain's `manifest.json` (audience age range, setting, description) and inject it into the system prompt so the assessment agent calibrates tone and language to the audience (e.g., ages 14-18 get different phrasing than adult professionals).
+
+42. **Curriculum Agent Pedagogy: Spiral Revisitation Model** — `src/server/agents/curriculum-agent.ts`
+    Embedded in the curriculum agent's prompt: skills appear 3 times at increasing depth (1st: knowledge/comprehension, 2nd: application, 3rd: analysis/synthesis). Spaced repetition rule: if gap between sessions > 3 days, extend review period. Pace estimation: 12-15 min per new skill if most have prerequisites.
+
+43. **Claude Code Preset System Prompt** — `src/server/agent.ts:createEducatorQuery()`
+    The main educator agent uses `systemPrompt: { type: "preset", preset: "claude_code", append: ... }` — meaning it inherits the full Claude Code system prompt (filesystem, bash, skills, etc.) with the pedagogical prompt appended. This is why the agent can install software, write scripts, and reason about code natively.
+
+44. **Affective-Aware Pairing in Educator Prompt** — `src/server/agent.ts:EDUCATOR_SYSTEM_PROMPT`
+    The main agent is explicitly instructed to factor both skill complementarity AND social dynamics into pairing decisions, with example phrasing: "I paired Sofia with Nkechi because their skills complement each other and you mentioned they have good rapport."
+
+45. **"Once is Advice, Twice is Nagging" Pushback Rule** — `src/server/agent.ts:EDUCATOR_SYSTEM_PROMPT`
+    Explicit behavioral constraint: the agent pushes back on pedagogically unsound plans ONCE with evidence, then defers. Categories where pushback is forbidden: style preferences, domain content choices, interpersonal dynamics, and previously overridden points.
