@@ -502,3 +502,21 @@ Key architectural choices that enable emergence:
 | Subagents with isolated context | Agent can delegate and parallelize reasoning branches we didn't anticipate |
 
 **The question isn't "what can this engine do?" — it's "what will it do next?"**
+
+### The LibreOffice Example (Extended)
+
+The full chain of emergent behavior during slide creation:
+
+1. Agent was asked to create presentation slides for a Magical Realism lesson
+2. Used the pptx skill to generate the .pptx file
+3. Realized it couldn't visually verify the output — **suggested installing LibreOffice**
+4. Installed LibreOffice (`brew install --cask libreoffice`)
+5. **Wrote a Python script** to convert .pptx → PDF for visual inspection
+6. Installed missing Python packages needed for the conversion
+7. Ran the export, visually inspected the PDF
+8. Iterated on the slides based on what it saw
+9. Applied a visual aesthetic matching the Magical Realism theme
+
+**No tool, no skill, no instruction existed for any of steps 3-9.** The agent composed this entire workflow from first principles because it had the right primitives: filesystem access, a shell, and the ability to reason about quality.
+
+This is what "primitives over features" means in practice.
