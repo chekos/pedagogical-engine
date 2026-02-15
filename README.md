@@ -20,9 +20,13 @@ Then it learned to explain itself. "Why did you pair Marcus with Sofia?" returns
 
 Then it started remembering. After each session, it debriefs with the educator and extracts patterns. 18 sessions in, it knows hands-on exercises run 3 minutes over for evening cohorts.
 
-27 MCP tools. 4 domains. Educator profiling. Cross-domain skill transfer. All built in a week.
+37 MCP tools. 10 skills. 3 subagents. 9 moonshots. 24 frontend routes. 4 domains. Google Workspace integration. PDF exports. Office doc generation. All built in a week.
+
+But here's the thing that blew my mind: I asked it to make slides for a Magical Realism lesson. It installed LibreOffice, wrote a Python script to export to PDF, visually inspected its own slides, iterated on the design, and styled them to match the Magical Realism aesthetic. **No tool was built for any of that.** It figured it out from primitives. That's emergence — and it means the platform gets smarter every time the underlying model improves, without changing a line of code.
 
 *— [chekos](https://github.com/chekos)*
+
+> **🤖 AI agents:** See [docs/AGENT-INDEX.md](docs/AGENT-INDEX.md) for a structured map of this repo. For the full capabilities inventory, see [CAPABILITIES.md](CAPABILITIES.md).
 
 ---
 
@@ -57,7 +61,7 @@ Most AI teaching tools generate content. This one reasons about teaching — and
 │              Claude Agent SDK Server                      │
 │                                                           │
 │  ┌──────────┐ ┌──────────┐ ┌───────────────────────────┐ │
-│  │  Skills  │ │Subagents │ │     27 MCP Tools          │ │
+│  │  Skills  │ │Subagents │ │     37 MCP Tools          │ │
 │  │(SKILL.md │ │assess    │ │ load_roster               │ │
 │  │on-demand │ │roster    │ │ query_skill_graph          │ │
 │  │loading)  │ │lesson    │ │ assess_learner             │ │
@@ -91,7 +95,7 @@ Most AI teaching tools generate content. This one reasons about teaching — and
 - **Skills as progressive disclosure** — pedagogical methodology in `SKILL.md` files, loaded on-demand. Context window stays lean.
 - **Three subagents with isolated context** — assessment, roster analysis, and lesson composition each get their own context window.
 - **Filesystem as working memory** — Markdown for what humans read, JSON for what tools traverse. No database.
-- **27 MCP tools** — skill graph traversal, dependency inference, lesson simulation, pedagogical disagreement, assessment integrity, cross-domain transfer, teaching wisdom, educator profiling, meta-pedagogical reasoning, debrief processing.
+- **37 MCP tools** — skill graph traversal, dependency inference, lesson simulation, pedagogical disagreement, assessment integrity, cross-domain transfer, teaching wisdom, educator profiling, meta-pedagogical reasoning, debrief processing.
 
 ## What makes it different
 
@@ -170,7 +174,7 @@ The moonshot features require reasoning chains that span skill graphs, learner p
 
 Pedagogical disagreement is where it gets hard: the engine has to figure out *why* a plan is suboptimal, build a counter-argument from evidence, and propose alternatives — all in one turn. Meta-pedagogical explanation retrieves stored reasoning traces and composes natural-language answers that reference specific students by name and cite specific graph paths.
 
-The Agent SDK handles the rest: subagents with isolated context, 27 MCP tools, session persistence, context compaction, on-demand skill loading from the filesystem.
+The Agent SDK handles the rest: subagents with isolated context, 37 MCP tools, session persistence, context compaction, on-demand skill loading from the filesystem.
 
 Not a chatbot with a teaching-themed system prompt. A reasoning engine that happens to reason about pedagogy.
 
