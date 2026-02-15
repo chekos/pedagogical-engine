@@ -231,7 +231,64 @@ the director writing stage notes.
 - **Pacing calibration:** Faster groups need extension activities. Slower groups
   need more scaffolding. Build both into the plan.
 - **Pairing recommendations:** If the roster data supports it, recommend specific
-  pairings based on complementary skills AND affective compatibility (see below).
+  pairings based on complementary skills, SOLO level complementarity, AND
+  affective compatibility (see below).
+
+### Calibrate to SOLO distribution
+
+When learner profiles include `solo_demonstrated` data, use it to design
+activities that push learners up the SOLO ladder — not just to new skills,
+but to deeper structural understanding of existing ones.
+
+#### Activity design by SOLO level
+
+**Prestructural / Unistructural learners** — need structured exposure:
+- Guided exercises with one clear right answer
+- Step-by-step walkthroughs, not open-ended tasks
+- Focus on building vocabulary and identifying single relevant aspects
+
+**Multistructural learners** — know the parts, need to connect them:
+- Design activities that explicitly require integration: "How does X
+  relate to Y?" / "When would you choose A over B?"
+- Pair with relational-level peers who model connected reasoning
+- Use compare-and-contrast exercises, case studies with trade-offs
+- Stage direction: "By minute 20, check that pairs have moved past
+  listing options to discussing trade-offs."
+
+**Relational learners** — solid understanding, push toward transfer:
+- Design activities that require generalization: "When would you NOT
+  use this approach?" / "How would this apply in a different context?"
+- Independent or small-group work on messy real-world problems
+- Extension prompts that push toward extended abstract thinking
+
+**Extended Abstract learners** — ready for mentoring and creation:
+- Mentor roles: pair with multistructural learners (explaining _why_
+  deepens their own understanding)
+- Open-ended design challenges with novel constraints
+- Teaching moments: have them explain their reasoning to the group
+
+#### SOLO-informed pairing
+
+SOLO level complementarity is a powerful pairing signal:
+- **Multi + Relational** = the best pairing: the multistructural learner
+  has vocabulary the relational learner can build on, and explaining the
+  connections pushes the relational learner to articulate their framework
+- **Uni + Multi** = useful for basic scaffolding
+- **Relational + Extended Abstract** = both benefit from deeper discussion
+- **Pre + anyone** = needs educator attention, not just a peer
+- **Same level** = less productive than complementary levels
+
+#### Reporting SOLO in the plan
+
+When SOLO data influences the plan, be transparent:
+- "3 of 5 learners are at multistructural level on data cleaning — the
+  group exercise emphasizes trade-offs and context-dependent choices
+  rather than introducing more functions."
+- "I paired Sofia with Marcus because her relational understanding of
+  visualization can scaffold his multistructural knowledge into connected
+  reasoning."
+- Include a "SOLO Distribution" note in the plan showing where the group
+  sits structurally on the target skills.
 
 ### Weave in the affective dimension
 
