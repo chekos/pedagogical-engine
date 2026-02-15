@@ -355,6 +355,7 @@ All persistent data lives in `agent-workspace/data/` — accessible to both the 
 ## Current limitations
 - 4 domains (python-data-analysis, farm-science, outdoor-ecology, culinary-fundamentals) — extensible to more
 - Assessment flow requires the backend server running (no offline mode)
-- Dashboard uses embedded demo data (not live from backend) for standalone viewing
+- Dashboard fetches live data from the backend API (`/api/domains`, `/api/groups`, `/api/assess/status`)
+- The group dashboard shows Bloom's taxonomy heatmaps but does not yet visualize SOLO taxonomy data — the backend already returns `soloSummary` and per-skill `soloDistribution` from `query_group`, but the frontend group dashboard component doesn't consume or display it yet
 - No persistent storage beyond filesystem — sessions lost on server restart
 - No authentication — assessment codes are the only access control
