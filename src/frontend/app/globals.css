@@ -416,3 +416,36 @@ h1, h2, h3 {
 .live-graph .react-flow__node {
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
+
+/* Paper grain texture */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.03;
+}
+
+.dark .grain {
+  opacity: 0.05;
+  mix-blend-mode: soft-light;
+}
+
+/* Landing skill graph — cascade animation */
+.landing-graph .graph-node {
+  opacity: 0;
+  animation: graphNodeIn 0.5s ease-out forwards;
+}
+
+.landing-graph .graph-edge {
+  opacity: 0;
+  animation: graphEdgeIn 0.4s ease-out forwards;
+}
+
+@keyframes graphNodeIn {
+  to { opacity: 1; }
+}
+
+@keyframes graphEdgeIn {
+  to { opacity: 0.18; }
+}

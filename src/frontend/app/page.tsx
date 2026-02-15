@@ -1,37 +1,20 @@
 import Link from "next/link";
 import { NavBar } from "@/components/ui/nav-bar";
 import { Footer } from "@/components/ui/footer";
-
-function SkillGraphVisual() {
-  return (
-    <svg
-      width="200"
-      height="120"
-      viewBox="0 0 200 120"
-      fill="none"
-      className="mx-auto"
-      aria-hidden="true"
-    >
-      {/* Edges */}
-      <line x1="40" y1="30" x2="100" y2="20" stroke="var(--bloom-remember)" strokeWidth="1.5" opacity="0.5" />
-      <line x1="40" y1="30" x2="80" y2="70" stroke="var(--bloom-understand)" strokeWidth="1.5" opacity="0.5" />
-      <line x1="100" y1="20" x2="150" y2="55" stroke="var(--bloom-apply)" strokeWidth="1.5" opacity="0.5" />
-      <line x1="80" y1="70" x2="150" y2="55" stroke="var(--bloom-analyze)" strokeWidth="1.5" opacity="0.5" />
-      <line x1="150" y1="55" x2="160" y2="100" stroke="var(--bloom-evaluate)" strokeWidth="1.5" opacity="0.5" />
-      {/* Nodes */}
-      <circle cx="40" cy="30" r="6" fill="var(--bloom-remember)" opacity="0.85" />
-      <circle cx="100" cy="20" r="7" fill="var(--bloom-understand)" opacity="0.85" />
-      <circle cx="80" cy="70" r="5" fill="var(--bloom-apply)" opacity="0.85" />
-      <circle cx="150" cy="55" r="8" fill="var(--bloom-analyze)" opacity="0.85" />
-      <circle cx="160" cy="100" r="6" fill="var(--bloom-evaluate)" opacity="0.85" />
-    </svg>
-  );
-}
+import { SkillGraphVisual } from "@/components/landing/skill-graph";
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-surface-0">
       <NavBar />
+
+      {/* Paper grain texture */}
+      <svg className="grain" aria-hidden="true">
+        <filter id="grain-filter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grain-filter)" />
+      </svg>
 
       {/* Hero */}
       <main className="flex-1 flex flex-col">
@@ -39,7 +22,7 @@ export default function Home() {
           <div className="max-w-[1000px] mx-auto text-center">
             <SkillGraphVisual />
 
-            <h1 className="mt-8 text-5xl md:text-6xl font-heading text-text-primary tracking-tight leading-[1.1]">
+            <h1 className="mt-6 text-5xl md:text-6xl font-heading text-text-primary tracking-tight leading-[1.1]">
               Teaching, reasoned.
             </h1>
 
@@ -77,64 +60,39 @@ export default function Home() {
           </div>
         </section>
 
-        {/* What makes this different */}
-        <section className="px-6 py-16 md:py-20 bg-surface-1">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-heading text-text-primary text-center mb-12">
-              What makes this different
-            </h2>
+        {/* What makes this different — typographic statements */}
+        <section className="px-6 py-16 md:py-24">
+          <div className="max-w-3xl mx-auto space-y-14 md:space-y-20">
+            <div className="border-l-2 border-bloom-understand pl-6 md:pl-8">
+              <h3 className="text-2xl md:text-3xl font-heading text-text-primary leading-snug">
+                It maps what students know.
+              </h3>
+              <p className="mt-3 text-base md:text-lg text-text-secondary leading-relaxed">
+                Not a quiz&nbsp;&mdash; a conversation that builds a dependency graph
+                of actual understanding. What they know, what they almost know,
+                and what&apos;s blocking them.
+              </p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Card 1 */}
-              <div className="rounded-xl border border-border-subtle bg-surface-0 p-6 hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-lg bg-bloom-understand/15 flex items-center justify-center mb-4">
-                  <svg className="w-5 h-5 text-bloom-understand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-heading text-text-primary mb-2">
-                  It maps what students know
-                </h3>
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  Not a quiz. A conversation that builds a dependency graph of
-                  actual understanding&nbsp;&mdash; what they know, what they
-                  almost know, and what&apos;s blocking them.
-                </p>
-              </div>
+            <div className="border-l-2 border-bloom-analyze pl-6 md:pl-8">
+              <h3 className="text-2xl md:text-3xl font-heading text-text-primary leading-snug">
+                Every lesson comes with reasoning traces.
+              </h3>
+              <p className="mt-3 text-base md:text-lg text-text-secondary leading-relaxed">
+                Why this order. Why this pairing. Why 15 minutes here
+                and 5 there. And it will push back if your plan has gaps.
+              </p>
+            </div>
 
-              {/* Card 2 */}
-              <div className="rounded-xl border border-border-subtle bg-surface-0 p-6 hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-lg bg-bloom-analyze/15 flex items-center justify-center mb-4">
-                  <svg className="w-5 h-5 text-bloom-analyze" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-heading text-text-primary mb-2">
-                  It reasons about teaching
-                </h3>
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  Every lesson plan comes with reasoning traces. Why this order.
-                  Why this pairing. Why 15 minutes here and 5 there. And it will
-                  push back if your plan has gaps.
-                </p>
-              </div>
-
-              {/* Card 3 */}
-              <div className="rounded-xl border border-border-subtle bg-surface-0 p-6 hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-lg bg-bloom-apply/15 flex items-center justify-center mb-4">
-                  <svg className="w-5 h-5 text-bloom-apply" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 19.644l3.181-3.182" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-heading text-text-primary mb-2">
-                  It learns from every session
-                </h3>
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  Debrief after teaching and the engine gets smarter. Timing
-                  patterns, what worked, what didn&apos;t. Your accumulated
-                  teaching wisdom, formalized.
-                </p>
-              </div>
+            <div className="border-l-2 border-bloom-apply pl-6 md:pl-8">
+              <h3 className="text-2xl md:text-3xl font-heading text-text-primary leading-snug">
+                It learns from every session.
+              </h3>
+              <p className="mt-3 text-base md:text-lg text-text-secondary leading-relaxed">
+                Debrief after teaching and the engine gets smarter. Timing
+                patterns, what worked, what didn&apos;t. Your accumulated
+                teaching wisdom, formalized.
+              </p>
             </div>
           </div>
         </section>
