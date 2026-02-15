@@ -719,3 +719,29 @@ This is what "primitives over features" means in practice.
 
 63. **Client-Side Session Context Extraction** — `src/frontend/components/chat/chat-interface.tsx:extractContext()`
     Fallback context extraction when server doesn't provide `session_context` events. Parses tool inputs from every `mcp__pedagogy__*` tool to accumulate: domain, groupName, lessonId, skillIds, learnerNames (from members arrays), constraints (duration + text). Also detects lesson file paths from Read/Write tools.
+
+### From Strategy (e): Google Integration Deep Scan — 2026-02-15
+
+64. **Lazy OAuth2 Client Initialization** — `src/server/google/auth.ts:ensureClient()`
+    OAuth2 client is created on first use, not at import time. If `GOOGLE_CLIENT_ID` or `GOOGLE_CLIENT_SECRET` are missing, logs a warning but doesn't crash — Google integration degrades gracefully. All other features continue working.
+
+65. **Auto Token Merge on Refresh** — `src/server/google/auth.ts:client.on("tokens")`
+    When Google refreshes an access token, the `tokens` event handler merges new tokens with existing disk tokens (preserving the refresh_token when only the access_token changes). Prevents the common bug where a token refresh overwrites the refresh_token with `undefined`.
+
+66. **CSRF State with 10-Minute Expiry** — `src/server/google/auth.ts:generateAuthUrl()`
+    Each OAuth flow generates a `crypto.randomUUID()` state parameter stored in an in-memory Map. States expire after 10 minutes and are cleaned up on each new auth URL generation. Callback validates and deletes the state in one step — replay-proof.
+
+67. **Best-Effort Credential Revocation on Disconnect** — `src/server/google/auth.ts:disconnect()`
+    Disconnect doesn't just delete local tokens — it also calls `revokeCredentials()` to invalidate them server-side at Google. Wrapped in `.catch(() => {})` because revocation may fail if tokens are already expired. Belt-and-suspenders security.
+
+68. **6 OAuth Scopes Requested** — `src/server/google/auth.ts:SCOPES`
+    Specifically: `documents`, `spreadsheets`, `drive.file`, `drive.readonly`, `classroom.rosters.readonly`, `userinfo.email`. Uses `drive.file` (app-created files only) instead of full `drive` scope — principle of least privilege.
+
+69. **Drive Query Injection Prevention** — `src/server/google/drive.ts:listFiles()`
+    Search queries escape single quotes (`query.replace(/'/g, "\\'")`) before embedding in Drive API `q` parameter. Prevents query injection through file search.
+
+70. **File Share with Email Notification** — `src/server/google/drive.ts:shareFile()`
+    `sendNotificationEmail: true` on file sharing — recipients get a Google notification email. Supports `reader`, `writer`, and `commenter` roles. Simple but important for the educator→student sharing workflow.
+
+71. **Classroom Active-Only Course Filter** — `src/server/google/classroom.ts:listCourses()`
+    Only returns courses with `courseState: "ACTIVE"` — filters out archived/provisioned/declined courses. Prevents educators from accidentally importing students from old classes. Caps at 30 courses, 100 students per course per page.
