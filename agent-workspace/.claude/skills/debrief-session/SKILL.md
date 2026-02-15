@@ -52,6 +52,11 @@ Map observations to learner profiles:
 - "[Student] disengaged during [activity type]" → affective note about
   preferences
 - "[Student] had a breakthrough" → significant confidence boost
+- "[Student] went from listing options to explaining trade-offs" → SOLO
+  shift from multistructural to relational. Record the transition using
+  the `soloShift` field: `{ from: "multistructural", to: "relational" }`.
+  These shifts are valuable longitudinal data — they show whether the
+  lesson's integration activities actually worked.
 
 ### Stage 4: Unplanned moments
 
@@ -89,6 +94,7 @@ For each student observation, produce:
   skillId: string,         // mapped from topic mention
   confidenceChange: number, // -0.2 to +0.3 (observational range)
   bloomLevelChange?: string, // if Bloom's level should shift
+  soloShift?: { from: string, to: string }, // if SOLO level changed
   evidenceType: "observational",
   note: string             // the educator's exact words
 }

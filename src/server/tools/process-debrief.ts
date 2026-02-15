@@ -82,6 +82,31 @@ export const processDebriefTool = tool(
                 .describe(
                   "New Bloom's level if observation warrants a level change"
                 ),
+              soloShift: z
+                .object({
+                  from: z
+                    .enum([
+                      "prestructural",
+                      "unistructural",
+                      "multistructural",
+                      "relational",
+                      "extended_abstract",
+                    ])
+                    .describe("SOLO level before the session"),
+                  to: z
+                    .enum([
+                      "prestructural",
+                      "unistructural",
+                      "multistructural",
+                      "relational",
+                      "extended_abstract",
+                    ])
+                    .describe("SOLO level observed during/after the session"),
+                })
+                .optional()
+                .describe(
+                  "SOLO level transition observed during the session. E.g., a learner who went from listing functions (multistructural) to connecting them to contexts (relational)."
+                ),
             })
           ),
         })
@@ -161,7 +186,11 @@ export const processDebriefTool = tool(
             obs.confidenceChange >= 0
               ? `+${obs.confidenceChange}`
               : `${obs.confidenceChange}`;
-          return `- [${now.toISOString().slice(0, 10)}] ${obs.type}: ${obs.detail} (${obs.skillId}: ${arrow} confidence, observational)`;
+          let line = `- [${now.toISOString().slice(0, 10)}] ${obs.type}: ${obs.detail} (${obs.skillId}: ${arrow} confidence, observational)`;
+          if (obs.soloShift) {
+            line += `\n  - SOLO shift: ${obs.soloShift.from} → ${obs.soloShift.to}`;
+          }
+          return line;
         });
 
         const obsBlock = `\n### Debrief Observations (${now.toISOString().slice(0, 10)})\n\n${observationLines.join("\n")}\n`;
@@ -252,10 +281,13 @@ export const processDebriefTool = tool(
         ? learnerObservations
             .map((l) => {
               const obsLines = l.observations
-                .map(
-                  (o) =>
-                    `- **${o.type}** on ${o.skillId}: ${o.detail} (confidence: ${o.confidenceChange >= 0 ? "+" : ""}${o.confidenceChange})`
-                )
+                .map((o) => {
+                  let line = `- **${o.type}** on ${o.skillId}: ${o.detail} (confidence: ${o.confidenceChange >= 0 ? "+" : ""}${o.confidenceChange})`;
+                  if (o.soloShift) {
+                    line += ` — SOLO: ${o.soloShift.from} → ${o.soloShift.to}`;
+                  }
+                  return line;
+                })
                 .join("\n");
               return `### ${l.learnerId}\n\n${obsLines}`;
             })
