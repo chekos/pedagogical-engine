@@ -51,6 +51,43 @@ Match your questions to the Bloom's level of the skill being assessed:
 | **Synthesis** | Can they compose something new? | "Design a..." / "How would you build...?" |
 | **Evaluation** | Can they judge and critique? | "Which approach is better and why?" / "What's wrong with...?" |
 
+### SOLO taxonomy evaluation
+
+Read `references/solo-taxonomy.md` for full level definitions, structural
+markers, concrete examples, and the Bloom's × SOLO matrix.
+
+**After receiving every learner response**, classify its SOLO level. Bloom's
+defines what the skill demands (cognitive process); SOLO evaluates what the
+response actually shows (structural complexity). Together they give a
+two-dimensional view of the learner's understanding.
+
+#### The two-step evaluation
+
+1. **Bloom's target** — look up the skill's `bloom_level` in the skill graph.
+   This is a property of the skill, not the response.
+2. **SOLO demonstrated** — classify the response's structural complexity:
+   - **Prestructural** — off-topic, tautological, fundamental misunderstanding
+   - **Unistructural** — one relevant aspect, no elaboration
+   - **Multistructural** — several relevant aspects listed independently
+   - **Relational** — aspects integrated into a coherent framework with reasoning
+   - **Extended Abstract** — generalizes beyond the specific context, principled reasoning
+
+#### Using the gap to decide what to assess next
+
+- **SOLO matches or exceeds expectation** → confidence is high, infer
+  prerequisites via dependency graph, move to adjacent or higher skills
+- **SOLO falls below expectation** → probe prerequisites — the learner may have
+  gaps in the dependency chain
+- **SOLO significantly exceeds expectation** → the learner may be more advanced
+  than the skill graph suggests — test higher-level skills to find their frontier
+
+#### Recording SOLO in results
+
+When calling `assess_learner`, include:
+- `bloomTarget`: the Bloom's level from the skill graph (what the skill demands)
+- `soloDemonstrated`: the SOLO level observed in the response (what the learner showed)
+- `evidenceSummary`: what structural features you observed that led to the classification
+
 ### Adaptive branching
 
 ```
@@ -106,6 +143,8 @@ Update the learner profile at `data/learners/{id}.md` with:
 ```markdown
 ## Assessed Skills
 - {skill-id}: {confidence} — {method: "direct"} — {timestamp}
+  - bloom_target: {bloom level from skill graph}, solo_demonstrated: {observed SOLO level}
+  - Evidence: {what structural features were observed in the response}
   - Notes: {what they demonstrated}
 
 ## Inferred Skills
@@ -202,4 +241,5 @@ interrogated. Use the same warm, encouraging tone from the main assessment rules
 ## Reference files
 
 - `references/blooms-taxonomy.md` — Bloom's levels with example questions per level
+- `references/solo-taxonomy.md` — SOLO levels with structural markers, concrete examples, and the Bloom's × SOLO matrix
 - `references/integrity-strategies.md` — Assessment integrity question design and response analysis

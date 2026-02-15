@@ -78,7 +78,7 @@ async function runDependencyInference(
 
 export const assessLearnerTool = tool(
   "assess_learner",
-  "Update a learner's profile with assessment results and run dependency inference to update inferred skills. Optionally apply integrity modifiers to adjust confidence based on response pattern analysis.",
+  "Update a learner's profile with assessment results and run dependency inference to update inferred skills. Optionally apply integrity modifiers to adjust confidence based on response pattern analysis. Supports SOLO taxonomy classification alongside Bloom's for two-dimensional assessment.",
   {
     learnerId: z.string().describe("Learner's file ID (without .md)"),
     domain: z.string().describe("Skill domain"),
@@ -91,6 +91,30 @@ export const assessLearnerTool = tool(
             .string()
             .describe(
               "Bloom's level demonstrated: knowledge, comprehension, application, analysis, synthesis, evaluation"
+            ),
+          bloomTarget: z
+            .string()
+            .optional()
+            .describe(
+              "Bloom's level the skill is designed to test (from skill graph). E.g. application, analysis"
+            ),
+          soloDemonstrated: z
+            .enum([
+              "prestructural",
+              "unistructural",
+              "multistructural",
+              "relational",
+              "extended_abstract",
+            ])
+            .optional()
+            .describe(
+              "SOLO taxonomy level observed in the learner's response: prestructural, unistructural, multistructural, relational, extended_abstract"
+            ),
+          evidenceSummary: z
+            .string()
+            .optional()
+            .describe(
+              "Brief description of the structural features observed in the response that led to the SOLO classification"
             ),
           notes: z.string().optional().describe("Assessment notes"),
         })
@@ -152,6 +176,16 @@ export const assessLearnerTool = tool(
           line += ` (raw: ${s.originalConfidence}, integrity-adjusted)`;
         }
         if (s.notes) line += ` (${s.notes})`;
+        // Add SOLO taxonomy fields when provided
+        if (s.bloomTarget || s.soloDemonstrated) {
+          const parts: string[] = [];
+          if (s.bloomTarget) parts.push(`bloom_target: ${s.bloomTarget}`);
+          if (s.soloDemonstrated) parts.push(`solo_demonstrated: ${s.soloDemonstrated}`);
+          line += `\n  - ${parts.join(", ")}`;
+        }
+        if (s.evidenceSummary) {
+          line += `\n  - Evidence: ${s.evidenceSummary}`;
+        }
         return line;
       })
       .join("\n");
@@ -272,6 +306,9 @@ export const assessLearnerTool = tool(
         skillId: s.skillId,
         confidence: s.confidence,
         bloomLevel: s.bloomLevel,
+        ...(s.bloomTarget ? { bloomTarget: s.bloomTarget } : {}),
+        ...(s.soloDemonstrated ? { soloDemonstrated: s.soloDemonstrated } : {}),
+        ...(s.evidenceSummary ? { evidenceSummary: s.evidenceSummary } : {}),
         ...(integrityModifier !== undefined && integrityModifier < 1.0
           ? { originalConfidence: s.originalConfidence, integrityAdjusted: true }
           : {}),

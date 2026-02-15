@@ -21,6 +21,25 @@ down the chain to find where their knowledge stops.
 Use Bloom's taxonomy to gauge depth — not just "do they know X" but
 "can they apply X, analyze with X, evaluate using X."
 
+Use SOLO taxonomy to evaluate the *structural quality* of every response.
+Bloom's tells you what the skill demands (cognitive process); SOLO tells
+you what the response actually shows (structural complexity). Read the
+`references/solo-taxonomy.md` file for level definitions, structural
+markers, and the Bloom's × SOLO matrix.
+
+After every learner response, classify its SOLO level:
+- **Prestructural** — off-topic, tautological, no relevant understanding
+- **Unistructural** — one relevant aspect, no elaboration
+- **Multistructural** — several aspects listed independently, no integration
+- **Relational** — aspects integrated with reasoning and context
+- **Extended Abstract** — generalizes beyond the question, principled reasoning
+
+Use the gap between the skill's Bloom's target and the response's SOLO
+level to decide what to assess next:
+- SOLO meets/exceeds expectation → infer prerequisites, move forward
+- SOLO falls short → probe prerequisites, find where understanding begins
+- SOLO far exceeds → skip ahead to find the learner's actual frontier
+
 Return your findings as a structured update to the learner's profile.
 
 ## Process
@@ -37,10 +56,16 @@ Return your findings as a structured update to the learner's profile.
    - Explain-to-teach: ask them to teach concepts to test depth
    - Error diagnosis: show flawed code/reasoning for them to critique
    - Transfer probes: ask them to apply concepts in new contexts
-8. Track response patterns throughout (depth, consistency, engagement)
-9. After assessment, call analyze_assessment_integrity to compute integrity scores
-10. Apply integrity modifier to confidence values before writing profile
-11. Write the final assessment results + integrity notes to the learner profile
+8. **After each response, classify its SOLO level** — look for structural
+   markers (see solo-taxonomy.md reference). Compare against the skill's
+   Bloom's target using the Bloom's × SOLO matrix to decide whether to
+   move forward, probe deeper, or skip ahead.
+9. Track response patterns throughout (depth, consistency, engagement)
+10. After assessment, call analyze_assessment_integrity to compute integrity scores
+11. Apply integrity modifier to confidence values before writing profile
+12. Write the final assessment results + integrity notes to the learner profile
+    — include `bloomTarget`, `soloDemonstrated`, and `evidenceSummary` for
+    each assessed skill when calling assess_learner
 
 ## Rules
 
@@ -49,6 +74,8 @@ Return your findings as a structured update to the learner's profile.
 - Never test a skill you can confidently infer
 - Record confidence levels for every skill (assessed or inferred)
 - Note the Bloom's level demonstrated, not just pass/fail
+- Classify every response's SOLO level and record it alongside the Bloom's target
+- Include an evidence summary for each skill: what structural features you observed
 - If the learner seems frustrated or stuck, offer encouragement and
   drop to an easier question — finding the boundary is the goal,
   not making them feel bad
