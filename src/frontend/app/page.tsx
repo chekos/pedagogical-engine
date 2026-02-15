@@ -107,7 +107,7 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <Link
                 href="/dashboard?domain=python-data-analysis"
-                className="group rounded-xl border border-border-subtle bg-surface-0 p-6 hover:shadow-md transition-shadow"
+                className="group border-l-2 border-bloom-evaluate p-6 hover:border-l-4 transition-all"
               >
                 <div className="w-10 h-10 rounded-lg bg-bloom-evaluate/15 flex items-center justify-center mb-3">
                   <svg className="w-5 h-5 text-bloom-evaluate" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -124,7 +124,7 @@ export default function Home() {
 
               <Link
                 href="/teach/live/tuesday-cohort-lesson-1"
-                className="group rounded-xl border border-border-subtle bg-surface-0 p-6 hover:shadow-md transition-shadow"
+                className="group border-l-2 border-bloom-create p-6 hover:border-l-4 transition-all"
               >
                 <div className="w-10 h-10 rounded-lg bg-bloom-create/15 flex items-center justify-center mb-3">
                   <svg className="w-5 h-5 text-bloom-create" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -141,7 +141,7 @@ export default function Home() {
 
               <Link
                 href="/assess/share"
-                className="group rounded-xl border border-border-subtle bg-surface-0 p-6 hover:shadow-md transition-shadow"
+                className="group border-l-2 border-bloom-understand p-6 hover:border-l-4 transition-all"
               >
                 <div className="w-10 h-10 rounded-lg bg-bloom-understand/15 flex items-center justify-center mb-3">
                   <svg className="w-5 h-5 text-bloom-understand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -158,7 +158,7 @@ export default function Home() {
 
               <Link
                 href="/wisdom"
-                className="group rounded-xl border border-border-subtle bg-surface-0 p-6 hover:shadow-md transition-shadow"
+                className="group border-l-2 border-bloom-analyze p-6 hover:border-l-4 transition-all"
               >
                 <div className="w-10 h-10 rounded-lg bg-bloom-analyze/15 flex items-center justify-center mb-3">
                   <svg className="w-5 h-5 text-bloom-analyze" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

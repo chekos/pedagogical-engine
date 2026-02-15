@@ -28,7 +28,7 @@ export default function LessonsPage() {
 
   return (
     <div>
-        <div className="mb-8">
+        <div className="mb-8 border-l-2 border-bloom-apply pl-4">
           <h1 className="text-2xl font-bold text-text-primary" style={{ fontFamily: 'var(--font-heading)' }}>Lesson Plans</h1>
           <p className="text-sm text-text-secondary mt-1 leading-relaxed">
             Your teaching sessions — review, rehearse, or go live.
@@ -56,7 +56,7 @@ export default function LessonsPage() {
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="divide-y divide-border-subtle">
           {lessons.map((lessonId) => {
             const parts = lessonId.split("-");
             const date = parts.slice(0, 3).join("-");
@@ -65,7 +65,7 @@ export default function LessonsPage() {
             return (
               <div
                 key={lessonId}
-                className="rounded-xl border border-border bg-surface-1 p-5 flex items-center justify-between gap-4"
+                className="border-l-[3px] border-bloom-apply py-4 pl-4 pr-2 flex items-center justify-between gap-4 hover:bg-surface-1/50 transition-colors"
               >
                 <div className="flex-1 min-w-0">
                   <Link href={`/lessons/${lessonId}`} className="group">

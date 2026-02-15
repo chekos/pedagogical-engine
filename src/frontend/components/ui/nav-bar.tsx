@@ -21,6 +21,20 @@ const EXPLORE_LINKS = [
   { href: "/transfer", label: "Transfer" },
 ];
 
+// Each section maps to a Bloom's taxonomy level for wayfinding color cues
+const SECTION_BLOOM: Record<string, string> = {
+  "/teach": "var(--bloom-understand)",
+  "/dashboard": "var(--bloom-evaluate)",
+  "/lessons": "var(--bloom-apply)",
+  "/domains": "var(--bloom-analyze)",
+  "/simulate": "var(--bloom-apply)",
+  "/wisdom": "var(--bloom-evaluate)",
+  "/profile": "var(--bloom-understand)",
+  "/meta": "var(--bloom-analyze)",
+  "/disagree": "var(--bloom-create)",
+  "/transfer": "var(--bloom-remember)",
+};
+
 export function NavBar() {
   const pathname = usePathname();
   const [exploreOpen, setExploreOpen] = useState(false);
@@ -33,6 +47,14 @@ export function NavBar() {
   const isExploreActive = EXPLORE_LINKS.some(
     ({ href }) => pathname === href || pathname.startsWith(href + "/")
   );
+
+  // Find the Bloom color for the currently active explore sub-page (if any)
+  const activeExploreBloom = EXPLORE_LINKS.find(
+    ({ href }) => pathname === href || pathname.startsWith(href + "/")
+  );
+  const exploreBloomColor = activeExploreBloom
+    ? SECTION_BLOOM[activeExploreBloom.href]
+    : undefined;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -80,17 +102,25 @@ export function NavBar() {
         {PRIMARY_LINKS.map(({ href, label }) => {
           const isActive =
             pathname === href || pathname.startsWith(href + "/");
+          const bloomColor = SECTION_BLOOM[href];
           return (
             <Link
               key={href}
               href={href}
-              className={
+              className={`text-sm relative ${
                 isActive
-                  ? "text-sm font-medium text-accent"
-                  : "text-sm text-text-secondary hover:text-text-primary transition-colors"
-              }
+                  ? "font-medium"
+                  : "text-text-secondary hover:text-text-primary transition-colors"
+              }`}
+              style={isActive ? { color: bloomColor } : undefined}
             >
               {label}
+              {isActive && (
+                <span
+                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+                  style={{ backgroundColor: bloomColor }}
+                />
+              )}
             </Link>
           );
         })}
@@ -100,13 +130,20 @@ export function NavBar() {
           <button
             onClick={() => setExploreOpen((prev) => !prev)}
             onMouseEnter={() => setExploreOpen(true)}
-            className={`text-sm flex items-center gap-1 transition-colors ${
+            className={`text-sm flex items-center gap-1 transition-colors relative ${
               isExploreActive
-                ? "font-medium text-accent"
+                ? "font-medium"
                 : "text-text-secondary hover:text-text-primary"
             }`}
+            style={isExploreActive && exploreBloomColor ? { color: exploreBloomColor } : undefined}
           >
             Explore
+            {isExploreActive && (
+              <span
+                className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+                style={{ backgroundColor: exploreBloomColor }}
+              />
+            )}
             <svg
               className={`w-3.5 h-3.5 transition-transform ${exploreOpen ? "rotate-180" : ""}`}
               fill="none"
@@ -126,16 +163,22 @@ export function NavBar() {
               {EXPLORE_LINKS.map(({ href, label }) => {
                 const isActive =
                   pathname === href || pathname.startsWith(href + "/");
+                const bloomColor = SECTION_BLOOM[href];
                 return (
                   <Link
                     key={href}
                     href={href}
-                    className={`block px-3.5 py-2 text-sm transition-colors ${
+                    className={`flex items-center gap-2.5 px-3.5 py-2 text-sm transition-colors ${
                       isActive
-                        ? "text-accent font-medium bg-accent/5"
+                        ? "font-medium"
                         : "text-text-secondary hover:text-text-primary hover:bg-surface-2"
                     }`}
+                    style={isActive ? { color: bloomColor } : undefined}
                   >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: bloomColor }}
+                    />
                     {label}
                   </Link>
                 );

@@ -449,3 +449,17 @@ h1, h2, h3 {
 @keyframes graphEdgeIn {
   to { opacity: 0.18; }
 }
+
+/* Bloom's spectrum gradient line */
+.bloom-spectrum {
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    var(--bloom-remember),
+    var(--bloom-understand),
+    var(--bloom-apply),
+    var(--bloom-analyze),
+    var(--bloom-evaluate),
+    var(--bloom-create)
+  );
+}

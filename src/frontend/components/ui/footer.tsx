@@ -1,13 +1,40 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
+const aphorisms = [
+  "Every lesson is a hypothesis.",
+  "Teaching is the art of reading the room.",
+  "The best plans leave room to breathe.",
+  "What worked last time won\u2019t always work next time.",
+  "The graph remembers what the room forgets.",
+];
+
 export function Footer() {
+  const [aphorism, setAphorism] = useState(aphorisms[0]);
+
+  useEffect(() => {
+    function update() {
+      const index = new Date().getMinutes() % aphorisms.length;
+      setAphorism(aphorisms[index]);
+    }
+    update();
+    const interval = setInterval(update, 10_000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <footer className="border-t border-border-subtle px-6 py-4 mt-auto">
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <span className="text-xs text-text-tertiary">
-          Pedagogical Engine &mdash; An AI teaching partner
-        </span>
-        <span className="text-xs text-text-tertiary">
-          Cerebral Valley x Anthropic Hackathon
-        </span>
+    <footer className="mt-auto">
+      <div className="bloom-spectrum" />
+      <div className="px-6 py-5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <span className="text-xs text-text-tertiary font-heading italic">
+            {aphorism}
+          </span>
+          <span className="text-xs text-text-tertiary">
+            Cerebral Valley x Anthropic Hackathon
+          </span>
+        </div>
       </div>
     </footer>
   );
