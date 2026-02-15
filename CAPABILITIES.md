@@ -563,3 +563,68 @@ This is what "primitives over features" means in practice.
 
 13. **report_assessment_progress Tool** — `src/server/tools/report-assessment-progress.ts`
     A lightweight signaling tool that the assessment agent calls during skill transitions. Returns only `{ acknowledged: true }` — its real purpose is to trigger frontend progress UI updates via the tool result stream.
+
+### From Strategy (b): Server Architecture Deep Scan — 2026-02-14
+
+14. **AI-Generated Personalized Greetings** — `src/server/index.ts:GET /api/user/greeting`
+    On app open, calls Claude Haiku 4.5 with the educator's profile, recent lessons, domains, and latest debrief to generate a contextual welcome message. Falls back to time-of-day greeting if no API key or generation fails. The greeting references specific names, topics, and recent work — like a colleague who remembers what you were working on.
+
+15. **AI-Generated Group Names** — `src/server/index.ts:GET /api/generate-group-name`
+    Generates creative two-word cohort names (e.g. "autumn-coders") via Claude Haiku. Falls back to random adjective-noun combos from hardcoded lists if API unavailable. Cohort naming is never boring.
+
+16. **WebSocket Session Reconnection** — `src/server/index.ts:wss "connection"`
+    Educator chat WebSocket supports reconnection via `?sessionId=...` query param. On reconnect, replays accumulated `session_context` so the sidebar repopulates without data loss. Disconnected sessions are kept (not destroyed) for reconnection.
+
+17. **Live Teaching Companion WebSocket** — `src/server/index.ts:wssLive, /ws/live`
+    A separate WebSocket endpoint (`/ws/live`) for real-time teaching assistance during active lessons. Accepts `?lessonId=xxx` to scope the companion to a specific lesson plan. Distinct from the educator chat — this is mid-lesson support.
+
+18. **Real-Time Session Context Extraction** — `src/server/index.ts + context-extractor.ts`
+    Every tool_use block from the agent triggers `extractSessionContext()` which builds an optimistic sidebar state (current domain, group, skills, lesson). On tool failure, a `PostToolUseFailure` hook re-extracts context excluding failed tools — self-correcting optimistic UI.
+
+19. **Creative Tool Labels System** — `src/server/index.ts + tool-labels.ts`
+    On startup, `warmToolLabels()` generates creative/humanized names for MCP tools. These labels are sent to the frontend on WebSocket connection and used in the UI instead of raw tool names like `mcp__pedagogy__compose_lesson_plan`.
+
+20. **File Creation Detection & Download Pipeline** — `src/server/index.ts:postToolUseHook`
+    A PostToolUse hook detects when the agent creates files (.docx, .pptx, .xlsx, .pdf) via Write or Bash tools, and emits `file_created` WebSocket events with download URLs. Also detects Google export tool results and emits upload events with Google Drive URLs. Frontend gets real-time file notifications.
+
+21. **Secure Agent-Workspace File Server** — `src/server/index.ts:GET /api/files/*`
+    Serves downloadable files from `agent-workspace/` with path traversal protection and extension allowlist (.docx, .pptx, .xlsx, .pdf only). Files created by the agent become immediately downloadable via the frontend.
+
+22. **Domain Plugin Architecture** — `src/server/index.ts:GET /api/domains`
+    Domains are self-contained plugin directories with: `skills.json`, `dependencies.json`, `manifest.json`, `SKILL.md` (teaching methodology), and `sample-learners/`. The API computes a `pluginCompleteness` score showing which files exist. Domains are sorted featured-first, then by skill count.
+
+23. **Batch Assessment Link Generation** — `src/server/index.ts:POST /api/assess/generate-batch`
+    Generates individual assessment links for every member of a group in one call. Each learner gets their own nanoid code and personalized assessment file. Returns a list with per-learner URLs including embeddable versions.
+
+24. **Assessment Integrity Dashboard API** — `src/server/index.ts:GET /api/assess/integrity/:groupName/:domain`
+    A dedicated endpoint that aggregates integrity data across all learners in a group: integrity levels (high/moderate/low), modifiers, flagged skills, and whether integrity-adjusted confidence values exist. Returns group-level summary stats for educator dashboards.
+
+25. **Learner Name Input Validation** — `src/server/index.ts:POST /api/assess`
+    Assessment learner names are validated with: max 50 chars, letters/spaces/hyphens/apostrophes only. Prevents prompt injection through learner name fields.
+
+26. **Assessment Session Persistence** — `src/server/index.ts:assessmentSessions Map`
+    In-memory map tracks `code:learnerName → sessionId` so returning students resume their assessment conversation rather than starting over. The assessment agent sees full conversation history.
+
+27. **Live Session Feedback Logging** — `src/server/index.ts:POST /api/lessons/:id/feedback`
+    During live teaching, section-by-section feedback (rating, notes, elapsed time) is appended to JSONL log files in `live-sessions/`. Each entry is timestamped. This feeds the debrief and wisdom flywheel.
+
+28. **Lesson Simulation & Tension Analysis HTTP APIs** — `src/server/index.ts:GET /api/simulate/:lessonId, POST /api/tensions`
+    Simulation and tension analysis are exposed as REST endpoints (not just MCP tools), allowing the frontend to trigger them directly with smart defaults — auto-extracting domain/group from lesson metadata if not provided.
+
+29. **Cross-Domain Transfer Learner Discovery** — `src/server/index.ts:GET /api/transfer-learners`
+    Lists all learners who have assessed skills (skillCount > 0) across any domain, enabling the frontend to populate transfer analysis dropdowns without requiring the educator to know learner IDs.
+
+30. **Debrief Readiness Check** — `src/server/index.ts:GET /api/debrief-ready/:lessonId`
+    Pre-flight check that returns whether a lesson exists, whether it already has a debrief, and parsed section data needed for the debrief form. Prevents duplicate debriefs and streamlines the post-session workflow.
+
+31. **Educator Context Analysis API** — `src/server/index.ts:GET /api/educators/:id/context`
+    Returns an educator's top teaching styles (ranked by percentage), domain-specific expertise level, strengths, growth areas, timing patterns, and preferences — scoped to a specific domain/skill set. Used to customize lesson plans to the educator's strengths.
+
+32. **Streaming Text Deltas** — `src/server/index.ts:stream_event handling`
+    The WebSocket forwards `content_block_delta` events from Claude's streaming API as `stream_delta` messages, enabling character-by-character text rendering in the frontend. Real-time typing effect.
+
+33. **Session Manager with Periodic Cleanup** — `src/server/index.ts + sessions/manager.ts`
+    Sessions are managed with create/touch/disconnect/remove lifecycle. A 15-minute cleanup interval removes stale sessions. Graceful shutdown (SIGTERM/SIGINT) closes all sessions and WebSocket servers with a 5-second force-exit timeout.
+
+34. **Google OAuth Token Persistence** — `src/server/index.ts startup`
+    Google OAuth tokens are loaded from disk on server startup (`googleAuth.loadTokens()`), so educators don't need to re-authenticate after server restarts.
