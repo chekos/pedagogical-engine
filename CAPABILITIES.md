@@ -663,3 +663,59 @@ This is what "primitives over features" means in practice.
 
 45. **"Once is Advice, Twice is Nagging" Pushback Rule** — `src/server/agent.ts:EDUCATOR_SYSTEM_PROMPT`
     Explicit behavioral constraint: the agent pushes back on pedagogically unsound plans ONCE with evidence, then defers. Categories where pushback is forbidden: style preferences, domain content choices, interpersonal dynamics, and previously overridden points.
+
+### From Strategy (d): Frontend Components Deep Scan — 2026-02-14
+
+46. **Speech-to-Text Voice Input with 3-State Recording UI** — `src/frontend/components/chat/voice-mic-button.tsx + hooks/use-speech-recognition.ts`
+    Full voice input system using Web Speech API with three states: idle (mic icon), listening (animated waveform bars + timer + interim transcript preview), paused (pause/resume controls). Recording bar shows elapsed time, live interim transcription, and pause/resume/stop buttons. Not just "click to record" — a proper recording studio UX.
+
+47. **Text-to-Speech Response Readback** — `src/frontend/components/chat/chat-interface.tsx + hooks/use-speech-synthesis.ts`
+    Optional TTS toggle that reads assistant responses aloud using Web Speech Synthesis API (rate 1.05×). Queues the final response text and speaks after the result is complete. Toggle button in the input area. Stops speaking when user starts recording.
+
+48. **Session State Persistence via localStorage** — `src/frontend/components/chat/chat-interface.tsx:saveSessionState/loadSessionState`
+    Chat messages, creative tool labels, and created files are persisted to localStorage keyed by sessionId. On reconnect (via `?session=` URL param), the UI restores full conversation history from localStorage before the WebSocket reconnects. Includes `pruneOldSessions(10)` to cap stored sessions.
+
+49. **Programmatic Message Sending from UI Cards** — `src/frontend/components/chat/chat-interface.tsx:sendProgrammaticMessage()`
+    AskUserQuestion cards, GoogleConnect cards, and starter prompts can inject messages into the chat without user typing. This enables structured data collection via interactive UI cards that feed back into the agent conversation.
+
+50. **Interactive Skill Graph on Landing Page** — `src/frontend/components/landing/skill-graph.tsx`
+    SVG skill graph with spring physics: nodes are draggable, connected nodes pull along via BFS-based force propagation (pull decays with depth). On release, nodes spring back with damped oscillation. Nodes are color-coded by Bloom's level. Uses requestAnimationFrame for smooth 60fps animation. Touch-enabled (`touchAction: none`).
+
+51. **QR Code Generation for Assessment Links** — `src/frontend/components/assessment/qr-code.tsx`
+    Client-side QR code generation via the `qrcode` npm library rendered to canvas. Used in assessment sharing — educators can display QR codes for students to scan with phones instead of typing assessment codes.
+
+52. **Embeddable Assessment Widget with postMessage API** — `src/frontend/components/assessment/embed-assessment-chat.tsx`
+    Minimal assessment chat designed for iframe embedding. Sends structured events to parent window via `postMessage`: `assessment:started`, `assessment:progress` (with covered/total), `assessment:completed` (with message count), `assessment:error`. Source identifier: `"pedagogical-engine"`. Enables LMS integration without navigation.
+
+53. **Real-Time Skill Coverage Tracking in Assessment UI** — `src/frontend/components/assessment/assessment-chat.tsx`
+    Assessment chat tracks which skill areas have been covered in real-time via `coveredSkillLabels` Map from the hook. Shows animated skill pills (covered=green checkmark, current=pulsing accent dot, upcoming=gray). On completion, renders a "Skill Map" visualization dividing skills into "What you know" vs "What you'll work on next".
+
+54. **Contextual Loading Duration Messages** — `src/frontend/components/assessment/assessment-chat.tsx + embed-assessment-chat.tsx`
+    Loading indicator shows progressive messages based on how long the agent has been thinking: "Thinking..." (<8s), "Still working..." (8-20s), "Saving your results — almost done!" (>20s). Prevents user anxiety during long assessment saves.
+
+55. **Bloom's Taxonomy Color-Coded Tool Results** — `src/frontend/components/chat/tool-result.tsx`
+    Every tool result card has a colored top border mapped to Bloom's taxonomy levels by tool category: data loading=Remember, querying=Understand, assessment=Apply, analysis=Analyze, auditing=Evaluate, composition=Create. Unknown tools get auto-categorized by verb prefix (load→Remember, compose→Create, etc.).
+
+56. **Interactive Group Dashboard with 4 Visualization Tabs** — `src/frontend/components/visualizations/group-dashboard.tsx`
+    Full analytics dashboard embedded in tool results: (a) Skill Heatmap with hover tooltips showing assessed/inferred status per learner×skill, (b) Bloom's Distribution with radar chart + bar chart side-by-side, (c) Common Gaps with auto-computed pairing suggestions based on complementary skill coverage (complementScore > 1.5), (d) Learner Overview with progress rings showing assessed/inferred/unknown breakdown. All rendered client-side with dark theme.
+
+57. **Live Dependency Graph with Inference Cascade Animation** — `src/frontend/components/visualizations/live-dependency-graph.tsx`
+    ReactFlow-based interactive DAG with: node sizing by Bloom's level (evaluation nodes 1.25× bigger than knowledge), cascade animation when inference propagates (150ms stagger per depth), edge tooltips showing confidence + type, group overlay pie charts on nodes, click-to-inspect skill detail panel showing prerequisites + per-learner status. Includes `computeInferenceCascade()` function for BFS inference with max-confidence-path and 0.85 decay per hop.
+
+58. **Lesson Plan Inline Viewer with Timeline Bar** — `src/frontend/components/lesson-plan/lesson-plan-view.tsx`
+    Lesson plans rendered as collapsible cards with: parsed section headers (title + timing), color-coded timeline bar showing proportional section durations, per-section color strips (8 rotating colors), total duration calculation, and inline PDF/Prerequisites export buttons. Markdown parser extracts timing from headers like "## Activity Name (15 min)".
+
+59. **Bloom's-Aware Navigation with Color Wayfinding** — `src/frontend/components/ui/nav-bar.tsx`
+    Every navigation section is mapped to a Bloom's taxonomy color (Teach=Understand, Dashboard=Evaluate, Lessons=Apply, etc.). Active page shows its Bloom color on the link text + a colored dot indicator. The "Explore" dropdown reveals 6 advanced features (Simulate, Wisdom, Educators, Meta, Disagree, Transfer) each with their own Bloom dot. Dark/light theme toggle included.
+
+60. **Google Account Status Badge with Auto-Refresh** — `src/frontend/components/chat/session-context-sidebar.tsx:GoogleStatusBadge`
+    Session sidebar shows Google connection status (email or "Not connected"), checked on mount and every 60 seconds. Also re-checks when the OAuth popup signals completion via localStorage, ensuring instant status update after connecting.
+
+61. **File Card System with Dual Download Paths** — `src/frontend/components/chat/file-card.tsx`
+    Created files show as inline cards with type-specific icons (doc=blue, slides=yellow, sheet=green, pdf=red). Two download paths: local file download (always available via `/api/files/*`) and "Open in Google" link (when uploaded). Includes copy-to-clipboard for Google URLs. Compact variant for sidebar display.
+
+62. **Adaptive Welcome Screen (First-Time vs Returning)** — `src/frontend/components/chat/chat-interface.tsx`
+    Landing state differentiates between new and returning educators. New users see onboarding copy ("Nice to meet you") with 2 starter prompts. Returning users see AI-generated personalized greeting (from Haiku) with 3 contextual starter prompts color-coded by Bloom level. Greeting includes subtext referencing recent work.
+
+63. **Client-Side Session Context Extraction** — `src/frontend/components/chat/chat-interface.tsx:extractContext()`
+    Fallback context extraction when server doesn't provide `session_context` events. Parses tool inputs from every `mcp__pedagogy__*` tool to accumulate: domain, groupName, lessonId, skillIds, learnerNames (from members arrays), constraints (duration + text). Also detects lesson file paths from Read/Write tools.
