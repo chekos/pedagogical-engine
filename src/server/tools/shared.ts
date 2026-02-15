@@ -34,6 +34,9 @@ export interface SkillEntry {
   confidence: number;
   bloomLevel: string;
   source: "assessed" | "inferred";
+  bloomTarget?: string;
+  soloDemonstrated?: string;
+  evidenceSummary?: string;
 }
 
 export interface LearnerProfile {
@@ -150,15 +153,30 @@ export function parseLearnerProfile(content: string): LearnerProfile {
 
   // Parse assessed skills section
   const assessedSection = content.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
-  for (const line of assessedSection.split("\n")) {
+  const assessedLines = assessedSection.split("\n");
+  for (let li = 0; li < assessedLines.length; li++) {
+    const line = assessedLines[li];
     const match = line.match(/^- (.+?):\s*([\d.]+)\s*confidence.*?(?:at\s+(\w+)\s+level)?/i);
     if (match) {
-      skills.push({
+      const entry: SkillEntry = {
         skillId: match[1].trim(),
         confidence: parseFloat(match[2]),
         bloomLevel: match[3] ?? "unknown",
         source: "assessed",
-      });
+      };
+
+      // Look ahead for SOLO taxonomy fields on indented continuation lines
+      for (let lj = li + 1; lj < assessedLines.length && assessedLines[lj].match(/^\s+-/); lj++) {
+        const subLine = assessedLines[lj].trim();
+        const bloomTargetMatch = subLine.match(/bloom_target:\s*(\w+)/);
+        const soloMatch = subLine.match(/solo_demonstrated:\s*(\w+)/);
+        const evidenceMatch = subLine.match(/^- Evidence:\s*(.+)/);
+        if (bloomTargetMatch) entry.bloomTarget = bloomTargetMatch[1];
+        if (soloMatch) entry.soloDemonstrated = soloMatch[1];
+        if (evidenceMatch) entry.evidenceSummary = evidenceMatch[1];
+      }
+
+      skills.push(entry);
     }
   }
 
