@@ -745,3 +745,29 @@ This is what "primitives over features" means in practice.
 
 71. **Classroom Active-Only Course Filter** — `src/server/google/classroom.ts:listCourses()`
     Only returns courses with `courseState: "ACTIVE"` — filters out archived/provisioned/declined courses. Prevents educators from accidentally importing students from old classes. Caps at 30 courses, 100 students per course per page.
+
+### From Strategy (f): PDF Export System Deep Scan — 2026-02-15
+
+72. **Hyphenation Disabled in PDF Rendering** — `src/server/exports/shared-styles.tsx`
+    Custom `Font.registerHyphenationCallback` returns words unsplit, preventing awkward mid-word breaks in all generated PDFs. Small detail, big readability impact.
+
+73. **Lesson Plan Markdown Parser with 7 Section Extractors** — `src/server/exports/data-parsers.ts`
+    Dedicated regex parsers for: metadata table fields (bold + non-bold variants), numbered learning objectives, checkbox prerequisite skills, tool requirements tables, timed sections (supports both range `0:00-0:15` and duration `15 min` formats), `### If` contingency patterns, and logistics tables. Each handles missing sections gracefully with empty defaults.
+
+74. **Prerequisites Handout: Student-Facing Tone & Bloom's Stripping** — `src/server/exports/prerequisites-pdf.tsx`
+    Generates a learner-facing (not educator-facing) handout with encouraging language: "Don't worry! Come to the session early and we will help you get set up." Strips Bloom's level annotations from objectives via regex before displaying to students.
+
+75. **Group PDF: Server-Side Peer Pairing Algorithm** — `src/server/exports/group-pdf.tsx`
+    Computes complementary skill pairings by finding learner pairs where one is strong (≥0.7) in skills the other lacks, generating human-readable rationale strings. This is computed at PDF render time (server-side), separate from the frontend dashboard pairing logic.
+
+76. **Group PDF: Numeric Confidence Heatmap Cells** — `src/server/exports/group-pdf.tsx`
+    Renders learner×skill matrix with color-coded cells using opacity scaling (`0.3 + confidence × 0.7`) and single-digit scores (0-10) inside each 16×16px cell. Empty cells render as gray. Caps at 18 skills to prevent page overflow.
+
+77. **Learner PDF: Prerequisite-Aware Focus Recommendations** — `src/server/exports/learner-pdf.tsx`
+    "Recommended Focus Areas" filters domain skill gaps to only those whose ALL prerequisites are met at ≥0.5 confidence. Shows top 5. This is prerequisite-aware next-step recommendation, not just gap listing.
+
+78. **Learner PDF: Three-Card Summary with Color Thresholds** — `src/server/exports/learner-pdf.tsx`
+    Summary cards show: Skills Assessed (count vs domain total), Skills Inferred (via dependency inference), and Coverage % with color thresholds (≥60%=green, ≥30%=yellow, <30%=red). Coverage computed as known skills / total domain skills.
+
+79. **PDF Lesson List API Endpoint** — `src/server/exports/router.tsx:GET /api/export/lessons`
+    Returns all available lesson plan IDs (`.md` files in lessons directory). Enables frontend to populate lesson selection dropdowns for export without hardcoding lesson names.
