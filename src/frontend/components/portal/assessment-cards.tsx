@@ -104,10 +104,10 @@ export default function AssessmentCards({ data }: AssessmentCardsProps) {
                         </p>
                       </div>
                       <time
-                        dateTime={assessment.date}
+                        dateTime={assessment.date ?? ""}
                         className="shrink-0 text-xs text-text-tertiary"
                       >
-                        {formatDate(assessment.date)}
+                        {assessment.date ? formatDate(assessment.date) : "—"}
                       </time>
                     </div>
                   </li>
