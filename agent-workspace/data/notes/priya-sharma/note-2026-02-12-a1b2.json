@@ -1,0 +1,9 @@
+{
+  "id": "note-2026-02-12-a1b2",
+  "learnerId": "priya-sharma",
+  "groupId": "tuesday-cohort",
+  "createdAt": "2026-02-12T20:15:00.000Z",
+  "content": "Great work on the pandas assessment! You demonstrated strong proficiency across data loading, exploration, and basic analysis. Your next challenge is data cleaning — specifically handling missing values and duplicates. I'd recommend practicing with messy real-world datasets before our next session.",
+  "audienceHint": "learner",
+  "pinned": false
+}

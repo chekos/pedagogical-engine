@@ -60,6 +60,14 @@
 - **Past experiences:** no negative experiences, but has a "I'm not a programmer" self-identity that limits her confidence. Tableau proficiency hasn't fully translated to coding confidence
 - **Comfort preferences:** thrives in collaborative settings. Prefers pair work over solo. Comfortable speaking up in class
 
+## Portal
+
+| Field | Value |
+|---|---|
+| **Portal Code** | sofia-tuesday-w5n4 |
+| **Portal URL** | http://localhost:3001/learner/sofia-tuesday-w5n4 |
+| **Generated** | 2026-02-14T10:00:00.000Z |
+
 ## Notes
 
 - Marketing analyst who uses Tableau daily — strong data visualization instincts

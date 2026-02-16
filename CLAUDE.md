@@ -19,7 +19,7 @@ an experienced teacher, not a content generator.
 - Developer skills in `.claude/skills/` assist developers working on this codebase
 - Agent skills in `agent-workspace/.claude/skills/` are what the in-app agent uses (pedagogical + Office export skills)
 - Agent subagents in `agent-workspace/.claude/agents/` handle specialized reasoning branches
-- 36 custom MCP tools in the pedagogy MCP server access data in data/
+- 39 custom MCP tools in the pedagogy MCP server access data in data/
 - All persistent data lives in agent-workspace/data/ as JSON and Markdown files
 - Agent workspace separation: the agent SDK runs with `cwd: agent-workspace/` so it picks up agent-specific skills, not developer skills
 
@@ -39,7 +39,7 @@ an experienced teacher, not a content generator.
 ### Backend (src/server/)
 - Express + WebSocket server on port 3000
 - Agent SDK integration with Opus 4.6 for educator conversations, Sonnet for assessments
-- 36 custom MCP tools via `createSdkMcpServer`:
+- 39 custom MCP tools via `createSdkMcpServer`:
   - `load_roster` — load or create groups and learner profiles
   - `query_skill_graph` — BFS/DFS traversal, dependency inference, Bloom's level filtering
   - `generate_assessment_link` — create assessment sessions with shareable codes
@@ -76,6 +76,9 @@ an experienced teacher, not a content generator.
   - `list_drive_files` — list files from Google Drive with optional query/mimeType filter
   - `share_document` — share a Google Drive file with email addresses
   - `sync_with_classroom` — list Google Classroom courses or import students from a course
+  - `generate_portal_code` — generate a persistent, URL-safe portal code for a learner and write it to their profile
+  - `get_portal_view` — render a learner's portal page data by portal code (skill map, assessments, notes)
+  - `share_note_with_learner` — share an educator note with a learner's portal page
 - Session management with WebSocket connection mapping
 - Graceful shutdown, periodic session cleanup
 
@@ -136,6 +139,15 @@ an experienced teacher, not a content generator.
 - Inline Google connect card in chat — rendered when agent calls `request_google_connection`
   - Opens OAuth consent in popup, polls for close, checks status, sends confirmation to agent
 - Google status badge in session context sidebar — polls `/api/auth/google/status`
+- Learner portal (/learner/[code]) — read-only progress page for learners, parents, employers
+  - Code-based access via persistent URL-safe portal codes
+  - Audience-adaptive views (learner, parent, employer, general) via ?audience= query param
+  - Multi-language support via ?lang= query param (en, es, fr, zh, ar, pt)
+  - Skill map grouped by Bloom's level with confidence meters
+  - Progress narrative with assessed/inferred counts and next steps
+  - Pending assessments with direct links to take them
+  - Educator-shared notes (pinned, audience-filtered)
+  - URL query params for shareable links (e.g. ?lang=es&audience=parent)
 - Accessibility statement page (/accessibility) — WCAG 2.2 AA conformance statement
 - Custom theme with light/dark mode via CSS variables
 - WCAG 2.2 Level AA accessibility:
@@ -304,6 +316,7 @@ All persistent data lives in `agent-workspace/data/` — accessible to both the 
 - Educator profiles: data/educators/{id}.json (JSON — teaching style, strengths, timing patterns)
 - Reasoning traces: data/reasoning-traces/{lesson-id}.json (JSON — decision traces with evidence chains)
 - Meta-pedagogical question history: data/meta-pedagogical/{educator-id}-questions.json (JSON — question patterns for teaching moments)
+- Educator notes for learners: data/notes/{learner-id}/note-{date}-{id}.json (JSON — shared via portal)
 - Google OAuth tokens: data/auth/google-tokens.json (JSON — auto-refreshed, gitignored)
 
 ## Behavioral rules

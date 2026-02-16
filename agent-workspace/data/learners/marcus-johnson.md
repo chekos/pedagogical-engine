@@ -59,6 +59,14 @@
 - **Past experiences:** had a frustrating experience in a previous online Python tutorial that did not accommodate screen readers. Educator noted "he almost quit the course after session 1 but came back because the in-person format was better"
 - **Comfort preferences:** prefers individual work with periodic check-ins. Uncomfortable with timed exercises or public coding — the pressure of being watched while his screen is magnified makes him self-conscious
 
+## Portal
+
+| Field | Value |
+|---|---|
+| **Portal Code** | marcus-tuesday-p3x8 |
+| **Portal URL** | http://localhost:3001/learner/marcus-tuesday-p3x8 |
+| **Generated** | 2026-02-14T10:00:00.000Z |
+
 ## Notes
 
 - Accessibility needs: visual impairment — uses screen magnification and high-contrast mode

@@ -77,6 +77,14 @@
 - **Past experiences:** positive — successful software career gives her a "I can learn anything" mindset
 - **Comfort preferences:** prefers challenge over comfort; gets disengaged when pace is too slow
 
+## Portal
+
+| Field | Value |
+|---|---|
+| **Portal Code** | priya-tuesday-k7m2 |
+| **Portal URL** | http://localhost:3001/learner/priya-tuesday-k7m2 |
+| **Generated** | 2026-02-14T10:00:00.000Z |
+
 ## Notes
 
 - Software engineer transitioning from Java to data science
