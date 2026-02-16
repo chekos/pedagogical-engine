@@ -10,7 +10,7 @@ function TeachContent() {
   const resumeSessionId = searchParams.get("session") || undefined;
 
   return (
-    <div className="h-screen flex flex-col bg-surface-0">
+    <div className="h-screen flex flex-col bg-surface-0 overflow-hidden">
       {/* Paper grain texture — same as landing page */}
       <svg className="grain" aria-hidden="true">
         <filter id="grain-filter">

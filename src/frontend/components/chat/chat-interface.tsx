@@ -43,6 +43,7 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
   const restoredRef = useRef(false);
   const [thinkingStartedAt, setThinkingStartedAt] = useState<number | null>(null);
   const clientRef = useRef<ChatClient | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentAssistantRef = useRef<string | null>(null);
@@ -238,7 +239,10 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
   }, [sessionId, messages, creativeLabels, createdFiles]);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+    }
   }, []);
 
   useEffect(() => {
@@ -548,11 +552,11 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
       </header>
 
       {/* Main content area with sidebar */}
-      <div className="flex-1 flex relative overflow-hidden">
+      <div className="flex-1 flex relative overflow-hidden min-h-0">
         {/* Chat column */}
-        <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarCollapsed ? "" : "md:mr-[280px]"}`}>
+        <div className={`flex-1 flex flex-col min-w-0 min-h-0 transition-all duration-300 ${sidebarCollapsed ? "" : "md:mr-[280px]"}`}>
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4" role="log" aria-label="Conversation" aria-live="polite" aria-atomic="false">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto min-h-0 px-4 md:px-6 py-6 space-y-4" role="log" aria-label="Conversation" aria-live="polite" aria-atomic="false">
         {messages.length === 0 && (status === "error" || status === "disconnected") && (
           <div className="flex flex-col items-center justify-center h-full text-center" role="alert">
             <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4" aria-hidden="true">
@@ -684,7 +688,7 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
       </div>
 
       {/* Input area */}
-      <div className="border-t border-border-subtle p-4 md:px-6">
+      <div className="flex-shrink-0 border-t border-border-subtle p-4 md:px-6">
         {/* STT error banner */}
         {sttError && (
           <div className="max-w-3xl mx-auto mb-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400" role="alert">
