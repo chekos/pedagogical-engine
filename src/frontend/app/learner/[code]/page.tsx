@@ -4,6 +4,7 @@ import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchPortalData, type PortalData } from "@/lib/api";
+import { getPortalStrings } from "@/lib/portal-i18n";
 import LanguageSelector from "@/components/portal/language-selector";
 import ProgressNarrative from "@/components/portal/progress-narrative";
 import SkillMap from "@/components/portal/skill-map";
@@ -28,6 +29,7 @@ export default function LearnerPortalPage({
   // Derive language and audience from URL query params
   const language = searchParams.get("lang") || "en";
   const audience = searchParams.get("audience") || "learner";
+  const s = getPortalStrings(language);
 
   const loadPortal = useCallback(async () => {
     setState({ status: "loading" });
@@ -63,13 +65,13 @@ export default function LearnerPortalPage({
   };
 
   return (
-    <div className="min-h-screen bg-surface-0">
+    <div className="min-h-screen bg-surface-0" dir={language === "ar" ? "rtl" : "ltr"}>
       {/* Skip link */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-accent focus:text-surface-0 focus:rounded-lg"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:start-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-accent focus:text-surface-0 focus:rounded-lg"
       >
-        Skip to main content
+        {s.skipToMain}
       </a>
 
       {/* Header */}
@@ -79,7 +81,7 @@ export default function LearnerPortalPage({
             href="/"
             className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
           >
-            Pedagogical Engine
+            {s.brandName}
           </Link>
           <div className="flex items-center gap-3">
             <LanguageSelector value={language} onChange={handleLanguageChange} />
@@ -89,19 +91,19 @@ export default function LearnerPortalPage({
                 htmlFor="portal-audience"
                 className="text-sm text-text-secondary font-medium"
               >
-                View as
+                {s.viewAs}
               </label>
               <select
                 id="portal-audience"
                 value={audience}
                 onChange={(e) => handleAudienceChange(e.target.value)}
                 className="rounded-lg border border-border bg-surface-1 px-3 py-1.5 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:bg-surface-2 dark:text-text-primary"
-                aria-label="Select audience perspective"
+                aria-label={s.audienceSelectLabel}
               >
-                <option value="learner">Learner</option>
-                <option value="parent">Parent</option>
-                <option value="employer">Employer</option>
-                <option value="general">General</option>
+                <option value="learner">{s.audienceLearner}</option>
+                <option value="parent">{s.audienceParent}</option>
+                <option value="employer">{s.audienceEmployer}</option>
+                <option value="general">{s.audienceGeneral}</option>
               </select>
             </div>
           </div>
@@ -115,7 +117,7 @@ export default function LearnerPortalPage({
             <div className="text-center">
               <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-3" />
               <p className="text-sm text-text-secondary">
-                Loading your progress&hellip;
+                {s.loadingProgress}
               </p>
             </div>
           </div>
@@ -127,14 +129,13 @@ export default function LearnerPortalPage({
             role="alert"
           >
             <h1 className="font-heading text-xl font-semibold text-text-primary mb-2">
-              Portal Not Found
+              {s.portalNotFound}
             </h1>
             <p className="text-sm text-text-secondary mb-4">
               {state.message}
             </p>
             <p className="text-xs text-text-tertiary">
-              Check that your portal code is correct. If you received a link,
-              make sure it was copied completely.
+              {s.portalNotFoundHelp}
             </p>
           </div>
         )}
@@ -177,11 +178,10 @@ export default function LearnerPortalPage({
             {/* Footer */}
             <footer className="border-t border-border-subtle pt-6 pb-8 text-center">
               <p className="text-xs text-text-tertiary">
-                This page is read-only. Your progress is updated by your
-                educator.
+                {s.footerReadOnly}
               </p>
               <p className="text-xs text-text-tertiary mt-1">
-                Portal code:{" "}
+                {s.footerPortalCode}{" "}
                 <code className="font-mono text-text-secondary">
                   {state.data.portalCode}
                 </code>

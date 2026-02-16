@@ -1,16 +1,17 @@
 "use client";
 
 import type { PortalData } from "@/lib/api";
+import { getPortalStrings, t } from "@/lib/portal-i18n";
 
 interface EducatorNotesProps {
   data: PortalData;
 }
 
-/** Format an ISO date string to a human-readable date */
-function formatDate(dateStr: string): string {
+/** Format an ISO date string to a human-readable date in the portal language */
+function formatDate(dateStr: string, lang: string): string {
   try {
     const d = new Date(dateStr);
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(lang, {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -22,6 +23,7 @@ function formatDate(dateStr: string): string {
 
 export default function EducatorNotes({ data }: EducatorNotesProps) {
   const { notes } = data;
+  const s = getPortalStrings(data.language);
 
   if (notes.length === 0) return null;
 
@@ -31,7 +33,7 @@ export default function EducatorNotes({ data }: EducatorNotesProps) {
         id="notes-heading"
         className="font-heading text-xl font-semibold text-text-primary mb-3"
       >
-        Notes from Your Educator
+        {s.notesFromEducator}
       </h2>
 
       <ul className="space-y-3" role="list">
@@ -49,14 +51,14 @@ export default function EducatorNotes({ data }: EducatorNotesProps) {
                 {note.pinned && (
                   <span
                     className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent"
-                    aria-label="Pinned note"
+                    aria-label={s.pinned}
                   >
-                    Pinned
+                    {s.pinned}
                   </span>
                 )}
                 {note.audienceHint !== "general" && (
                   <span className="text-xs text-text-tertiary">
-                    For {note.audienceHint}s
+                    {t(s.forAudience, { audience: note.audienceHint })}
                   </span>
                 )}
               </div>
@@ -64,7 +66,7 @@ export default function EducatorNotes({ data }: EducatorNotesProps) {
                 dateTime={note.createdAt}
                 className="text-xs text-text-tertiary shrink-0"
               >
-                {formatDate(note.createdAt)}
+                {formatDate(note.createdAt, data.language)}
               </time>
             </div>
             <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap break-words">

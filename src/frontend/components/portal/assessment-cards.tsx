@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import type { PortalData } from "@/lib/api";
+import { getPortalStrings } from "@/lib/portal-i18n";
 
 interface AssessmentCardsProps {
   data: PortalData;
 }
 
-/** Format an ISO date string to a human-readable date */
-function formatDate(dateStr: string): string {
+/** Format an ISO date string to a human-readable date in the portal language */
+function formatDate(dateStr: string, lang: string): string {
   try {
     const d = new Date(dateStr);
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(lang, {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -28,6 +29,7 @@ function domainLabel(domain: string): string {
 
 export default function AssessmentCards({ data }: AssessmentCardsProps) {
   const { assessments } = data;
+  const s = getPortalStrings(data.language);
   const hasAny =
     assessments.completed.length > 0 || assessments.pending.length > 0;
 
@@ -37,12 +39,12 @@ export default function AssessmentCards({ data }: AssessmentCardsProps) {
         id="assessments-heading"
         className="font-heading text-xl font-semibold text-text-primary mb-3"
       >
-        Assessments
+        {s.assessments}
       </h2>
 
       {!hasAny ? (
         <div className="rounded-xl border border-border-subtle bg-surface-1 p-5 text-text-secondary text-center">
-          No assessments yet. Your educator will assign assessments when ready.
+          {s.assessmentsEmpty}
         </div>
       ) : (
         <div className="space-y-4">
@@ -50,7 +52,7 @@ export default function AssessmentCards({ data }: AssessmentCardsProps) {
           {assessments.pending.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-2">
-                Ready to Take
+                {s.readyToTake}
               </h3>
               <ul className="space-y-2" role="list">
                 {assessments.pending.map((assessment) => (
@@ -69,10 +71,10 @@ export default function AssessmentCards({ data }: AssessmentCardsProps) {
                           </p>
                         </div>
                         <span
-                          className="shrink-0 ml-3 px-3 py-1 text-xs font-medium rounded-full bg-accent text-surface-0"
-                          aria-label="Start assessment"
+                          className="shrink-0 ms-3 px-3 py-1 text-xs font-medium rounded-full bg-accent text-surface-0"
+                          aria-label={s.startAssessment}
                         >
-                          Start
+                          {s.startAssessment}
                         </span>
                       </div>
                     </Link>
@@ -86,7 +88,7 @@ export default function AssessmentCards({ data }: AssessmentCardsProps) {
           {assessments.completed.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-2">
-                Completed
+                {s.completed}
               </h3>
               <ul className="space-y-2" role="list">
                 {assessments.completed.map((assessment) => (
@@ -107,7 +109,7 @@ export default function AssessmentCards({ data }: AssessmentCardsProps) {
                         dateTime={assessment.date ?? ""}
                         className="shrink-0 text-xs text-text-tertiary"
                       >
-                        {assessment.date ? formatDate(assessment.date) : "—"}
+                        {assessment.date ? formatDate(assessment.date, data.language) : "\u2014"}
                       </time>
                     </div>
                   </li>

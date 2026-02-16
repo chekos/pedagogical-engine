@@ -1,6 +1,7 @@
 "use client";
 
 import type { PortalData } from "@/lib/api";
+import { getPortalStrings, bloomDisplay } from "@/lib/portal-i18n";
 
 interface SkillMapProps {
   data: PortalData;
@@ -14,15 +15,6 @@ const BLOOM_ORDER = [
   "synthesis",
   "evaluation",
 ];
-
-const BLOOM_DISPLAY: Record<string, string> = {
-  knowledge: "Remember",
-  comprehension: "Understand",
-  application: "Apply",
-  analysis: "Analyze",
-  synthesis: "Create",
-  evaluation: "Evaluate",
-};
 
 const BLOOM_COLORS: Record<string, string> = {
   knowledge: "bg-bloom-remember/20 border-bloom-remember text-bloom-remember",
@@ -49,8 +41,9 @@ function confPct(confidence: number): string {
 
 export default function SkillMap({ data }: SkillMapProps) {
   const { skillMap, skillLabels } = data;
-  const assessedIds = new Set(skillMap.assessed.map((s) => s.skillId));
-  const inferredIds = new Set(skillMap.inferred.map((s) => s.skillId));
+  const s = getPortalStrings(data.language);
+  const assessedIds = new Set(skillMap.assessed.map((sk) => sk.skillId));
+  const inferredIds = new Set(skillMap.inferred.map((sk) => sk.skillId));
 
   // Group assessed skills by bloom level
   const byBloom = new Map<string, typeof skillMap.assessed>();
@@ -69,12 +62,12 @@ export default function SkillMap({ data }: SkillMapProps) {
         id="skillmap-heading"
         className="font-heading text-xl font-semibold text-text-primary mb-3"
       >
-        Skill Map
+        {s.skillMap}
       </h2>
 
       {!hasSkills ? (
         <div className="rounded-xl border border-border-subtle bg-surface-1 p-5 text-text-secondary text-center">
-          No skills assessed yet. Complete an assessment to build your skill map.
+          {s.skillMapEmpty}
         </div>
       ) : (
         <div className="space-y-4">
@@ -86,7 +79,7 @@ export default function SkillMap({ data }: SkillMapProps) {
                   className={`inline-block w-3 h-3 rounded-full border ${BLOOM_COLORS[level] ?? "bg-surface-2 border-border"}`}
                   aria-hidden="true"
                 />
-                {BLOOM_DISPLAY[level] ?? level}
+                {bloomDisplay(level, s)}
               </h3>
               <ul className="space-y-2" role="list">
                 {byBloom.get(level)!.map((skill) => (
@@ -103,14 +96,14 @@ export default function SkillMap({ data }: SkillMapProps) {
                         aria-valuenow={Math.round(skill.confidence * 100)}
                         aria-valuemin={0}
                         aria-valuemax={100}
-                        aria-label={`${getLabel(skill.skillId, skillLabels)}: ${confPct(skill.confidence)} confidence`}
+                        aria-label={`${getLabel(skill.skillId, skillLabels)}: ${confPct(skill.confidence)}`}
                       >
                         <div
                           className="h-full rounded-full bg-accent"
                           style={{ width: `${skill.confidence * 100}%` }}
                         />
                       </div>
-                      <span className="text-xs text-text-tertiary w-8 text-right tabular-nums">
+                      <span className="text-xs text-text-tertiary w-8 text-end tabular-nums">
                         {confPct(skill.confidence)}
                       </span>
                     </div>
@@ -125,10 +118,10 @@ export default function SkillMap({ data }: SkillMapProps) {
             <div className="rounded-xl border border-border-subtle border-dashed bg-surface-1 p-4">
               <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-3 flex items-center gap-2">
                 <span className="inline-block w-3 h-3 rounded-full border border-dashed border-accent-muted bg-accent-muted/20" aria-hidden="true" />
-                Inferred
+                {s.inferredLabel}
               </h3>
               <p className="text-xs text-text-tertiary mb-2">
-                These skills are inferred from demonstrated abilities in related areas.
+                {s.inferredExplanation}
               </p>
               <ul className="space-y-2" role="list">
                 {skillMap.inferred.map((skill) => (
@@ -145,14 +138,14 @@ export default function SkillMap({ data }: SkillMapProps) {
                         aria-valuenow={Math.round(skill.confidence * 100)}
                         aria-valuemin={0}
                         aria-valuemax={100}
-                        aria-label={`${getLabel(skill.skillId, skillLabels)}: ${confPct(skill.confidence)} confidence (inferred)`}
+                        aria-label={`${getLabel(skill.skillId, skillLabels)}: ${confPct(skill.confidence)}`}
                       >
                         <div
                           className="h-full rounded-full bg-accent-muted"
                           style={{ width: `${skill.confidence * 100}%` }}
                         />
                       </div>
-                      <span className="text-xs text-text-tertiary w-8 text-right tabular-nums">
+                      <span className="text-xs text-text-tertiary w-8 text-end tabular-nums">
                         {confPct(skill.confidence)}
                       </span>
                     </div>
@@ -166,7 +159,7 @@ export default function SkillMap({ data }: SkillMapProps) {
           {skillMap.next.length > 0 && (
             <div className="rounded-xl border border-border-subtle bg-surface-0 p-4">
               <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-3">
-                Up Next
+                {s.upNext}
               </h3>
               <ul className="space-y-1.5" role="list">
                 {skillMap.next.slice(0, 5).map((skill) => (
@@ -179,7 +172,7 @@ export default function SkillMap({ data }: SkillMapProps) {
                     </span>
                     <span>{skill.label}</span>
                     <span className="text-xs text-text-tertiary">
-                      ({BLOOM_DISPLAY[skill.bloomLevel] ?? skill.bloomLevel})
+                      ({bloomDisplay(skill.bloomLevel, s)})
                     </span>
                   </li>
                 ))}

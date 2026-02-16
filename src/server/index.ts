@@ -1950,7 +1950,7 @@ app.get("/api/portal/:code", async (req, res) => {
     .sort((a, b) => a.confidence - b.confidence)
     .slice(0, 3);
 
-  res.json({
+  const responseObj = {
     portalCode: code,
     language: lang,
     audience,
@@ -1977,7 +1977,20 @@ app.get("/api/portal/:code", async (req, res) => {
       pending: pendingAssessments,
     },
     notes,
-  });
+  };
+
+  // Translate dynamic content for non-English languages
+  if (lang !== "en") {
+    try {
+      const { translatePortalData } = await import("./translate.js");
+      await translatePortalData(responseObj as Record<string, unknown>, lang);
+    } catch (err) {
+      // Non-fatal — serve English content if translation fails
+      console.log(`[portal] Translation failed: ${err instanceof Error ? err.message : err}`);
+    }
+  }
+
+  res.json(responseObj);
 });
 
 // ─── WebSocket handler for educator chat ─────────────────────────
