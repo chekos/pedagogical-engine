@@ -1862,13 +1862,19 @@ app.get("/api/portal/:code", async (req, res) => {
   }> = [];
   try {
     const noteFiles = await fs.readdir(notesDir);
-    const notePromises = noteFiles
-      .filter((f) => f.endsWith(".json"))
-      .map(async (f) => {
-        const raw = await fs.readFile(path.join(notesDir, f), "utf-8");
-        return JSON.parse(raw);
-      });
-    notes = await Promise.all(notePromises);
+    const noteResults = await Promise.all(
+      noteFiles
+        .filter((f) => f.endsWith(".json"))
+        .map(async (f) => {
+          try {
+            const raw = await fs.readFile(path.join(notesDir, f), "utf-8");
+            return JSON.parse(raw);
+          } catch {
+            return null;
+          }
+        })
+    );
+    notes = noteResults.filter((n) => n !== null);
     // Sort: pinned first, then reverse chronological
     notes.sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;

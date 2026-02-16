@@ -11,11 +11,11 @@ interface AssessmentCardsProps {
 function formatDate(dateStr: string): string {
   try {
     const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
+    return new Intl.DateTimeFormat(undefined, {
       month: "short",
       day: "numeric",
       year: "numeric",
-    });
+    }).format(d);
   } catch {
     return dateStr;
   }

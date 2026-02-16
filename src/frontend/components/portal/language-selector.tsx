@@ -2,11 +2,11 @@
 
 const LANGUAGES = [
   { code: "en", label: "English" },
-  { code: "es", label: "Espanol" },
-  { code: "fr", label: "Francais" },
+  { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
   { code: "zh", label: "Chinese" },
   { code: "ar", label: "Arabic" },
-  { code: "pt", label: "Portugues" },
+  { code: "pt", label: "Português" },
 ];
 
 interface LanguageSelectorProps {
@@ -30,7 +30,7 @@ export default function LanguageSelector({
         id="portal-language"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-border bg-surface-1 px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+        className="rounded-lg border border-border bg-surface-1 px-3 py-1.5 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:bg-surface-2 dark:text-text-primary"
         aria-label="Select language for portal content"
       >
         {LANGUAGES.map((lang) => (

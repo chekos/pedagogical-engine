@@ -54,14 +54,19 @@ async function loadNotes(
     return [];
   }
 
-  const notes = await Promise.all(
+  const noteResults = await Promise.all(
     files
       .filter((f) => f.endsWith(".json"))
       .map(async (f) => {
-        const raw = await fs.readFile(path.join(notesDir, f), "utf-8");
-        return JSON.parse(raw);
+        try {
+          const raw = await fs.readFile(path.join(notesDir, f), "utf-8");
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
       })
   );
+  const notes = noteResults.filter((n) => n !== null);
 
   // Sort: pinned first, then reverse chronological
   notes.sort((a, b) => {

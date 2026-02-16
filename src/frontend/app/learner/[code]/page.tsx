@@ -85,7 +85,7 @@ export default function LearnerPortalPage({
                 id="portal-audience"
                 value={audience}
                 onChange={(e) => handleAudienceChange(e.target.value)}
-                className="rounded-lg border border-border bg-surface-1 px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+                className="rounded-lg border border-border bg-surface-1 px-3 py-1.5 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:bg-surface-2 dark:text-text-primary"
                 aria-label="Select audience perspective"
               >
                 <option value="learner">Learner</option>
@@ -105,7 +105,7 @@ export default function LearnerPortalPage({
             <div className="text-center">
               <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-3" />
               <p className="text-sm text-text-secondary">
-                Loading your progress...
+                Loading your progress&hellip;
               </p>
             </div>
           </div>

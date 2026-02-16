@@ -72,7 +72,7 @@ export const shareNoteWithLearnerTool = tool(
       groupId,
       audienceHint: note.audienceHint,
       pinned: note.pinned,
-      preview: content.length > 200 ? content.slice(0, 200) + "..." : content,
+      preview: content.length > 200 ? content.slice(0, 200) + "\u2026" : content,
       file: notePath,
       message: `Note shared with ${learnerId}'s portal page.`,
     });

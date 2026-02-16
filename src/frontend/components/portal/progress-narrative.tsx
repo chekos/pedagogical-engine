@@ -75,7 +75,7 @@ export default function ProgressNarrative({ data }: ProgressNarrativeProps) {
             aria-label={`${progressPct}% of skills demonstrated`}
           >
             <div
-              className="h-full rounded-full bg-accent transition-all duration-500"
+              className="h-full rounded-full bg-accent transition-[width] duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
