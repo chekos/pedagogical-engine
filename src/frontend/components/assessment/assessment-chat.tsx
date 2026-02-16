@@ -131,7 +131,7 @@ export default function AssessmentChat({
   const skillAreas = buildSkillAreas(labels, coveredSkillLabels, isLoading);
 
   return (
-    <div className="flex flex-col h-screen bg-surface-0">
+    <div id="main-content" className="flex flex-col h-screen bg-surface-0">
       {/* Header with progress */}
       <header className="border-b border-border-subtle">
         <div className="flex items-center justify-between px-6 py-3">
@@ -242,6 +242,7 @@ export default function AssessmentChat({
                   : "bg-surface-2 text-text-primary rounded-bl-md"
               }`}
             >
+              <span className="sr-only">{msg.role === "user" ? "You" : "Assistant"}: </span>
               {msg.role === "user" ? (
                 <p className="whitespace-pre-wrap">{msg.text}</p>
               ) : (

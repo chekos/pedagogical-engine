@@ -12,7 +12,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <rect width="100%" height="100%" filter="url(#grain-filter)" />
       </svg>
       <NavBar />
-      <main className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full page-transition">
+      <main id="main-content" className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full page-transition">
         {children}
       </main>
       <Footer />

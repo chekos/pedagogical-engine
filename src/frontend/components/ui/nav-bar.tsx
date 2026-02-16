@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
 
 const PRIMARY_LINKS = [
@@ -40,6 +40,7 @@ export function NavBar() {
   const [exploreOpen, setExploreOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const { resolvedTheme, setTheme } = useTheme();
 
   useEffect(() => setMounted(true), []);
@@ -56,6 +57,11 @@ export function NavBar() {
     ? SECTION_BLOOM[activeExploreBloom.href]
     : undefined;
 
+  const closeDropdown = useCallback(() => {
+    setExploreOpen(false);
+    triggerRef.current?.focus();
+  }, []);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -69,21 +75,34 @@ export function NavBar() {
     }
   }, [exploreOpen]);
 
+  // Close on Escape key
+  useEffect(() => {
+    if (!exploreOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        closeDropdown();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [exploreOpen, closeDropdown]);
+
   // Close on route change
   useEffect(() => {
     setExploreOpen(false);
   }, [pathname]);
 
   return (
-    <nav className="flex items-center justify-between px-6 py-4 border-b border-border-subtle bg-surface-0">
+    <nav aria-label="Main navigation" className="flex items-center justify-between px-6 py-4 border-b border-border-subtle bg-surface-0">
       <div className="flex items-center gap-2.5">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+        <Link href="/" className="flex items-center gap-2.5" aria-label="Pedagogical Engine home">
+          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center" aria-hidden="true">
             <svg
               className="w-4 h-4 text-accent"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -107,6 +126,7 @@ export function NavBar() {
             <Link
               key={href}
               href={href}
+              aria-current={isActive ? "page" : undefined}
               className={`text-sm relative ${
                 isActive
                   ? "font-medium"
@@ -119,6 +139,7 @@ export function NavBar() {
                 <span
                   className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
                   style={{ backgroundColor: bloomColor }}
+                  aria-hidden="true"
                 />
               )}
             </Link>
@@ -128,8 +149,11 @@ export function NavBar() {
         {/* Explore dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
+            ref={triggerRef}
             onClick={() => setExploreOpen((prev) => !prev)}
             onMouseEnter={() => setExploreOpen(true)}
+            aria-expanded={exploreOpen}
+            aria-haspopup="true"
             className={`text-sm flex items-center gap-1 transition-colors relative ${
               isExploreActive
                 ? "font-medium"
@@ -142,6 +166,7 @@ export function NavBar() {
               <span
                 className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
                 style={{ backgroundColor: exploreBloomColor }}
+                aria-hidden="true"
               />
             )}
             <svg
@@ -150,6 +175,7 @@ export function NavBar() {
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={2}
+              aria-hidden="true"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
@@ -157,6 +183,9 @@ export function NavBar() {
 
           {exploreOpen && (
             <div
+              role="menu"
+              tabIndex={-1}
+              aria-label="Explore pages"
               className="absolute right-0 top-full mt-2 w-44 py-1.5 bg-surface-1 border border-border-subtle rounded-lg shadow-lg z-50"
               onMouseLeave={() => setExploreOpen(false)}
             >
@@ -168,6 +197,8 @@ export function NavBar() {
                   <Link
                     key={href}
                     href={href}
+                    role="menuitem"
+                    aria-current={isActive ? "page" : undefined}
                     className={`flex items-center gap-2.5 px-3.5 py-2 text-sm transition-colors ${
                       isActive
                         ? "font-medium"
@@ -178,6 +209,7 @@ export function NavBar() {
                     <span
                       className="w-1.5 h-1.5 rounded-full shrink-0"
                       style={{ backgroundColor: bloomColor }}
+                      aria-hidden="true"
                     />
                     {label}
                   </Link>
@@ -188,19 +220,19 @@ export function NavBar() {
         </div>
 
         {/* Theme toggle */}
-        <div className="border-l border-border-subtle pl-4">
+        <div className="border-l border-border-subtle pl-4" aria-hidden="false">
           <button
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="text-text-secondary hover:text-text-primary transition-colors"
-            aria-label="Toggle theme"
+            className="text-text-secondary hover:text-text-primary transition-colors p-1 min-w-[24px] min-h-[24px]"
+            aria-label={mounted ? (resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode") : "Toggle theme"}
           >
             {mounted ? (
               resolvedTheme === "dark" ? (
-                <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               ) : (
-                <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
               )

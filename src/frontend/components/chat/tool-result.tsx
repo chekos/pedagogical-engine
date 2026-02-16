@@ -321,13 +321,15 @@ export default memo(function ToolResult({ tool, isActive = false, onSendMessage,
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+        aria-label={`${displayLabel}${isActive ? " (working)" : ""} — ${expanded ? "collapse" : "expand"} details`}
         className="w-full flex items-center gap-3 px-5 py-3 hover:bg-surface-2/50 transition-colors"
       >
         <span className="text-sm font-medium text-text-primary flex-1 text-left">
           {displayLabel}
           {isActive && (
             <span className="ml-2 inline-flex">
-              <span className="animate-pulse-subtle text-xs text-text-tertiary">working...</span>
+              <span className="animate-pulse-subtle text-xs text-text-tertiary" role="status">working...</span>
             </span>
           )}
         </span>
@@ -336,6 +338,7 @@ export default memo(function ToolResult({ tool, isActive = false, onSendMessage,
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          aria-hidden="true"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>

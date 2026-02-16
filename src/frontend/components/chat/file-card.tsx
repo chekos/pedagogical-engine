@@ -93,9 +93,9 @@ export default function FileCard({ file }: FileCardProps) {
               href={`${BACKEND_URL}${file.downloadUrl}`}
               download
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium text-text-primary transition-colors"
-              title="Download file"
+              aria-label={`Download ${file.title}`}
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
               Download
@@ -118,7 +118,7 @@ export default function FileCard({ file }: FileCardProps) {
               <button
                 onClick={handleCopyLink}
                 className="p-1.5 rounded-lg hover:bg-white/10 text-text-tertiary hover:text-text-primary transition-colors"
-                title="Copy link"
+                aria-label={copied ? "Link copied" : "Copy link"}
               >
                 {copied ? (
                   <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 const aphorisms = [
   "Every lesson is a hypothesis.",
@@ -25,15 +26,23 @@ export function Footer() {
 
   return (
     <footer className="mt-auto">
-      <div className="bloom-spectrum" />
+      <div className="bloom-spectrum" aria-hidden="true" />
       <div className="px-6 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <span className="text-xs text-text-tertiary font-heading italic">
             {aphorism}
           </span>
-          <span className="text-xs text-text-tertiary">
-            Cerebral Valley x Anthropic Hackathon
-          </span>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/accessibility"
+              className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+            >
+              Accessibility
+            </Link>
+            <span className="text-xs text-text-tertiary">
+              Cerebral Valley x Anthropic Hackathon
+            </span>
+          </div>
         </div>
       </div>
     </footer>

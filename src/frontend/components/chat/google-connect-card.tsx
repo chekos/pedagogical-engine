@@ -139,7 +139,7 @@ export default function GoogleConnectCard({
       </button>
 
       {status === "error" && (
-        <p className="text-xs text-red-400">
+        <p className="text-xs text-red-400" role="alert">
           Connection failed. Please try again.
         </p>
       )}

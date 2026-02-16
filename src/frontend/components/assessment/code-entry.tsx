@@ -49,7 +49,7 @@ export default function CodeEntry({ initialCode = "", onSubmit }: CodeEntryProps
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-0 px-4">
+    <div id="main-content" className="min-h-screen flex items-center justify-center bg-surface-0 px-4">
       <div className="w-full max-w-md">
         {/* Friendly wave illustration */}
         <div className="text-center mb-8">

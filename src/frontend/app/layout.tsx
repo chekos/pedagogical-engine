@@ -1,10 +1,20 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "../components/theme-provider";
+import { SkipLink } from "../components/ui/skip-link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pedagogical Engine",
+  title: {
+    default: "Pedagogical Engine",
+    template: "%s | Pedagogical Engine",
+  },
   description: "AI-powered teaching partner for educators — plan lessons, assess students, reason about skills",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Do NOT set maximumScale or userScalable=no — WCAG 1.4.4 requires 200% zoom
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen bg-surface-0 text-text-primary antialiased">
         <ThemeProvider>
+          <SkipLink />
           {children}
         </ThemeProvider>
       </body>

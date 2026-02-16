@@ -426,7 +426,7 @@ function DashboardContent() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-5">
+      <main id="main-content" className="max-w-7xl mx-auto px-6 py-5">
         {!domainDetail ? (
           <div className="flex items-center justify-center h-[400px]">
             <LoadingSpinner message={`Loading ${domainName}...`} />
