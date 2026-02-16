@@ -280,8 +280,6 @@ export const getPortalViewTool = tool(
     const totalSkills = skillGraph?.skills.length ?? 0;
     const assessedCount = skillMap.assessed.length;
     const inferredCount = skillMap.inferred.length;
-    const nextCount = skillMap.next.length;
-
     const progressData = {
       learnerName: profile.name,
       domain: profile.domain,

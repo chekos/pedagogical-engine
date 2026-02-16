@@ -67,7 +67,7 @@ export default function EducatorNotes({ data }: EducatorNotesProps) {
                 {formatDate(note.createdAt)}
               </time>
             </div>
-            <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
+            <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap break-words">
               {note.content}
             </div>
           </li>

@@ -57,7 +57,7 @@ export default function AssessmentCards({ data }: AssessmentCardsProps) {
                   <li key={assessment.code}>
                     <Link
                       href={`/assess/${assessment.code}`}
-                      className="block rounded-xl border border-accent/30 bg-accent/5 p-4 hover:bg-accent/10 transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="block rounded-xl border border-accent/30 bg-accent/5 p-4 hover:bg-accent/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       <div className="flex items-center justify-between">
                         <div>
