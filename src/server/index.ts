@@ -1718,6 +1718,262 @@ app.get("/api/transfer-learners", async (_req, res) => {
   }
 });
 
+// ─── Learner portal endpoint ──────────────────────────────────────
+
+/** Serve learner portal data by portal code */
+app.get("/api/portal/:code", async (req, res) => {
+  const { code } = req.params;
+  const lang = (req.query.lang as string) || "en";
+  const audience = (req.query.audience as string) || "learner";
+
+  // Validate code format (URL-safe characters only)
+  if (!/^[a-zA-Z0-9_-]+$/.test(code)) {
+    res.status(400).json({ error: "Invalid portal code format" });
+    return;
+  }
+
+  // Validate audience
+  const validAudiences = ["learner", "parent", "employer", "general"];
+  if (!validAudiences.includes(audience)) {
+    res.status(400).json({ error: `Invalid audience. Must be one of: ${validAudiences.join(", ")}` });
+    return;
+  }
+
+  // Find learner by portal code — scan learner profiles
+  const learnersDir = path.join(DATA_DIR, "learners");
+  let learnerFile: string | null = null;
+  let learnerContent: string | null = null;
+
+  try {
+    const files = await fs.readdir(learnersDir);
+    for (const file of files) {
+      if (!file.endsWith(".md")) continue;
+      const content = await fs.readFile(path.join(learnersDir, file), "utf-8");
+      if (content.includes(`| **Portal Code** | ${code} |`)) {
+        learnerFile = file;
+        learnerContent = content;
+        break;
+      }
+    }
+  } catch {
+    res.status(500).json({ error: "Failed to scan learner profiles" });
+    return;
+  }
+
+  if (!learnerFile || !learnerContent) {
+    res.status(404).json({ error: `No learner found with portal code '${code}'` });
+    return;
+  }
+
+  const learnerId = learnerFile.replace(".md", "");
+
+  // Parse learner profile
+  const nameMatch = learnerContent.match(/# Learner Profile: (.+)/);
+  const name = nameMatch ? nameMatch[1].trim() : learnerId;
+  const groupMatch = learnerContent.match(/\| \*\*Group\*\* \| (.+?) \|/);
+  const group = groupMatch ? groupMatch[1].trim() : "";
+  const domainMatch = learnerContent.match(/\| \*\*Domain\*\* \| (.+?) \|/);
+  const domain = domainMatch ? domainMatch[1].trim() : "";
+
+  // Parse assessed skills
+  const assessedSkills: Array<{
+    skillId: string;
+    confidence: number;
+    bloomLevel: string;
+    soloDemonstrated?: string;
+  }> = [];
+  const inferredSkills: Array<{ skillId: string; confidence: number }> = [];
+
+  const assessedSection = learnerContent.split("## Assessed Skills")[1]?.split("##")[0] ?? "";
+  const assessedLines = assessedSection.split("\n");
+  for (let li = 0; li < assessedLines.length; li++) {
+    const line = assessedLines[li];
+    const match = line.match(/^- (.+?):\s*([\d.]+)\s*confidence.*?(?:at\s+(\w+)\s+level)?/i);
+    if (match) {
+      const entry: (typeof assessedSkills)[0] = {
+        skillId: match[1].trim(),
+        confidence: parseFloat(match[2]),
+        bloomLevel: match[3] ?? "unknown",
+      };
+      // Check for SOLO level
+      for (let lj = li + 1; lj < assessedLines.length && assessedLines[lj].match(/^\s+-/); lj++) {
+        const soloMatch = assessedLines[lj].match(/solo_demonstrated:\s*(\w+)/);
+        if (soloMatch) entry.soloDemonstrated = soloMatch[1];
+      }
+      assessedSkills.push(entry);
+    }
+  }
+
+  const inferredSection = learnerContent.split("## Inferred Skills")[1]?.split("##")[0] ?? "";
+  for (const line of inferredSection.split("\n")) {
+    const match = line.match(/^- (.+?):\s*([\d.]+)\s*confidence/i);
+    if (match) {
+      inferredSkills.push({
+        skillId: match[1].trim(),
+        confidence: parseFloat(match[2]),
+      });
+    }
+  }
+
+  // Load skill graph for "next steps" calculation
+  const knownSkillIds = new Set([
+    ...assessedSkills.map((s) => s.skillId),
+    ...inferredSkills.map((s) => s.skillId),
+  ]);
+  const nextSteps: Array<{ skillId: string; label: string; bloomLevel: string }> = [];
+  let totalSkills = 0;
+  const skillLabels: Record<string, string> = {};
+
+  if (domain) {
+    try {
+      const skillsRaw = await fs.readFile(
+        path.join(DATA_DIR, "domains", domain, "skills.json"),
+        "utf-8"
+      );
+      const { skills } = JSON.parse(skillsRaw);
+      totalSkills = skills.length;
+      for (const skill of skills as Array<{ id: string; label: string; bloom_level: string; dependencies: string[] }>) {
+        skillLabels[skill.id] = skill.label;
+        if (knownSkillIds.has(skill.id)) continue;
+        const allDepsKnown =
+          skill.dependencies.length === 0 ||
+          skill.dependencies.every((d: string) => knownSkillIds.has(d));
+        if (allDepsKnown) {
+          nextSteps.push({
+            skillId: skill.id,
+            label: skill.label,
+            bloomLevel: skill.bloom_level,
+          });
+        }
+      }
+    } catch {
+      // No skill graph
+    }
+  }
+
+  // Load educator-shared notes
+  const notesDir = path.join(DATA_DIR, "notes", learnerId);
+  let notes: Array<{
+    id: string;
+    createdAt: string;
+    content: string;
+    audienceHint: string;
+    pinned: boolean;
+  }> = [];
+  try {
+    const noteFiles = await fs.readdir(notesDir);
+    const notePromises = noteFiles
+      .filter((f) => f.endsWith(".json"))
+      .map(async (f) => {
+        const raw = await fs.readFile(path.join(notesDir, f), "utf-8");
+        return JSON.parse(raw);
+      });
+    notes = await Promise.all(notePromises);
+    // Sort: pinned first, then reverse chronological
+    notes.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  } catch {
+    // No notes directory — that's fine
+  }
+
+  // Load assessments that reference this learner
+  const completedAssessments: Array<{
+    code: string;
+    domain: string;
+    date: string;
+    summary: string;
+  }> = [];
+  const pendingAssessments: Array<{
+    code: string;
+    domain: string;
+    description: string;
+    assessUrl: string;
+  }> = [];
+
+  try {
+    const assessmentsDir = path.join(DATA_DIR, "assessments");
+    const assessFiles = await fs.readdir(assessmentsDir);
+    for (const file of assessFiles) {
+      if (!file.endsWith(".md")) continue;
+      const content = await fs.readFile(path.join(assessmentsDir, file), "utf-8");
+
+      const isTargeted =
+        content.includes(`- ${learnerId}`) ||
+        (content.includes(`| **Group** | ${group} |`) && content.includes("_All group members_"));
+      if (!isTargeted) continue;
+
+      const codeMatch = content.match(/\| \*\*Code\*\* \| (.+?) \|/);
+      const domMatch = content.match(/\| \*\*Domain\*\* \| (.+?) \|/);
+      const statusMatch = content.match(/\| \*\*Status\*\* \| (.+?) \|/);
+      const aCode = codeMatch?.[1]?.trim() ?? "";
+      const aDomain = domMatch?.[1]?.trim() ?? "";
+      const aStatus = statusMatch?.[1]?.trim() ?? "";
+
+      const completionMatch = content.match(
+        new RegExp(`- ${learnerId}: Completed (.+?) —(.+)`)
+      );
+
+      if (completionMatch) {
+        completedAssessments.push({
+          code: aCode,
+          domain: aDomain,
+          date: completionMatch[1].trim(),
+          summary: completionMatch[2].trim(),
+        });
+      } else if (aStatus === "active") {
+        pendingAssessments.push({
+          code: aCode,
+          domain: aDomain,
+          description: `Assessment on ${aDomain.replace(/-/g, " ")}`,
+          assessUrl: `/assess/${aCode}`,
+        });
+      }
+    }
+  } catch {
+    // No assessments directory
+  }
+
+  // Compose the progress data
+  const topSkills = [...assessedSkills]
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, 5);
+  const growthAreas = assessedSkills
+    .filter((s) => s.confidence < 0.7)
+    .sort((a, b) => a.confidence - b.confidence)
+    .slice(0, 3);
+
+  res.json({
+    portalCode: code,
+    language: lang,
+    audience,
+    learner: { id: learnerId, name, domain, group },
+    progressData: {
+      learnerName: name,
+      domain,
+      totalSkillsInDomain: totalSkills,
+      assessedCount: assessedSkills.length,
+      inferredCount: inferredSkills.length,
+      knownCount: assessedSkills.length + inferredSkills.length,
+      nextSteps: nextSteps.slice(0, 3),
+      topSkills,
+      growthAreas,
+    },
+    skillMap: {
+      assessed: assessedSkills,
+      inferred: inferredSkills,
+      next: nextSteps,
+    },
+    skillLabels,
+    assessments: {
+      completed: completedAssessments,
+      pending: pendingAssessments,
+    },
+    notes,
+  });
+});
+
 // ─── WebSocket handler for educator chat ─────────────────────────
 wss.on("connection", (ws: WebSocket, req: import("http").IncomingMessage) => {
   // Check for reconnection: ?sessionId=... in the upgrade URL

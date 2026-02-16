@@ -35,6 +35,9 @@ import { googleListDriveTool } from "./google-list-drive.js";
 import { googleShareDocumentTool } from "./google-share-document.js";
 import { googleSyncClassroomTool } from "./google-sync-classroom.js";
 import { googleExportLessonToSlidesTool } from "./google-export-lesson-to-slides.js";
+import { generatePortalCodeTool } from "./generate-portal-code.js";
+import { shareNoteWithLearnerTool } from "./share-note-with-learner.js";
+import { getPortalViewTool } from "./get-portal-view.js";
 
 export const pedagogyServer = createSdkMcpServer({
   name: "pedagogy",
@@ -77,5 +80,8 @@ export const pedagogyServer = createSdkMcpServer({
     googleShareDocumentTool,
     googleSyncClassroomTool,
     googleExportLessonToSlidesTool,
+    generatePortalCodeTool,
+    shareNoteWithLearnerTool,
+    getPortalViewTool,
   ],
 });

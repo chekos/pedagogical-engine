@@ -626,3 +626,79 @@ export async function fetchGroupStatus(
   if (!res.ok) throw new Error(`Group status not found for ${group}/${domain}`);
   return res.json();
 }
+
+// ─── Portal API ──────────────────────────────────────────────────
+
+export interface PortalSkill {
+  skillId: string;
+  confidence: number;
+  bloomLevel?: string;
+  soloDemonstrated?: string;
+}
+
+export interface PortalAssessment {
+  code: string;
+  domain: string;
+  date?: string;
+  summary?: string;
+  description?: string;
+  assessUrl?: string;
+}
+
+export interface PortalNote {
+  id: string;
+  createdAt: string;
+  content: string;
+  audienceHint: string;
+  pinned: boolean;
+}
+
+export interface PortalData {
+  portalCode: string;
+  language: string;
+  audience: string;
+  learner: {
+    id: string;
+    name: string;
+    domain: string;
+    group: string;
+  };
+  progressData: {
+    learnerName: string;
+    domain: string;
+    totalSkillsInDomain: number;
+    assessedCount: number;
+    inferredCount: number;
+    knownCount: number;
+    nextSteps: Array<{ skillId: string; label: string; bloomLevel: string }>;
+    topSkills: PortalSkill[];
+    growthAreas: PortalSkill[];
+  };
+  skillMap: {
+    assessed: PortalSkill[];
+    inferred: Array<{ skillId: string; confidence: number }>;
+    next: Array<{ skillId: string; label: string; bloomLevel: string }>;
+  };
+  skillLabels: Record<string, string>;
+  assessments: {
+    completed: PortalAssessment[];
+    pending: PortalAssessment[];
+  };
+  notes: PortalNote[];
+}
+
+export async function fetchPortalData(
+  code: string,
+  lang = "en",
+  audience = "learner"
+): Promise<PortalData> {
+  const params = new URLSearchParams({ lang, audience });
+  const res = await fetch(
+    `${BACKEND_URL}/api/portal/${encodeURIComponent(code)}?${params}`
+  );
+  if (!res.ok) {
+    if (res.status === 404) throw new Error("Portal not found");
+    throw new Error("Failed to load portal data");
+  }
+  return res.json();
+}
