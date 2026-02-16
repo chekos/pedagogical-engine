@@ -10,7 +10,7 @@ A pedagogical reasoning engine — an AI teaching partner built on the Claude Ag
 
 | Want to understand... | Read this |
 |---|---|
-| **Everything the system does** | [CAPABILITIES.md](../CAPABILITIES.md) — the comprehensive inventory (37 tools, 9 moonshots, 24 routes, emergence) |
+| **Everything the system does** | [CAPABILITIES.md](../CAPABILITIES.md) — the comprehensive inventory (40 tools, 9 moonshots, 25 routes, emergence) |
 | **Why it exists / philosophy** | [docs/north-star.md](north-star.md) — 5 primitives, "primitives over features" |
 | **How it's built** | [docs/architecture.md](architecture.md) — Agent SDK, subagents, skills, filesystem-as-memory |
 | **The 9 moonshots** | [docs/moonshots/index.md](moonshots/index.md) — lesson simulation, disagreement, transfer, meta-reasoning, etc. |
@@ -28,7 +28,7 @@ A pedagogical reasoning engine — an AI teaching partner built on the Claude Ag
 src/server/
 ├── index.ts              # Express server, 30+ REST endpoints, 2 WebSocket endpoints
 ├── agent.ts              # Agent SDK config — models, system prompt, tools, subagents
-├── tools/                # 37 MCP tools (28 pedagogy + 9 Google)
+├── tools/                # 40 MCP tools (31 pedagogy + 9 Google)
 │   └── index.ts          # Tool registry — start here to see all tools
 ├── google/               # Google Workspace integration (OAuth, Drive, Classroom)
 ├── exports/              # PDF generation (lesson plans, skill reports, group summaries)
@@ -37,7 +37,7 @@ src/server/
 └── tool-labels.ts        # Human-friendly tool labels for chat UI
 
 src/frontend/
-├── app/                  # 25 Next.js routes (see CAPABILITIES.md §6)
+├── app/                  # 26 Next.js routes (see CAPABILITIES.md §6)
 │   ├── page.tsx          # Landing page
 │   ├── teach/page.tsx    # Main educator chat (WebSocket)
 │   ├── dashboard/        # Skill graph + group analytics
@@ -52,7 +52,7 @@ agent-workspace/          # The agent's world (separate from developer tools)
 
 ## The key insight: Emergence
 
-The 37 tools and 10 skills are a floor, not a ceiling. The agent combines them in ways we didn't design. Example: asked to create slides, it autonomously installed LibreOffice, wrote a Python export script, visually QA'd its own output, and styled slides to match the lesson's Magical Realism theme. No tool was built for any of that.
+The 40 tools and 10 skills are a floor, not a ceiling. The agent combines them in ways we didn't design. Example: asked to create slides, it autonomously installed LibreOffice, wrote a Python export script, visually QA'd its own output, and styled slides to match the lesson's Magical Realism theme. No tool was built for any of that.
 
 Read [CAPABILITIES.md §13](../CAPABILITIES.md) for the full emergence story.
 

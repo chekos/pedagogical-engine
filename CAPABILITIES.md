@@ -77,9 +77,9 @@ Educator arrives → Interview + [6] Affective + [9] Profile
 
 ---
 
-## 3. Complete Tool Inventory (37 MCP Tools)
+## 3. Complete Tool Inventory (40 MCP Tools)
 
-### Core Pedagogy Tools (28)
+### Core Pedagogy Tools (31)
 
 | Tool | What it does | Powers |
 |------|-------------|--------|
@@ -111,6 +111,9 @@ Educator arrives → Interview + [6] Affective + [9] Profile
 | `update_educator_profile` | Create/update educator profile from signals and preferences | Moonshot 9 |
 | `analyze_educator_context` | Generate lesson-specific customization based on educator profile | Moonshot 9 |
 | `report_assessment_progress` | Report assessment progress updates to the educator | Assessment UX |
+| `generate_portal_code` | Generate persistent, URL-safe portal code for a learner | Learner Portal |
+| `get_portal_view` | Render learner portal page data by portal code (skills, assessments, notes) | Learner Portal |
+| `share_note_with_learner` | Share educator note with a learner's portal page | Learner Portal |
 
 ### Google Workspace Tools (9)
 
@@ -166,7 +169,7 @@ Each subagent gets its own isolated context window, system prompt, and tool rest
 
 ---
 
-## 6. Frontend Experiences (24 Routes)
+## 6. Frontend Experiences (25 Routes)
 
 | Route | Experience | Key features |
 |-------|-----------|-------------|
@@ -192,6 +195,7 @@ Each subagent gets its own isolated context window, system prompt, and tool rest
 | `/debrief/[lesson-id]` | Post-session debrief | Structured reflection interface |
 | `/onboarding` | Google Workspace onboarding | 3-step OAuth connect wizard with benefit cards |
 | `/onboarding/callback` | OAuth callback | Handles success/error with localStorage signaling |
+| `/learner/[code]` | Learner portal | Read-only progress page — skill map, assessments, educator notes, audience-adaptive views (?lang=, ?audience=) |
 | `/accessibility` | Accessibility statement | WCAG 2.2 AA conformance statement, features list, known limitations |
 
 **Tech stack:** Next.js 16 + App Router + Turbopack + Tailwind CSS v4 (CSS-native @theme)
@@ -236,6 +240,7 @@ Each subagent gets its own isolated context window, system prompt, and tool rest
 | GET | `/api/reasoning/:lessonId/:traceId` | Specific trace |
 | GET | `/api/transfer/:learnerId` | Cross-domain transfer analysis |
 | GET | `/api/transfer-learners` | Learners with assessed skills |
+| GET | `/api/portal/:code` | Learner portal data (skills, assessments, notes) by portal code |
 
 ### WebSocket Endpoints
 
@@ -302,6 +307,7 @@ All persistent data lives in `agent-workspace/data/` — accessible to both the 
 | Educator profiles | `data/educators/{id}.json` | JSON | Style distributions, timing patterns |
 | Reasoning traces | `data/reasoning-traces/{lesson-id}.json` | JSON | Decision traces with evidence chains |
 | Meta-pedagogical questions | `data/meta-pedagogical/{educator-id}-questions.json` | JSON | Question pattern tracking |
+| Educator notes | `data/notes/{learner-id}/note-{date}-{id}.json` | JSON | Per-learner, shared via portal |
 | Google OAuth tokens | `data/auth/google-tokens.json` | JSON | Auto-refreshed, gitignored |
 
 ### Demo Data (4 Domains)
@@ -469,10 +475,10 @@ Items found in other docs that CLAUDE.md doesn't fully cover:
 
 | Metric | Count |
 |--------|-------|
-| MCP tools | 37 (28 pedagogy + 9 Google) |
+| MCP tools | 40 (31 pedagogy + 9 Google) |
 | Agent skills | 10 (6 pedagogical + 4 Office export) |
 | Subagents | 3 |
-| Frontend routes | 25 |
+| Frontend routes | 26 |
 | REST API endpoints | 30+ |
 | WebSocket endpoints | 2 |
 | PDF export types | 4 |
