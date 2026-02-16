@@ -1,0 +1,51 @@
+{
+  "id": "sergio",
+  "name": "Sergio",
+  "bio": "Naturalist educator for East Bay Regional Parks (3 years). Works at Tilden Nature Area. Teaches outdoor/environmental education to school groups, primarily elementary age. Passionate about Indigenous peoples' history and ethnobotany.",
+  "created": "2026-02-16T19:09:37.052Z",
+  "updated": "2026-02-16T19:09:37.052Z",
+  "teaching_style": {
+    "lecture": 0.05,
+    "discussion": 0.15,
+    "hands_on": 0.3,
+    "socratic": 0.25,
+    "project_based": 0.05,
+    "demonstration": 0.1,
+    "storytelling": 0.1
+  },
+  "strengths": [
+    {
+      "area": "rapport_building",
+      "confidence": 0.8,
+      "notes": "Adapts to audience needs naturally"
+    },
+    {
+      "area": "facilitation",
+      "confidence": 0.8,
+      "notes": "Comfortable with hands-on and Socratic approaches"
+    },
+    {
+      "area": "content_expertise",
+      "confidence": 0.75,
+      "notes": "Strong knowledge of East Bay ecology and Indigenous history"
+    },
+    {
+      "area": "improvisation",
+      "confidence": 0.75,
+      "notes": "Adapts to whatever the audience needs"
+    }
+  ],
+  "growth_areas": [],
+  "content_confidence": {},
+  "preferences": {
+    "lesson_start": "story_or_hook",
+    "group_work_comfort": "high",
+    "pacing": "adaptive",
+    "contingency_preference": "open_ended_pivots",
+    "setting": "outdoor_field"
+  },
+  "timing_patterns": {},
+  "growth_nudges": [],
+  "session_count": 0,
+  "debrief_count": 0
+}

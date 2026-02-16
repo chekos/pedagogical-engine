@@ -1,0 +1,61 @@
+{
+  "domain": "ohlone-ethnobotany",
+  "version": "1.0.0",
+  "description": "Directed dependency edges between ohlone-ethnobotany skills. Source is the prerequisite; target is the dependent skill.",
+  "edges": [
+    {
+      "source": "identify-local-plants",
+      "target": "name-plant-uses",
+      "confidence": 0.9,
+      "type": "prerequisite"
+    },
+    {
+      "source": "know-ohlone-presence",
+      "target": "name-plant-uses",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "name-plant-uses",
+      "target": "explain-plant-people-relationship",
+      "confidence": 0.9,
+      "type": "prerequisite"
+    },
+    {
+      "source": "know-ohlone-presence",
+      "target": "explain-plant-people-relationship",
+      "confidence": 0.85,
+      "type": "prerequisite"
+    },
+    {
+      "source": "explain-plant-people-relationship",
+      "target": "describe-stewardship",
+      "confidence": 0.9,
+      "type": "prerequisite"
+    },
+    {
+      "source": "know-ohlone-presence",
+      "target": "connect-past-present",
+      "confidence": 0.9,
+      "type": "prerequisite"
+    },
+    {
+      "source": "describe-stewardship",
+      "target": "connect-past-present",
+      "confidence": 0.8,
+      "type": "recommended"
+    },
+    {
+      "source": "describe-stewardship",
+      "target": "apply-stewardship-personally",
+      "confidence": 0.95,
+      "type": "prerequisite"
+    },
+    {
+      "source": "connect-past-present",
+      "target": "apply-stewardship-personally",
+      "confidence": 0.8,
+      "type": "recommended"
+    }
+  ]
+}

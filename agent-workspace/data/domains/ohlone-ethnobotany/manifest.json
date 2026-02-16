@@ -1,0 +1,32 @@
+{
+  "name": "Ohlone Ethnobotany & Stewardship",
+  "slug": "ohlone-ethnobotany",
+  "version": "1.0.0",
+  "description": "Ethnobotany and Indigenous stewardship for East Bay field trips — covers local plant identification, Ohlone plant uses, the concept of stewardship, and connecting past Indigenous land management to present-day responsibility. Designed for elementary school trail walks at Tilden Nature Area.",
+  "author": "Sergio",
+  "license": "MIT",
+  "tags": [
+    "ethnobotany",
+    "ohlone",
+    "stewardship",
+    "east-bay",
+    "tilden",
+    "elementary",
+    "field-trip"
+  ],
+  "audience": {
+    "level": "beginner",
+    "ages": "8-9",
+    "setting": "outdoor trail walk"
+  },
+  "stats": {
+    "skills": 7,
+    "dependencies": 9,
+    "bloomLevels": 3
+  },
+  "icon": "🌿",
+  "color": "#4a7c59",
+  "featured": false,
+  "createdAt": "2026-02-16T19:21:55.383Z",
+  "updatedAt": "2026-02-16T19:21:55.383Z"
+}

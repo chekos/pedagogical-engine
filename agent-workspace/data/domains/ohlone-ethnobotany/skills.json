@@ -1,0 +1,56 @@
+{
+  "domain": "ohlone-ethnobotany",
+  "version": "1.0.0",
+  "description": "Ethnobotany and Indigenous stewardship for East Bay field trips — covers local plant identification, Ohlone plant uses, the concept of stewardship, and connecting past Indigenous land management to present-day responsibility. Designed for elementary school trail walks at Tilden Nature Area.",
+  "skills": [
+    {
+      "id": "identify-local-plants",
+      "label": "Can identify oak (acorn), mugwort, soap root, and bay laurel by sight, smell, or touch",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "know-ohlone-presence",
+      "label": "Knows the Ohlone peoples have lived in the East Bay for thousands of years and are still here today",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "name-plant-uses",
+      "label": "Can name at least one way the Ohlone used each plant (food, medicine, cleaning, cooking)",
+      "bloom_level": "knowledge",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "explain-plant-people-relationship",
+      "label": "Can explain that the Ohlone didn't just use plants — they cared for and managed them",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "describe-stewardship",
+      "label": "Can describe stewardship as taking care of something so it's there for the future",
+      "bloom_level": "comprehension",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "connect-past-present",
+      "label": "Can give an example of Ohlone people or culture today (Sogorea Te' Land Trust, Ohlone Cafe, etc.)",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": []
+    },
+    {
+      "id": "apply-stewardship-personally",
+      "label": "Can describe one thing they can do to take care of nature for future people",
+      "bloom_level": "application",
+      "assessable": true,
+      "dependencies": []
+    }
+  ]
+}
