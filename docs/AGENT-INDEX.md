@@ -37,7 +37,7 @@ src/server/
 └── tool-labels.ts        # Human-friendly tool labels for chat UI
 
 src/frontend/
-├── app/                  # 24 Next.js routes (see CAPABILITIES.md §6)
+├── app/                  # 25 Next.js routes (see CAPABILITIES.md §6)
 │   ├── page.tsx          # Landing page
 │   ├── teach/page.tsx    # Main educator chat (WebSocket)
 │   ├── dashboard/        # Skill graph + group analytics

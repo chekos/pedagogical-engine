@@ -136,7 +136,17 @@ an experienced teacher, not a content generator.
 - Inline Google connect card in chat — rendered when agent calls `request_google_connection`
   - Opens OAuth consent in popup, polls for close, checks status, sends confirmation to agent
 - Google status badge in session context sidebar — polls `/api/auth/google/status`
+- Accessibility statement page (/accessibility) — WCAG 2.2 AA conformance statement
 - Custom theme with light/dark mode via CSS variables
+- WCAG 2.2 Level AA accessibility:
+  - Skip navigation link on every page
+  - ARIA live regions on chat interfaces (`role="log"`, `aria-live="polite"`)
+  - Screen reader sender identification on all messages
+  - Keyboard-navigable dropdown menus with Escape key handling
+  - `prefers-reduced-motion` media query disabling all animations
+  - `aria-expanded`, `aria-pressed`, `aria-current="page"` on interactive elements
+  - Semantic HTML: `<ol>` message lists, `<time>` timestamps, `scope="col"` table headers
+  - ESLint `jsx-a11y` plugin enforcing accessibility rules (`npm run lint`)
 
 ### Meta-pedagogical layer (Moonshot 4)
 - Decision tracing: every major decision in a lesson plan is tagged with its reasoning chain
@@ -315,6 +325,7 @@ All persistent data lives in `agent-workspace/data/` — accessible to both the 
 - `npm install` from root installs all workspaces
 - `npm run dev:server` — runs backend from project root
 - `npm run dev:frontend` — runs Next.js on port 3001
+- `npm run lint --workspace=src/frontend` — runs ESLint with jsx-a11y accessibility rules
 - `brew install --cask libreoffice` — needed for agent visual QA of created .docx/.pptx files (headless conversion to PDF/images)
 - Tailwind v4 config is CSS-native in `src/frontend/app/globals.css` (@theme inline) — no tailwind.config.ts
 
