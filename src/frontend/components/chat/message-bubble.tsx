@@ -12,9 +12,9 @@ interface MessageBubbleProps {
 }
 
 const markdownComponents: Components = {
-  // Tables
+  // Tables — role="region" + tabIndex allows keyboard scrolling of overflow content
   table: ({ children }) => (
-    <div className="overflow-x-auto my-2">
+    <div className="overflow-x-auto my-2" role="region" aria-label="Data table" tabIndex={0}>
       <table className="w-full border-collapse text-sm">{children}</table>
     </div>
   ),
@@ -28,7 +28,7 @@ const markdownComponents: Components = {
     </tr>
   ),
   th: ({ children }) => (
-    <th className="px-3 py-2 text-left font-semibold border border-border-subtle">
+    <th className="px-3 py-2 text-left font-semibold border border-border-subtle" scope="col">
       {children}
     </th>
   ),
@@ -50,7 +50,7 @@ const markdownComponents: Components = {
     return <code {...props}>{children}</code>;
   },
 
-  // Links
+  // Links — opens external links in new tab with screen reader hint
   a: ({ href, children }) => (
     <a
       href={href}
@@ -59,6 +59,7 @@ const markdownComponents: Components = {
       className="text-accent-muted underline underline-offset-2 hover:text-accent"
     >
       {children}
+      <span className="sr-only"> (opens in new tab)</span>
     </a>
   ),
 
@@ -72,6 +73,7 @@ const markdownComponents: Components = {
 
 export default memo(function MessageBubble({ role, text, timestamp }: MessageBubbleProps) {
   const isUser = role === "user";
+  const senderLabel = isUser ? "You" : "Assistant";
 
   return (
     <div
@@ -84,6 +86,8 @@ export default memo(function MessageBubble({ role, text, timestamp }: MessageBub
             : "border-l-[3px] border-accent/60 pl-4 text-text-primary"
         }`}
       >
+        {/* Screen reader only sender identification */}
+        <span className="sr-only">{senderLabel}: </span>
         {isUser ? (
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{text}</p>
         ) : (
@@ -97,8 +101,10 @@ export default memo(function MessageBubble({ role, text, timestamp }: MessageBub
           </div>
         )}
         {timestamp && (
-          <p className="text-xs mt-1.5 text-text-tertiary">
-            {timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          <p className="text-xs mt-1.5 text-text-tertiary" aria-label={`Sent at ${timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}>
+            <time dateTime={timestamp.toISOString()}>
+              {timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </time>
           </p>
         )}
       </div>

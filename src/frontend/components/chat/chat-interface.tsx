@@ -94,8 +94,7 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
       restoredRef.current = true;
       pruneOldSessions(10);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Intentionally run once on mount
 
   // AI-generated creative tool labels (received from server on session init)
   const [creativeLabels, setCreativeLabels] = useState<Record<string, string>>({});
@@ -167,7 +166,7 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
   // Extract session context from tool uses (generic pattern-based extraction)
   const extractContext = useCallback((tools: ToolUse[]) => {
     setSessionContext((prev) => {
-      let next = { ...prev };
+      const next = { ...prev };
       for (const tool of tools) {
         // Extract lessonId from file-based tools (Read/Write on lesson files)
         if ((tool.name === "Read" || tool.name === "Write") && typeof tool.input.file_path === "string") {
@@ -510,37 +509,38 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
   const connLabel = CONNECTION_LABELS[status];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" id="main-content">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
         <div className="flex items-center gap-4">
           <Link
             href="/"
+            aria-label="Back to home"
             className="flex items-center gap-2 text-text-tertiary hover:text-text-primary transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </Link>
-          <div className="w-px h-5 bg-border-subtle" />
+          <div className="w-px h-5 bg-border-subtle" aria-hidden="true" />
           <div>
             <h1 className="text-lg font-heading text-text-primary">Teach</h1>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {status !== "connected" && (
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${connLabel.color}`} />
+            <div className="flex items-center gap-2" role="status" aria-live="polite">
+              <span className={`w-2 h-2 rounded-full ${connLabel.color}`} aria-hidden="true" />
               <span className="text-xs text-text-tertiary">{connLabel.text}</span>
             </div>
           )}
           {/* Mobile sidebar toggle */}
           <button
             onClick={toggleSidebar}
-            className="md:hidden p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-2 transition-colors"
-            title="Session context"
+            aria-label="Toggle session context panel"
+            className="md:hidden p-2 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-2 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
@@ -552,11 +552,11 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
         {/* Chat column */}
         <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarCollapsed ? "" : "md:mr-[280px]"}`}>
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4" role="log" aria-label="Conversation" aria-live="polite" aria-atomic="false">
         {messages.length === 0 && (status === "error" || status === "disconnected") && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex flex-col items-center justify-center h-full text-center" role="alert">
+            <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4" aria-hidden="true">
+              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
@@ -653,9 +653,9 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
           </div>
         )}
 
-        <div className="max-w-3xl mx-auto space-y-4">
+        <ol className="max-w-3xl mx-auto space-y-4 list-none p-0 m-0" aria-label="Messages">
           {messages.map((msg) => (
-            <div key={msg.id}>
+            <li key={msg.id}>
               {msg.text && (
                 <MessageBubble role={msg.role} text={msg.text} timestamp={msg.timestamp} />
               )}
@@ -666,31 +666,34 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
                   ))}
                 </div>
               )}
-            </div>
+            </li>
           ))}
+        </ol>
 
           {isThinking && (
-            <ProgressIndicator
-              activeTools={activeTools}
-              startedAt={thinkingStartedAt}
-              creativeLabels={creativeLabels}
-            />
+            <div className="max-w-3xl mx-auto" role="status" aria-label="Assistant is thinking">
+              <ProgressIndicator
+                activeTools={activeTools}
+                startedAt={thinkingStartedAt}
+                creativeLabels={creativeLabels}
+              />
+            </div>
           )}
 
           <div ref={messagesEndRef} />
-        </div>
       </div>
 
       {/* Input area */}
       <div className="border-t border-border-subtle p-4 md:px-6">
         {/* STT error banner */}
         {sttError && (
-          <div className="max-w-3xl mx-auto mb-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+          <div className="max-w-3xl mx-auto mb-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400" role="alert">
             {sttError}
           </div>
         )}
         <div className="flex items-end gap-2 max-w-3xl mx-auto">
           <div className="flex-1 relative">
+            <label htmlFor="chat-input" className="sr-only">Message to teaching assistant</label>
             {/* When recording, show the recording bar above the textarea */}
             {isRecording && sttSupported && (
               <div className="mb-2">
@@ -706,6 +709,7 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
               </div>
             )}
             <textarea
+              id="chat-input"
               ref={inputRef}
               value={input}
               onChange={handleInputChange}
@@ -733,9 +737,10 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
           <button
             onClick={sendMessage}
             disabled={!input.trim() || status !== "connected" || isThinking}
+            aria-label="Send message"
             className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent text-white flex items-center justify-center hover:bg-accent-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </button>
@@ -751,12 +756,13 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
                 setTtsEnabled(!ttsEnabled);
                 if (isSpeaking) stopSpeaking();
               }}
-              className={`flex items-center gap-1 text-xs transition-colors ${
+              className={`flex items-center gap-1 text-xs transition-colors min-w-[24px] min-h-[24px] ${
                 ttsEnabled ? "text-accent" : "text-text-tertiary hover:text-text-secondary"
               }`}
-              title={ttsEnabled ? "Disable voice responses" : "Enable voice responses"}
+              aria-label={ttsEnabled ? "Disable voice responses" : "Enable voice responses"}
+              aria-pressed={ttsEnabled}
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 {ttsEnabled ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" />
                 ) : (

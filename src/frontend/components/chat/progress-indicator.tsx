@@ -85,9 +85,9 @@ export default function ProgressIndicator({ activeTools, startedAt, creativeLabe
   const label = getStageLabel(activeTools, creativeLabels);
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 animate-fade-in">
+    <div className="flex items-center gap-3 px-4 py-2.5 animate-fade-in" role="status" aria-label={label}>
       {/* Bloom-colored cycling dots */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1" aria-hidden="true">
         <span
           className="w-1.5 h-1.5 rounded-full animate-bloom-cycle"
           style={{ animationDelay: "0s", backgroundColor: "currentColor" }}
@@ -108,7 +108,7 @@ export default function ProgressIndicator({ activeTools, startedAt, creativeLabe
           {label}
         </span>
         {elapsed >= 3000 && (
-          <span className="text-xs text-text-tertiary tabular-nums flex-shrink-0 animate-fade-in">
+          <span className="text-xs text-text-tertiary tabular-nums flex-shrink-0 animate-fade-in" aria-label={`Elapsed: ${formatElapsed(elapsed)}`}>
             {formatElapsed(elapsed)}
           </span>
         )}

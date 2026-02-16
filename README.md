@@ -220,6 +220,7 @@ src/frontend/          — Next.js app with 20 pages
 | `/wisdom` | Accumulated teaching wisdom |
 | `/profile` | Educator style profiles |
 | `/debrief/[id]` | Post-session debrief |
+| `/accessibility` | WCAG 2.2 AA accessibility statement |
 
 ---
 

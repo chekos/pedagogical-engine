@@ -174,7 +174,7 @@ export default function TransferPage() {
     <div className="min-h-screen bg-surface-0">
       <NavBar />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main id="main-content" className="max-w-7xl mx-auto px-6 py-8">
         {/* Setup Panel */}
         <div className="rounded-xl border border-border-subtle bg-surface-1 p-6 mb-8">
           <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">

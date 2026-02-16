@@ -176,6 +176,7 @@ export default function EmbedAssessmentChat({
                   : "bg-surface-2 text-text-primary rounded-bl-md"
               }`}
             >
+              <span className="sr-only">{msg.role === "user" ? "You" : "Assistant"}: </span>
               {msg.role === "user" ? (
                 <p className="whitespace-pre-wrap">{msg.text}</p>
               ) : (

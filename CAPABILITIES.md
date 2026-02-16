@@ -192,6 +192,7 @@ Each subagent gets its own isolated context window, system prompt, and tool rest
 | `/debrief/[lesson-id]` | Post-session debrief | Structured reflection interface |
 | `/onboarding` | Google Workspace onboarding | 3-step OAuth connect wizard with benefit cards |
 | `/onboarding/callback` | OAuth callback | Handles success/error with localStorage signaling |
+| `/accessibility` | Accessibility statement | WCAG 2.2 AA conformance statement, features list, known limitations |
 
 **Tech stack:** Next.js 16 + App Router + Turbopack + Tailwind CSS v4 (CSS-native @theme)
 
@@ -339,7 +340,26 @@ Teaching style distribution (lecture, discussion, hands_on, socratic, project_ba
 
 ---
 
-## 9. Design System & UX Direction
+## 9. Accessibility (WCAG 2.2 Level AA)
+
+The frontend is designed for WCAG 2.2 Level AA compliance, targeting ADA Title II (April 2024 DOJ final rule) and Section 508 requirements for US public schools.
+
+| Feature | Implementation |
+|---------|---------------|
+| **Skip navigation** | Skip link on every page, keyboard-visible on focus |
+| **ARIA live regions** | Chat: `role="log"` + `aria-live="polite"` for streaming messages |
+| **Screen reader support** | `sr-only` sender identification on all messages, `aria-label` on all interactive controls |
+| **Keyboard navigation** | Dropdown menus with Escape key handling, `aria-expanded`/`aria-haspopup` state |
+| **Motion safety** | `prefers-reduced-motion` media query disabling all 14+ custom animations |
+| **Semantic HTML** | `<ol>` message lists, `<time>` timestamps, `scope="col"` table headers, `role="status"`/`role="alert"` |
+| **Interactive state** | `aria-pressed` on toggles, `aria-current="page"` on active nav links |
+| **Zoom support** | No `maximumScale` or `userScalable=no` — allows 200%+ zoom (WCAG 1.4.4) |
+| **Automated testing** | `eslint-plugin-jsx-a11y` with recommended rules (`npm run lint`) |
+| **Accessibility statement** | `/accessibility` page with conformance target, features, known limitations |
+
+---
+
+## 10. Design System & UX Direction
 
 ### Visual Identity
 
@@ -383,7 +403,7 @@ Based on Lucas Crespo's article (Every), the frontend was evaluated and designed
 
 ---
 
-## 10. Architecture Decisions
+## 11. Architecture Decisions
 
 | Decision | Why |
 |----------|-----|
@@ -400,7 +420,7 @@ Based on Lucas Crespo's article (Every), the frontend was evaluated and designed
 
 ---
 
-## 11. Demo Narrative (3-Minute Script)
+## 12. Demo Narrative (3-Minute Script)
 
 ### ACT 1: The Graph (0:00–0:40)
 Open on `/graph/python-data-analysis` — 25 nodes, 48 edges. Trigger cascade demo: Priya answers ONE question about pandas groupby → engine infers 12 skills. Click between Priya (mostly green) and Alex (mostly gray). *"One question did the work of twelve."*
@@ -421,7 +441,7 @@ Back to the graph, auto-cycle mode. *"37 custom tools. 4 domains. 3 subagents. B
 
 ---
 
-## 12. What's NOT in CLAUDE.md
+## 13. What's NOT in CLAUDE.md
 
 Items found in other docs that CLAUDE.md doesn't fully cover:
 
@@ -452,7 +472,7 @@ Items found in other docs that CLAUDE.md doesn't fully cover:
 | MCP tools | 37 (28 pedagogy + 9 Google) |
 | Agent skills | 10 (6 pedagogical + 4 Office export) |
 | Subagents | 3 |
-| Frontend routes | 24 |
+| Frontend routes | 25 |
 | REST API endpoints | 30+ |
 | WebSocket endpoints | 2 |
 | PDF export types | 4 |
@@ -465,7 +485,7 @@ Items found in other docs that CLAUDE.md doesn't fully cover:
 | Reasoning traces seeded | 8 |
 | Build time | 1 week |
 
-## 13. Emergence: The Platform Gets Smarter When Models Do
+## 14. Emergence: The Platform Gets Smarter When Models Do
 
 The most important capability isn't a tool or a feature — it's **emergence**.
 

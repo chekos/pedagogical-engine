@@ -76,7 +76,7 @@ export default function ExportButton({
         }`}
       >
         {loading ? (
-          <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle
               className="opacity-25"
               cx="12"
@@ -92,7 +92,7 @@ export default function ExportButton({
             />
           </svg>
         ) : (
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -103,7 +103,7 @@ export default function ExportButton({
         )}
         {label}
       </button>
-      {error && <span className="text-[10px] text-red-400 mt-1">{error}</span>}
+      {error && <span className="text-[10px] text-red-400 mt-1" role="alert">{error}</span>}
     </div>
   );
 }
