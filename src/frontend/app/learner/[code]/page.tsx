@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { fetchPortalData, type PortalData } from "@/lib/api";
 import LanguageSelector from "@/components/portal/language-selector";
 import ProgressNarrative from "@/components/portal/progress-narrative";
@@ -20,9 +21,13 @@ export default function LearnerPortalPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = use(params);
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [state, setState] = useState<LoadState>({ status: "loading" });
-  const [language, setLanguage] = useState("en");
-  const [audience, setAudience] = useState("learner");
+
+  // Derive language and audience from URL query params
+  const language = searchParams.get("lang") || "en";
+  const audience = searchParams.get("audience") || "learner";
 
   const loadPortal = useCallback(async () => {
     setState({ status: "loading" });
@@ -42,14 +47,19 @@ export default function LearnerPortalPage({
     loadPortal();
   }, [loadPortal]);
 
-  // Language change triggers re-fetch
+  // Update URL query params — keeps defaults clean (no ?lang=en&audience=learner)
   const handleLanguageChange = (lang: string) => {
-    setLanguage(lang);
+    const params = new URLSearchParams(searchParams.toString());
+    if (lang === "en") params.delete("lang");
+    else params.set("lang", lang);
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
-  // Audience change triggers re-fetch
   const handleAudienceChange = (aud: string) => {
-    setAudience(aud);
+    const params = new URLSearchParams(searchParams.toString());
+    if (aud === "learner") params.delete("audience");
+    else params.set("audience", aud);
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   return (
