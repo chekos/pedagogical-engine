@@ -514,6 +514,9 @@ h1, h2, h3 {
 
 /* ============================================
    Screen reader only utility
+   Duplicates Tailwind's sr-only for contexts where
+   Tailwind utility classes aren't available (e.g.
+   third-party component wrappers, raw HTML).
    ============================================ */
 .sr-only {
   position: absolute;

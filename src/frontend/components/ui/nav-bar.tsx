@@ -153,7 +153,6 @@ export function NavBar() {
             onClick={() => setExploreOpen((prev) => !prev)}
             onMouseEnter={() => setExploreOpen(true)}
             aria-expanded={exploreOpen}
-            aria-haspopup="true"
             className={`text-sm flex items-center gap-1 transition-colors relative ${
               isExploreActive
                 ? "font-medium"
@@ -183,9 +182,6 @@ export function NavBar() {
 
           {exploreOpen && (
             <div
-              role="menu"
-              tabIndex={-1}
-              aria-label="Explore pages"
               className="absolute right-0 top-full mt-2 w-44 py-1.5 bg-surface-1 border border-border-subtle rounded-lg shadow-lg z-50"
               onMouseLeave={() => setExploreOpen(false)}
             >
@@ -197,7 +193,6 @@ export function NavBar() {
                   <Link
                     key={href}
                     href={href}
-                    role="menuitem"
                     aria-current={isActive ? "page" : undefined}
                     className={`flex items-center gap-2.5 px-3.5 py-2 text-sm transition-colors ${
                       isActive
@@ -220,7 +215,7 @@ export function NavBar() {
         </div>
 
         {/* Theme toggle */}
-        <div className="border-l border-border-subtle pl-4" aria-hidden="false">
+        <div className="border-l border-border-subtle pl-4">
           <button
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             className="text-text-secondary hover:text-text-primary transition-colors p-1 min-w-[24px] min-h-[24px]"

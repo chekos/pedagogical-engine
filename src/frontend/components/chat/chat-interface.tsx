@@ -655,7 +655,7 @@ export default function ChatInterface({ initialMessage, resumeSessionId }: ChatI
 
         <ol className="max-w-3xl mx-auto space-y-4 list-none p-0 m-0" aria-label="Messages">
           {messages.map((msg) => (
-            <li key={msg.id} aria-label={`${msg.role === "user" ? "You" : "Assistant"}: ${msg.text ? msg.text.slice(0, 100) : "tool activity"}`}>
+            <li key={msg.id}>
               {msg.text && (
                 <MessageBubble role={msg.role} text={msg.text} timestamp={msg.timestamp} />
               )}
